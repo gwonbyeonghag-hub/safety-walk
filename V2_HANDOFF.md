@@ -43,7 +43,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0 ✅ 완료 · WO-1 🔴 OPEN(아래 상세).** WO-2 이후는 WO-1 완료·검토 후 작성된다.
+**WO-0·WO-1 ✅ 완료 · WO-2 🔴 OPEN(아래 상세 — 위험성평가 3단계+빈도×강도).** WO-2b 이후는 WO-2 완료·검토 후 작성된다.
 
 ---
 
@@ -249,6 +249,122 @@ WO-1 결과: [완료 | 중단(사유)]
 - **플래너 독립 검증**: 커밋② = 테스트 단언만 변경(JSON·로직 혼입 0) / 파일이동·체크섬·pbxproj 확인 / 패키지 `swift test` **26/26** / 앱 `xcodebuild build` **BUILD SUCCEEDED** / 앱 테스트 15/15(실행자).
 - STOP 리스크 전부 해소: @Model+public ✅ · Bundle.module ✅ · 0 warning ✅ · 동작 중립 ✅.
 - 범위 밖(미실행): 체크리스트 화면까지 UI 탭다운 인터랙션 스크립트화 안 함(WO: UI 최종 스모크만). 런타임 Bundle.module 경로는 패키지 로딩 테스트 22개로 증명됨.
+
+---
+
+## WO-2 — 위험성평가 모듈 (3단계 + 빈도×강도 3x3) 🔴 OPEN
+
+> 골격은 WO-1과 동일(위키 위임계약·verifiable goal·자가검증 루프·검토자 분리).
+> WO-1과 차이: 이건 **추출이 아니라 신규 기능** → 성공기준은 "동작 중립"이 아니라 "수용기준 충족 + 회귀 0".
+> 오너 결정(2026-06-27): **2기법만**(3단계 상·중·하 + 빈도×강도), 매트릭스 **3x3**(데이터로 추상화 → 추후 5x5).
+> 체크리스트법·JSA = WO-2b. CloudKit 배선 = WO-3(단, 모델은 지금 CloudKit-ready로).
+
+### 배경 / 목적
+한국 산안법상 위험성평가는 정기(≥연1회)+최초+수시로 요구된다(V2_ROADMAP AD-3). 현재 앱엔 전무.
+점검(Pass/Fail/NA)·위험요인(즉시기록)과 **별개**의 정식 평가표를 만든다. 앱은 **기록/리마인더**만, **법적 판정 안 함**(면책 고지 필수).
+
+### 목표 (verifiable / 강한 기준)
+`SafetyWalkCore`에 `RiskAssessment`/`RiskAssessmentItem` 모델(**CloudKit-ready**)을 추가하고,
+iOS에서 **2기법으로 위험성평가표를 생성→항목입력→위험성 산정→감소대책→저장→목록/상세**까지 완결한다.
+- 3단계: 위험성 수준을 상/중/하 **직접 선택**(기존 `RiskLevel` 재사용).
+- 빈도×강도: 가능성(1–3)×중대성(1–3) → **점수 1–9 → 밴드(상/중/하) 자동 파생**(데이터 기반 매트릭스).
+
+### 스코프
+
+**✅ 포함:**
+- **모델(SafetyWalkCore)** — 아래 §모델 스펙대로. 전 속성 optional/기본값, 관계 optional, `.unique` 금지(CloudKit-ready).
+- **매트릭스 설정(데이터)** — 3x3 밴드 경계를 **값/설정으로**(코드 if문에 하드코딩 금지, CLAUDE.md 규칙). 5x5는 이 값만 바꿔 확장 가능하게.
+- **iOS UI** — 생성 플로우(평가종류·기법·현장·평가자) → 항목 입력(기법별 위험성 입력) → 목록/상세. Home에서 **2탭 이내 도달**.
+- **현지화** — 신규 문자열 EN/KO 키 패리티(`LocalizationKey`).
+- **테스트** — 매트릭스 밴드 로직(3x3 전 조합) + 모델 단위 테스트(SafetyWalkCoreTests).
+- **DOMAIN_TERMS.md 갱신** — 신규 용어(아래) 먼저 등재.
+
+**⛔ 제외 (별도 WO):**
+- 체크리스트법·JSA(WO-2b) · CloudKit 배선(WO-3) · 이쁜 위험성평가표 PDF/인쇄(WO-5) · macOS(WO-4) · 연1회 due 알림 로직(후속). WO-2의 리포트는 **기본 요약 화면**까지만.
+
+**🚫 절대 금지:** 기존 모델 필드 변경, 점검(Inspection)에 점수 도입(점검은 Pass/Fail/NA 유지), 법적 적합/위반 판정 문구, 도메인 용어 임의 신설(DOMAIN_TERMS.md 경유), 네비게이션 대수술.
+
+### 신규 도메인 용어 (DOMAIN_TERMS.md에 먼저 추가)
+| EN(code) | KO(UI) | 정의 |
+|---|---|---|
+| RiskAssessment | 위험성평가 | 한 건의 평가표. 종류·기법·현장·평가자·항목들 보유 |
+| RiskAssessmentItem | 위험성평가 항목 | 공정/작업·유해위험요인·현재조치·위험성·감소대책·개선후·담당/기한 |
+| RiskAssessmentKind | 평가종류 | `initial`최초 / `regular`정기 / `occasional`수시 |
+| RiskAssessmentMethod | 평가기법 | `threeLevel`3단계 / `frequencySeverity`빈도×강도 (추후 checklist/jsa) |
+| Likelihood | 가능성(빈도) | 빈도×강도 입력 1–3 |
+| Severity | 중대성(강도) | 빈도×강도 입력 1–3 |
+| RiskScore | 위험성 점수 | 가능성×중대성 (1–9) |
+| (band) | 위험성 수준 | 상/중/하 = 기존 `RiskLevel` 재사용 |
+| ReductionMeasure | 감소대책 | 위험성 감소 조치 |
+
+### 모델 스펙 (SafetyWalkCore, public, CloudKit-ready)
+```swift
+@Model public final class RiskAssessment {
+  public var id: UUID = UUID()
+  public var kind: RiskAssessmentKind = .regular
+  public var method: RiskAssessmentMethod = .frequencySeverity
+  public var siteId: UUID?                 // optional link
+  public var siteName: String = ""         // denormalized(이력 보존, Inspection 패턴)
+  public var assessorName: String = ""
+  public var assessedAt: Date = .init()    // init에서 현재시각
+  public var note: String?
+  public var linkedInspectionId: UUID?     // optional
+  @Relationship(deleteRule: .cascade) public var items: [RiskAssessmentItem]?  // optional(CloudKit)
+}
+@Model public final class RiskAssessmentItem {
+  public var id: UUID = UUID()
+  public var taskDescription: String = ""       // 공정/작업
+  public var hazardDescription: String = ""     // 유해위험요인
+  public var currentControls: String?           // 현재 안전조치
+  public var likelihood: Int?                    // 가능성 1–3 (빈도×강도 전용; 3단계는 nil)
+  public var severity: Int?                      // 중대성 1–3
+  public var riskLevel: RiskLevel = .low         // 위험성 수준(3단계=직접/빈도×강도=점수→파생)
+  public var reductionMeasure: String?           // 감소대책
+  public var postRiskLevel: RiskLevel?           // 개선 후 위험성(선택)
+  public var responsibleName: String?            // 담당
+  public var dueDate: Date?                       // 개선예정일
+  public var correctiveActionStatus: CorrectiveActionStatus = .notStarted  // 기존 enum 재사용
+  public var linkedHazardId: UUID?               // optional link to Hazard
+}
+```
+- `riskLevel`은 항상 **resolved 위험성 수준**. 빈도×강도는 `score = (likelihood ?? 0)*(severity ?? 0)` → 밴드 파생해 저장. 3단계는 사용자가 직접.
+- **매트릭스 설정(데이터)** — `RiskMatrixConfig`(public struct, 값): `likelihoodScale=3, severityScale=3`, 밴드 경계 **필드로**: 3x3 기본 `score ≤2→.low / 3…4→.medium / ≥6→.high`(곱값은 1,2,3,4,6,9뿐). `func band(forScore:)`. 경계가 **데이터**라 5x5는 이 값만 교체.
+
+### UI / 기능 (기능 수용기준 — 화면 디자인 latitude는 실행자, 단 QA 스킬 통과)
+- **진입**: Home에서 "위험성평가" 도달 ≤2탭(탭 추가 or Home 카드 — 실행자 판단, `/navigation-qa` 필수).
+- **생성**: 평가종류(최초/정기/수시) + 기법(3단계/빈도×강도) + 현장(기존 Site 피커, optional) + 평가자명.
+- **항목 입력**: 행 추가. 공통(공정/작업·유해위험요인·현재조치·감소대책·담당·기한·상태). 위험성 입력은 **기법별**:
+  - 3단계 → 상/중/하 색상 버튼(기존 `Color+Risk` 재사용).
+  - 빈도×강도 → 가능성1–3 × 중대성1–3 선택 → **실시간 점수+파생 밴드 색상 표시**.
+- **목록/상세**: 평가 목록(일자·현장·기법·항목수·위험성 분포), 상세는 항목별 위험성 색 밴드. **면책 고지 노출**(기존 재사용).
+- **현지화**: 신규 문자열 EN/KO 동시.
+
+### 완료 조건 (증거 필수)
+- [ ] DOMAIN_TERMS.md에 신규 용어 등재 / `RiskAssessment`·`RiskAssessmentItem` 모델이 SafetyWalkCore에 추가, 전 속성 optional/기본값·관계 optional·`.unique` 없음(CloudKit-ready)
+- [ ] 매트릭스 밴드 경계가 **데이터/설정**(if문 하드코딩 아님)
+- [ ] 패키지 테스트: 3x3 전 조합 점수→밴드 + 3단계 pass-through 단위테스트 green
+- [ ] iOS 2기법 end-to-end: 생성→항목입력→위험성 산정(3단계 직접/빈도×강도 파생)→저장→목록→상세, **시뮬레이터 런타임 검증**(스크린샷/SwiftData 확인)
+- [ ] 신규 문자열 EN/KO 패리티 / 면책 고지 노출
+- [ ] 앱 빌드 green, **기존 41테스트 회귀 0**(WO-1 베이스라인 유지)
+- [ ] `/navigation-qa`·`/screen-implementation-review`·`/design-visual-qa`·`/safetywalk-qa-guardrails` 통과
+- [ ] 보고: 신규 모델·용어, 매트릭스 설정 위치, 추가 화면, 빌드/테스트, 런타임 검증 증거
+
+### 중단 조건
+- SwiftData `@Model` CloudKit-ready 제약 충돌(해결 불명확) / 네비게이션이 대수술 필요 / 한국 위험성평가 의미론 모호(예: 밴드 경계 분쟁) / 기존 테스트 회귀.
+
+### 검증 (WO-1과 동일 + 시뮬 런)
+스킴은 `xcodebuild -list`에서 캡처(NFC/NFD). 패키지 `swift test`, 앱 `xcodebuild build`/`test`, 시뮬 실행으로 2기법 플로우.
+
+### Skills 호출 지점
+`/swiftui-build-qa`(빌드), `/navigation-qa`(진입/전환), `/screen-implementation-review`(화면 완료 전), `/design-visual-qa`(이쁘게 — 렌더→스샷→비평), `/safetywalk-qa-guardrails`(스코프·법적문구·도메인). 막히면 `/diagnose`, 완료/중단 전 `/handoff`.
+
+### 진행 / 보고
+**main에서 새 브랜치**(예: `wo2-risk-assessment`)로 작업. WO-1 handoff 형식으로 보고 → 플래너 검수 → WO-2b/ WO-3.
+
+**WO-2 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
 
 ---
 
