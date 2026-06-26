@@ -1,0 +1,133 @@
+{
+  "id": "korea-general-v1",
+  "regionProfile": "korea",
+  "name": "일반 현장 점검표",
+  "categories": [
+    {
+      "id": "korea-cat-common",
+      "titleKey": "checklist.category.commonSafety",
+      "items": [
+        { "id": "korea-common-001", "titleKey": "checklist.item.korea.common.001", "descriptionKey": null },
+        { "id": "korea-common-002", "titleKey": "checklist.item.korea.common.002", "descriptionKey": null },
+        { "id": "korea-common-003", "titleKey": "checklist.item.korea.common.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-house",
+      "titleKey": "checklist.category.housekeeping",
+      "items": [
+        { "id": "korea-house-001", "titleKey": "checklist.item.korea.house.001", "descriptionKey": null },
+        { "id": "korea-house-002", "titleKey": "checklist.item.korea.house.002", "descriptionKey": null },
+        { "id": "korea-house-003", "titleKey": "checklist.item.korea.house.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-ppe",
+      "titleKey": "checklist.category.ppe",
+      "items": [
+        { "id": "korea-ppe-001", "titleKey": "checklist.item.korea.ppe.001", "descriptionKey": null },
+        { "id": "korea-ppe-002", "titleKey": "checklist.item.korea.ppe.002", "descriptionKey": null },
+        { "id": "korea-ppe-003", "titleKey": "checklist.item.korea.ppe.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-fall",
+      "titleKey": "checklist.category.fallRisk",
+      "items": [
+        { "id": "korea-fall-001", "titleKey": "checklist.item.korea.fall.001", "descriptionKey": null },
+        { "id": "korea-fall-002", "titleKey": "checklist.item.korea.fall.002", "descriptionKey": null },
+        { "id": "korea-fall-003", "titleKey": "checklist.item.korea.fall.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-electrical",
+      "titleKey": "checklist.category.electrical",
+      "items": [
+        { "id": "korea-elec-001", "titleKey": "checklist.item.korea.elec.001", "descriptionKey": null },
+        { "id": "korea-elec-002", "titleKey": "checklist.item.korea.elec.002", "descriptionKey": null },
+        { "id": "korea-elec-003", "titleKey": "checklist.item.korea.elec.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-fire",
+      "titleKey": "checklist.category.fire",
+      "items": [
+        { "id": "korea-fire-001", "titleKey": "checklist.item.korea.fire.001", "descriptionKey": null },
+        { "id": "korea-fire-002", "titleKey": "checklist.item.korea.fire.002", "descriptionKey": null },
+        { "id": "korea-fire-003", "titleKey": "checklist.item.korea.fire.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-chem",
+      "titleKey": "checklist.category.chemical",
+      "items": [
+        { "id": "korea-chem-001", "titleKey": "checklist.item.korea.chem.001", "descriptionKey": null },
+        { "id": "korea-chem-002", "titleKey": "checklist.item.korea.chem.002", "descriptionKey": null },
+        { "id": "korea-chem-003", "titleKey": "checklist.item.korea.chem.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-fork",
+      "titleKey": "checklist.category.forklift",
+      "items": [
+        { "id": "korea-fork-001", "titleKey": "checklist.item.korea.fork.001", "descriptionKey": null },
+        { "id": "korea-fork-002", "titleKey": "checklist.item.korea.fork.002", "descriptionKey": null },
+        { "id": "korea-fork-003", "titleKey": "checklist.item.korea.fork.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-robot",
+      "titleKey": "checklist.category.industrialRobot",
+      "items": [
+        { "id": "korea-robot-001", "titleKey": "checklist.item.korea.robot.001", "descriptionKey": null },
+        { "id": "korea-robot-002", "titleKey": "checklist.item.korea.robot.002", "descriptionKey": null },
+        { "id": "korea-robot-003", "titleKey": "checklist.item.korea.robot.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-press",
+      "titleKey": "checklist.category.pressMachine",
+      "items": [
+        { "id": "korea-press-001", "titleKey": "checklist.item.korea.press.001", "descriptionKey": null },
+        { "id": "korea-press-002", "titleKey": "checklist.item.korea.press.002", "descriptionKey": null },
+        { "id": "korea-press-003", "titleKey": "checklist.item.korea.press.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-conv",
+      "titleKey": "checklist.category.conveyorRotating",
+      "items": [
+        { "id": "korea-conv-001", "titleKey": "checklist.item.korea.conv.001", "descriptionKey": null },
+        { "id": "korea-conv-002", "titleKey": "checklist.item.korea.conv.002", "descriptionKey": null },
+        { "id": "korea-conv-003", "titleKey": "checklist.item.korea.conv.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-crane",
+      "titleKey": "checklist.category.craneHoist",
+      "items": [
+        { "id": "korea-crane-001", "titleKey": "checklist.item.korea.crane.001", "descriptionKey": null },
+        { "id": "korea-crane-002", "titleKey": "checklist.item.korea.crane.002", "descriptionKey": null },
+        { "id": "korea-crane-003", "titleKey": "checklist.item.korea.crane.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-conf",
+      "titleKey": "checklist.category.confinedSpace",
+      "items": [
+        { "id": "korea-conf-001", "titleKey": "checklist.item.korea.conf.001", "descriptionKey": null },
+        { "id": "korea-conf-002", "titleKey": "checklist.item.korea.conf.002", "descriptionKey": null },
+        { "id": "korea-conf-003", "titleKey": "checklist.item.korea.conf.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "korea-cat-emerg",
+      "titleKey": "checklist.category.emergencyResponse",
+      "items": [
+        { "id": "korea-emerg-001", "titleKey": "checklist.item.korea.emerg.001", "descriptionKey": null },
+        { "id": "korea-emerg-002", "titleKey": "checklist.item.korea.emerg.002", "descriptionKey": null },
+        { "id": "korea-emerg-003", "titleKey": "checklist.item.korea.emerg.003", "descriptionKey": null }
+      ]
+    }
+  ]
+}

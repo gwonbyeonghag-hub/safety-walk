@@ -1,0 +1,160 @@
+{
+  "id": "global-general-v1",
+  "regionProfile": "global",
+  "name": "General Site Inspection",
+  "categories": [
+    {
+      "id": "global-cat-common",
+      "titleKey": "checklist.category.commonSafety",
+      "items": [
+        { "id": "global-common-001", "titleKey": "checklist.item.global.common.001", "descriptionKey": null },
+        { "id": "global-common-002", "titleKey": "checklist.item.global.common.002", "descriptionKey": null },
+        { "id": "global-common-003", "titleKey": "checklist.item.global.common.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-house",
+      "titleKey": "checklist.category.housekeeping",
+      "items": [
+        { "id": "global-house-001", "titleKey": "checklist.item.global.house.001", "descriptionKey": null },
+        { "id": "global-house-002", "titleKey": "checklist.item.global.house.002", "descriptionKey": null },
+        { "id": "global-house-003", "titleKey": "checklist.item.global.house.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-wws",
+      "titleKey": "checklist.category.walkingWorkingSurfaces",
+      "items": [
+        { "id": "global-wws-001", "titleKey": "checklist.item.global.wws.001", "descriptionKey": null },
+        { "id": "global-wws-002", "titleKey": "checklist.item.global.wws.002", "descriptionKey": null },
+        { "id": "global-wws-003", "titleKey": "checklist.item.global.wws.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-fall",
+      "titleKey": "checklist.category.fallRisk",
+      "items": [
+        { "id": "global-fall-001", "titleKey": "checklist.item.global.fall.001", "descriptionKey": null },
+        { "id": "global-fall-002", "titleKey": "checklist.item.global.fall.002", "descriptionKey": null },
+        { "id": "global-fall-003", "titleKey": "checklist.item.global.fall.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-ladder",
+      "titleKey": "checklist.category.laddersScaffolds",
+      "items": [
+        { "id": "global-ladder-001", "titleKey": "checklist.item.global.ladder.001", "descriptionKey": null },
+        { "id": "global-ladder-002", "titleKey": "checklist.item.global.ladder.002", "descriptionKey": null },
+        { "id": "global-ladder-003", "titleKey": "checklist.item.global.ladder.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-ppe",
+      "titleKey": "checklist.category.ppe",
+      "items": [
+        { "id": "global-ppe-001", "titleKey": "checklist.item.global.ppe.001", "descriptionKey": null },
+        { "id": "global-ppe-002", "titleKey": "checklist.item.global.ppe.002", "descriptionKey": null },
+        { "id": "global-ppe-003", "titleKey": "checklist.item.global.ppe.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-resp",
+      "titleKey": "checklist.category.respiratoryProtection",
+      "items": [
+        { "id": "global-resp-001", "titleKey": "checklist.item.global.resp.001", "descriptionKey": null },
+        { "id": "global-resp-002", "titleKey": "checklist.item.global.resp.002", "descriptionKey": null },
+        { "id": "global-resp-003", "titleKey": "checklist.item.global.resp.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-hazcom",
+      "titleKey": "checklist.category.hazardCommunication",
+      "items": [
+        { "id": "global-hazcom-001", "titleKey": "checklist.item.global.hazcom.001", "descriptionKey": null },
+        { "id": "global-hazcom-002", "titleKey": "checklist.item.global.hazcom.002", "descriptionKey": null },
+        { "id": "global-hazcom-003", "titleKey": "checklist.item.global.hazcom.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-chemical",
+      "titleKey": "checklist.category.chemical",
+      "items": [
+        { "id": "global-chem-001", "titleKey": "checklist.item.global.chem.001", "descriptionKey": null },
+        { "id": "global-chem-002", "titleKey": "checklist.item.global.chem.002", "descriptionKey": null },
+        { "id": "global-chem-003", "titleKey": "checklist.item.global.chem.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-electrical",
+      "titleKey": "checklist.category.electrical",
+      "items": [
+        { "id": "global-elec-001", "titleKey": "checklist.item.global.elec.001", "descriptionKey": null },
+        { "id": "global-elec-002", "titleKey": "checklist.item.global.elec.002", "descriptionKey": null },
+        { "id": "global-elec-003", "titleKey": "checklist.item.global.elec.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-loto",
+      "titleKey": "checklist.category.lockoutTagout",
+      "items": [
+        { "id": "global-loto-001", "titleKey": "checklist.item.global.loto.001", "descriptionKey": null },
+        { "id": "global-loto-002", "titleKey": "checklist.item.global.loto.002", "descriptionKey": null },
+        { "id": "global-loto-003", "titleKey": "checklist.item.global.loto.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-guard",
+      "titleKey": "checklist.category.machineGuarding",
+      "items": [
+        { "id": "global-guard-001", "titleKey": "checklist.item.global.guard.001", "descriptionKey": null },
+        { "id": "global-guard-002", "titleKey": "checklist.item.global.guard.002", "descriptionKey": null },
+        { "id": "global-guard-003", "titleKey": "checklist.item.global.guard.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-fire",
+      "titleKey": "checklist.category.fire",
+      "items": [
+        { "id": "global-fire-001", "titleKey": "checklist.item.global.fire.001", "descriptionKey": null },
+        { "id": "global-fire-002", "titleKey": "checklist.item.global.fire.002", "descriptionKey": null },
+        { "id": "global-fire-003", "titleKey": "checklist.item.global.fire.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-hotwork",
+      "titleKey": "checklist.category.hotWork",
+      "items": [
+        { "id": "global-hotwork-001", "titleKey": "checklist.item.global.hotwork.001", "descriptionKey": null },
+        { "id": "global-hotwork-002", "titleKey": "checklist.item.global.hotwork.002", "descriptionKey": null },
+        { "id": "global-hotwork-003", "titleKey": "checklist.item.global.hotwork.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-pit",
+      "titleKey": "checklist.category.poweredIndustrialTrucks",
+      "items": [
+        { "id": "global-pit-001", "titleKey": "checklist.item.global.pit.001", "descriptionKey": null },
+        { "id": "global-pit-002", "titleKey": "checklist.item.global.pit.002", "descriptionKey": null },
+        { "id": "global-pit-003", "titleKey": "checklist.item.global.pit.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-conf",
+      "titleKey": "checklist.category.confinedSpace",
+      "items": [
+        { "id": "global-conf-001", "titleKey": "checklist.item.global.conf.001", "descriptionKey": null },
+        { "id": "global-conf-002", "titleKey": "checklist.item.global.conf.002", "descriptionKey": null },
+        { "id": "global-conf-003", "titleKey": "checklist.item.global.conf.003", "descriptionKey": null }
+      ]
+    },
+    {
+      "id": "global-cat-eap",
+      "titleKey": "checklist.category.emergencyActionPlan",
+      "items": [
+        { "id": "global-eap-001", "titleKey": "checklist.item.global.eap.001", "descriptionKey": null },
+        { "id": "global-eap-002", "titleKey": "checklist.item.global.eap.002", "descriptionKey": null },
+        { "id": "global-eap-003", "titleKey": "checklist.item.global.eap.003", "descriptionKey": null }
+      ]
+    }
+  ]
+}

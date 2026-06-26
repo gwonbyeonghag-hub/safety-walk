@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      SafetyWalk privacy manifest.
+
+      App is local-first / offline-first per PRD:
+        - no networking (no URLSession / URLRequest in any source file)
+        - no analytics or tracking SDKs (no third-party packages of any kind)
+        - no location, advertising, or tracking-transparency frameworks
+        - only outbound data is whatever the user explicitly chooses via the
+          iOS Share Sheet (Mail / KakaoTalk / AirDrop / Save to Files)
+
+      Required-reason API audit at the time of this manifest:
+        - UserDefaults: used for inspectorName + selected RegionProfile
+          → CA92.1 (App functionality)
+        - FileManager file existence / createDirectory / removeItem / Documents
+          and temporaryDirectory URLs: not required-reason APIs
+        - No file timestamp APIs (no `attributesOfItem`, no `creationDate`)
+        - No system boot time APIs (no `systemUptime`)
+        - No disk-space query APIs
+    -->
+
+    <key>NSPrivacyTracking</key>
+    <false/>
+
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array/>
+
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

@@ -1,0 +1,394 @@
+// SafetyWalk — Korean strings (한국어)
+// Keep in sync with en.lproj/Localizable.strings and LocalizationKey.swift
+
+// MARK: - Tabs
+"tab.home"          = "홈";
+"tab.inspection"    = "점검";
+"tab.hazards"       = "위험요인";
+"tab.history"       = "기록";
+"tab.settings"      = "설정";
+
+// MARK: - Home
+"home.subtitle"             = "현장 안전 점검을 빠르게 기록하세요.";
+"home.startInspection"      = "점검 시작";
+"home.recentInspections"    = "최근 점검";
+"home.addHazard"            = "위험요인 등록";
+"home.noInspectionsYet"     = "점검 기록이 없습니다. '점검 시작'을 눌러 시작하세요.";
+"home.inspectionsToday"     = "오늘";
+"home.openHazards"          = "미처리 위험요인";
+"home.allClear"             = "안정";
+"home.noOpenHazards"        = "미처리 위험요인 없음";
+
+// MARK: - Inspection setup
+"inspection.noSitesYet"         = "저장된 현장이 없습니다. 아래에서 추가하세요.";
+"inspection.templateSummary"    = "%d개 카테고리 · %d개 항목";
+"inspection.noArea"             = "구역 없음";
+"inspection.addNewArea"         = "새 구역 저장";
+"inspection.selectSite"         = "현장 선택";
+"inspection.addNewSite"         = "새 현장 추가";
+"inspection.selectArea"         = "구역 선택";
+"inspection.enterAreaFree"      = "구역 이름 입력";
+"inspection.selectTemplate"     = "점검표 선택";
+"inspection.begin"                  = "점검 시작";
+"inspection.complete"               = "점검 완료";
+"inspection.noActiveInspections"    = "진행중인 점검이 없습니다.";
+
+// MARK: - Inspection deletion (task 5-9)
+"inspection.delete"         = "점검 기록 삭제";
+"inspection.deleteTitle"    = "점검 기록을 삭제하시겠습니까?";
+"inspection.deleteMessage"  = "점검 기록, 점검 항목, 연결된 위험요인, 로컬 사진이 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다.";
+
+// MARK: - Inspection scope / category selection
+"inspection.scopeTitle"             = "점검 범위 선택";
+"inspection.scopeSubtitle"          = "이번 점검에 적용할 카테고리를 선택하세요. 선택하지 않은 카테고리는 점검에서 제외되며, 해당없음(N/A)으로 표시되지 않습니다.";
+"inspection.selectAll"              = "전체 선택";
+"inspection.clearAll"               = "전체 해제";
+"inspection.recommendedDefaults"    = "권장 기본값";
+"inspection.selectedScopeSummary"   = "%d개 카테고리 · %d개 항목";
+"inspection.noScopeSelected"        = "시작하려면 최소 한 개 이상의 카테고리를 선택하세요.";
+"inspection.startWithScope"         = "점검 시작";
+
+// MARK: - Checklist item
+"checklist.pass"            = "적합";
+"checklist.fail"            = "부적합";
+"checklist.notApplicable"   = "해당없음";
+"checklist.addNote"         = "메모 추가…";
+"checklist.attachPhoto"     = "사진 첨부";
+"checklist.replacePhoto"    = "사진 교체";
+"checklist.addHazard"       = "위험요인 등록";
+"checklist.hazardLinked"    = "위험요인 연결됨";
+"checklist.progress"        = "%d / %d 항목";
+"checklist.failedCount"     = "%d 부적합";
+
+// MARK: - Hazard
+"hazard.registrationTitle"      = "위험요인 등록";
+"hazard.photo"                  = "사진";
+"hazard.location"           = "위치";
+"hazard.type"               = "위험 유형";
+"hazard.riskLevel"          = "위험 등급";
+"hazard.description"            = "설명";
+"hazard.descriptionPlaceholder" = "위험요인을 설명해 주세요…";
+"hazard.correctiveStatus"       = "시정 조치 상태";
+"hazard.save"               = "위험요인 저장";
+"hazard.photoRequired"      = "위험요인에는 사진이 필수입니다.";
+"hazard.noHazardsYet"       = "등록된 위험요인이 없습니다.";
+"hazard.filterAll"          = "전체";
+"hazard.clearFilters"       = "필터 지우기";
+"hazard.detailTitle"        = "위험요인 상세";
+"hazard.createdAt"          = "등록일";
+"hazard.updatedAt"          = "수정일";
+"hazard.noFilterResults"    = "선택한 필터에 해당하는 위험요인이 없습니다.";
+"hazard.noSitesForStandalone" = "점검 없이 위험요인을 등록하려면 먼저 설정에서 현장을 추가하세요.";
+
+// MARK: - Risk levels
+"risk.low"      = "낮음";
+"risk.medium"   = "보통";
+"risk.high"     = "높음";
+
+// MARK: - Hazard types
+"hazardType.fallRisk"   = "추락 위험";
+"hazardType.electrical" = "전기 위험";
+"hazardType.fire"       = "화재 위험";
+"hazardType.chemical"   = "화학물질 위험";
+"hazardType.general"    = "일반 위험";
+"hazardType.other"      = "기타";
+
+// MARK: - Corrective action status
+"status.notStarted" = "미착수";
+"status.inProgress" = "진행중";
+"status.completed"  = "완료";
+
+// MARK: - Inspection status
+"inspectionStatus.inProgress"   = "진행중";
+"inspectionStatus.completed"    = "완료";
+
+// MARK: - Inspection detail
+"detail.continueInspection" = "점검 계속";
+"detail.checklistItems"     = "점검 항목";
+"detail.linkedHazards"      = "연결된 위험요인";
+
+// MARK: - History
+"history.noRecords"         = "점검 기록이 없습니다.";
+"history.title"             = "기록";
+"history.noFilterResults"   = "선택한 필터에 해당하는 점검이 없습니다.";
+
+// MARK: - Inspection summary
+"summary.title"         = "점검 완료";
+"summary.inspector"     = "점검자";
+"summary.startedAt"     = "시작";
+"summary.completedAt"   = "완료";
+"summary.totalItems"    = "전체 항목";
+"summary.failedItems"   = "부적합 항목";
+"summary.hazardsByRisk" = "위험 등급별 위험요인";
+"summary.pass"          = "적합";
+"summary.fail"          = "부적합";
+"summary.notApplicable" = "해당없음";
+"summary.hazards"       = "위험요인";
+"summary.share"         = "요약 공유";
+
+// MARK: - Inspection report (Phase 4 export)
+"report.title"          = "현장 안전 점검 보고서";
+"report.generatedAt"    = "생성일";
+"report.generatedBy"    = "현장 안전 지킴이로 생성";
+"report.passRate"       = "적합률";
+"report.openHazards"    = "미처리 위험";
+"report.progress"       = "진행";
+"report.metadata"       = "점검 정보";
+"report.checklist"      = "점검표";
+"report.area"           = "구역";
+"report.status"         = "상태";
+"report.resultSummary"  = "점검 결과 요약";
+"report.hazardSummary"  = "위험요인 요약";
+"report.progressRate"   = "진행률";
+"report.unchecked"      = "미점검";
+"report.categoryResults" = "카테고리별 점검 항목 결과";
+"report.checklistItem"  = "점검 항목";
+"report.result"         = "결과";
+"report.note"           = "비고";
+"report.hazardsAndActions" = "위험요인 및 시정 조치";
+"report.evidencePhotos" = "증거 사진";
+"report.noEvidencePhotos" = "첨부된 증거 사진이 없습니다.";
+"share.button"          = "보고서 공유";
+"share.exporting"       = "보고서 준비 중…";
+"share.failed"          = "보고서를 준비할 수 없습니다.";
+
+// MARK: - Errors (task 5-3)
+"error.photoLoadFailed" = "선택한 사진을 불러올 수 없습니다.";
+"error.photoSaveFailed" = "사진을 저장할 수 없습니다. 저장 공간을 확인하고 다시 시도해 주세요.";
+
+// MARK: - Data reset (task 5-11)
+"settings.dataManagement"   = "데이터 관리";
+"settings.resetLocalData"   = "로컬 데이터 초기화";
+"reset.confirmTitle"        = "로컬 데이터를 초기화하시겠습니까?";
+"reset.confirmMessage"      = "모든 현장, 구역, 점검, 점검 항목, 위험요인, 로컬 증거 사진이 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.\n\n점검자 이름, 언어, 화면 모드, 온보딩 상태 등 앱 환경설정은 유지됩니다.";
+"reset.confirmAction"       = "초기화";
+"error.resetFailed"         = "로컬 데이터를 초기화할 수 없습니다.";
+
+// MARK: - Accessibility (task 5-4)
+"site.areaCountAccessibility" = "구역 %d개";
+
+// MARK: - Onboarding (task 5-1)
+"onboarding.title"          = "현장 안전 지킴이";
+"onboarding.subtitle"       = "점검자 프로필을 설정해 시작하세요. 설정 탭에서 언제든 변경할 수 있습니다.";
+"onboarding.inspectorName"  = "점검자 이름";
+"onboarding.region"         = "지역";
+"onboarding.start"          = "시작하기";
+"onboarding.nameRequired"   = "이름을 입력하면 시작할 수 있습니다.";
+
+// MARK: - Reopen setup (task 5-14)
+"settings.appSetup"             = "앱 설정";
+"settings.reopenSetup"          = "초기 설정 다시 보기";
+"setupReopen.confirmTitle"      = "초기 설정을 다시 여시겠습니까?";
+"setupReopen.confirmMessage"    = "초기 설정 화면이 다시 표시되어 점검자 이름과 언어를 업데이트할 수 있습니다. 기존 점검, 위험요인, 현장, 사진은 삭제되지 않습니다.";
+"setupReopen.confirmAction"     = "다시 보기";
+
+// MARK: - Settings
+"settings.title"            = "설정";
+"settings.inspectorName"    = "점검자 이름";
+"settings.language"         = "언어";
+// 언어 토글 옵션 — 자칭(endonym)이라 두 로케일 값이 동일합니다.
+"language.korean"           = "한국어";
+"language.english"          = "English";
+"settings.regionProfile"    = "지역";
+"settings.region.korea"     = "한국";
+"settings.region.global"    = "글로벌";
+"settings.siteManagement"   = "현장 관리";
+"settings.appVersion"       = "버전";
+
+// MARK: - Appearance (task 5-8)
+"settings.appearance"       = "화면 모드";
+"appearance.system"         = "시스템";
+"appearance.light"          = "라이트";
+"appearance.dark"           = "다크";
+
+// MARK: - Site management
+"siteManagement.title"              = "현장 및 구역";
+"siteManagement.namePlaceholder"    = "현장 이름 (필수)";
+"siteManagement.addressPlaceholder" = "주소 (선택)";
+"siteManagement.areaNamePlaceholder"= "구역 이름";
+
+// MARK: - Site management actions (task 3-2)
+"site.addSite"                = "현장 추가";
+"site.noSites"                = "등록된 현장이 없습니다. 아래에서 추가하세요.";
+"site.areasSection"           = "구역";
+"site.deleteSiteAction"       = "현장 삭제";
+"site.deleteConfirmTitle"     = "현장을 삭제하시겠습니까?";
+"site.deleteBlockedTitle"     = "현장을 삭제할 수 없습니다";
+"site.deleteBlockedMessage"   = "이 현장은 기존 점검 또는 위험요인 기록에서 사용 중입니다. 과거 기록은 분리할 수 없습니다.";
+"area.addArea"                = "구역 추가";
+"area.noAreas"                = "등록된 구역이 없습니다.";
+"area.deleteConfirmTitle"     = "구역을 삭제하시겠습니까?";
+"area.deleteBlockedTitle"     = "구역을 삭제할 수 없습니다";
+"area.deleteBlockedMessage"   = "이 구역은 기존 점검 기록에서 사용 중입니다. 과거 기록은 분리할 수 없습니다.";
+
+// MARK: - Disclaimer
+"disclaimer.title" = "면책 고지";
+"disclaimer.text"  = "이 앱은 현장 점검 기록 및 증거 정리를 지원합니다. 법적 위반 여부를 판단하거나 법적 준수 여부를 확정하지 않습니다. 안전관리자의 검토가 필요합니다.";
+
+// MARK: - Common
+"common.save"       = "저장";
+"common.next"       = "다음";
+"common.cancel"     = "취소";
+"common.delete"     = "삭제";
+"common.edit"       = "편집";
+"common.share"      = "공유";
+"common.back"       = "뒤로";
+"common.confirm"    = "확인";
+"common.required"   = "필수";
+"common.done"       = "완료";
+"common.comingSoon" = "준비중";
+
+// MARK: - Checklist categories
+// Used as section headers in the checklist view. Keys shared by Korea and Global templates.
+"checklist.category.commonSafety"       = "일반 안전";
+"checklist.category.housekeeping"       = "정리정돈";
+"checklist.category.ppe"                = "보호구";
+"checklist.category.fallRisk"           = "추락 위험";
+"checklist.category.electrical"         = "전기 위험";
+"checklist.category.fire"               = "화재 위험";
+"checklist.category.chemical"           = "화학물질 위험";
+"checklist.category.forklift"           = "지게차";
+"checklist.category.industrialRobot"    = "산업용 로봇";
+"checklist.category.pressMachine"       = "프레스 기계";
+"checklist.category.conveyorRotating"   = "컨베이어·회전체";
+"checklist.category.craneHoist"         = "크레인·호이스트";
+"checklist.category.confinedSpace"      = "밀폐 공간";
+"checklist.category.emergencyResponse"  = "비상 대응";
+// US(글로벌) 템플릿 카테고리
+"checklist.category.walkingWorkingSurfaces"  = "보행·작업면";
+"checklist.category.laddersScaffolds"        = "사다리·비계";
+"checklist.category.respiratoryProtection"   = "호흡 보호";
+"checklist.category.hazardCommunication"     = "위험물 정보전달";
+"checklist.category.lockoutTagout"           = "잠금·표지(LOTO)";
+"checklist.category.machineGuarding"         = "기계 방호";
+"checklist.category.hotWork"                 = "화기 작업";
+"checklist.category.poweredIndustrialTrucks" = "동력 산업차량(지게차)";
+"checklist.category.emergencyActionPlan"     = "비상조치 계획";
+
+// MARK: - Checklist items — Korea template (korea-general-v1)
+// General Safety
+"checklist.item.korea.common.001" = "안전 관리자 및 작업 지시자 현장 배치 여부 확인";
+"checklist.item.korea.common.002" = "작업 전 위험성 평가 실시 및 작업자 주지 여부";
+"checklist.item.korea.common.003" = "안전 표지판 설치 상태 및 식별 가능 여부";
+// Housekeeping
+"checklist.item.korea.house.001" = "통로·비상구 주변 자재 및 장애물 제거 여부";
+"checklist.item.korea.house.002" = "공구·자재의 지정 위치 보관 및 바닥 정리 상태";
+"checklist.item.korea.house.003" = "폐기물 제거 및 작업 구역 청결 상태 확인";
+// PPE
+"checklist.item.korea.ppe.001" = "작업자 안전모·안전화·안전대 착용 여부";
+"checklist.item.korea.ppe.002" = "작업 특성에 맞는 보호구(방진마스크, 보안경 등) 착용 여부";
+"checklist.item.korea.ppe.003" = "보호구 손상·마모 상태 확인 및 교체 여부";
+// Fall Risk
+"checklist.item.korea.fall.001" = "고소 작업 구간 안전난간 설치 및 상태 확인";
+"checklist.item.korea.fall.002" = "개구부 덮개 또는 방호시설 설치 여부";
+"checklist.item.korea.fall.003" = "작업발판 설치 상태 및 발끝막이판 설치 여부";
+// Electrical
+"checklist.item.korea.elec.001" = "전선 피복 손상 여부 및 노출 전선 없음";
+"checklist.item.korea.elec.002" = "분전반 접지 및 잠금 조치 확인";
+"checklist.item.korea.elec.003" = "임시 배선 규격 적정 여부 및 고정 상태";
+// Fire
+"checklist.item.korea.fire.001" = "소화기 위치 표시, 충약 상태 및 점검일 확인";
+"checklist.item.korea.fire.002" = "가연성 자재의 작업 구역과 분리 보관";
+"checklist.item.korea.fire.003" = "비상구 및 피난 경로 확보 및 표시 여부";
+// Chemical
+"checklist.item.korea.chem.001" = "화학물질 용기 라벨 부착 및 밀봉 상태 확인";
+"checklist.item.korea.chem.002" = "물질안전보건자료(MSDS) 현장 접근 가능 여부";
+"checklist.item.korea.chem.003" = "화학물질 누출 방지 장비 구비 및 위험 구역 표시 여부";
+// Forklift
+"checklist.item.korea.fork.001" = "지게차 포크·마스트·타이어 등 외관 점검 실시 여부";
+"checklist.item.korea.fork.002" = "지게차 작업 구역 내 보행자 통행 분리 조치 여부";
+"checklist.item.korea.fork.003" = "운전자 자격 보유 및 후방 경보 장치 작동 여부";
+// Industrial Robot
+"checklist.item.korea.robot.001" = "로봇 작동 구역 안전 펜스 또는 방호 장치 설치 여부";
+"checklist.item.korea.robot.002" = "비상 정지 버튼 접근 가능 및 작동 상태 확인";
+"checklist.item.korea.robot.003" = "로봇 작동 중 작업자 진입 통제 조치 여부";
+// Press Machine
+"checklist.item.korea.press.001" = "프레스 방호 장치(게이트, 양수 조작식 등) 설치 및 작동 여부";
+"checklist.item.korea.press.002" = "금형 교체 시 잠금·표지 절차 이행 여부";
+"checklist.item.korea.press.003" = "프레스 주변 안전 통로 확보 및 발판 미끄럼 방지 여부";
+// Conveyor & Rotating Parts
+"checklist.item.korea.conv.001" = "컨베이어·회전체 덮개 또는 방호망 설치 여부";
+"checklist.item.korea.conv.002" = "비상 정지 장치 위치 표시 및 작동 상태 확인";
+"checklist.item.korea.conv.003" = "회전체 주변 작업자 끼임 방지 조치 여부";
+// Crane & Hoist
+"checklist.item.korea.crane.001" = "크레인·호이스트 와이어 로프·훅·샤클 상태 확인";
+"checklist.item.korea.crane.002" = "과부하 방지 장치 및 권과 방지 장치 작동 여부";
+"checklist.item.korea.crane.003" = "인양 작업 중 작업자 이동 경로 통제 여부";
+// Confined Space
+"checklist.item.korea.conf.001" = "밀폐 공간 진입 전 산소 및 유해가스 농도 측정 여부";
+"checklist.item.korea.conf.002" = "감시인 배치 및 비상 연락 체계 확보 여부";
+"checklist.item.korea.conf.003" = "환기 장치 가동 상태 및 개인용 공기 공급 장비 준비 여부";
+// Emergency Response
+"checklist.item.korea.emerg.001" = "비상 연락망(응급 연락처) 현장 게시 여부";
+"checklist.item.korea.emerg.002" = "응급 처치함 위치 표시 및 기본 물품 구비 여부";
+"checklist.item.korea.emerg.003" = "비상 대피 경로 및 집결지 표시 여부";
+
+// MARK: - Checklist items — Global template (global-general-v1) — US / OSHA-oriented
+// General Safety
+"checklist.item.global.common.001" = "현장 안전 오리엔테이션 완료 및 참석 기록";
+"checklist.item.global.common.002" = "작업 위험성 분석(JHA) 완료 및 작업 전 작업조와 검토";
+"checklist.item.global.common.003" = "필수 안전 게시물 및 표지가 현장 출입구에 잘 보이게 게시됨";
+// Housekeeping
+"checklist.item.global.house.001" = "통로·복도·출구에 자재 및 잔재물 없음";
+"checklist.item.global.house.002" = "공구·자재를 지정 구역에 보관하고 바닥 정돈 상태 유지";
+"checklist.item.global.house.003" = "폐기물·잔재물 제거 및 유출물 신속 정리";
+// Walking-Working Surfaces
+"checklist.item.global.wws.001" = "바닥·보행면에 걸림 위험·구멍·고인 물 없음";
+"checklist.item.global.wws.002" = "바닥 개구부·구멍 덮개 또는 방호 및 표시";
+"checklist.item.global.wws.003" = "계단 난간 견고 및 디딤판 상태 양호";
+// Fall Protection
+"checklist.item.global.fall.001" = "6피트(일반산업 4피트) 이상 개방 가장자리·개구부에 안전난간·안전망·개인 추락방지장비 적용";
+"checklist.item.global.fall.002" = "개인 추락방지장비 점검 및 정격 앵커에 결속";
+"checklist.item.global.fall.003" = "구멍·채광창·지붕 개구부 덮개 또는 방호로 추락 방지";
+// Ladders & Scaffolds
+"checklist.item.global.ladder.001" = "사다리 점검, 결함 없음, 안정되고 평평한 바닥에 설치";
+"checklist.item.global.ladder.002" = "곧은 사다리가 착지면 위로 약 3피트 연장되고 움직이지 않게 고정됨";
+"checklist.item.global.ladder.003" = "비계 발판 완전 설치, 안전난간 구비, 교대 전 점검";
+// PPE
+"checklist.item.global.ppe.001" = "작업자 머리·눈·발·고시인성 보호구 착용";
+"checklist.item.global.ppe.002" = "고소음 지정 구역에서 청력 보호구 착용";
+"checklist.item.global.ppe.003" = "보호구 손상 점검 및 교체품 현장 비치";
+// Respiratory Protection
+"checklist.item.global.resp.001" = "공기 중 유해인자 존재 구역에서 호흡보호구 제공·착용";
+"checklist.item.global.resp.002" = "호흡보호구 착용자 밀착 검사 완료 및 유해인자에 맞는 정화통 사용";
+"checklist.item.global.resp.003" = "호흡보호구 세척·점검 및 청결·밀폐 용기 보관";
+// Hazard Communication
+"checklist.item.global.hazcom.001" = "현장 내 모든 화학물질의 물질안전보건자료(SDS) 비치·접근 가능";
+"checklist.item.global.hazcom.002" = "용기에 내용물·유해성을 표시한 GHS 라벨 부착";
+"checklist.item.global.hazcom.003" = "작업자 화학물질 유해성 교육 및 서면 위험물 정보전달 프로그램 비치";
+// Chemical Storage
+"checklist.item.global.chem.001" = "유해 화학물질을 적합성별로 분류하여 라벨 부착·밀폐 용기에 보관";
+"checklist.item.global.chem.002" = "인화성 액체를 승인된 안전캔 및 방화 캐비닛에 보관";
+"checklist.item.global.chem.003" = "화학물질 사용 구역에 2차 방류조 및 유출 대응 키트 비치";
+// Electrical
+"checklist.item.global.elec.001" = "코드·케이블 손상 없음 및 노출 도체 없음";
+"checklist.item.global.elec.002" = "임시 전원 및 습한·야외 장소에 누전차단기(GFCI) 사용";
+"checklist.item.global.elec.003" = "전기 패널 표시·폐쇄 및 약 3피트 접근 통로 확보";
+// Lockout/Tagout
+"checklist.item.global.loto.001" = "장비 정비 전 에너지원 차단·잠금·표지 부착";
+"checklist.item.global.loto.002" = "각 작업자가 본인의 잠금장치·표지를 부착";
+"checklist.item.global.loto.003" = "잔류 에너지 방출 또는 구속 및 영(0) 에너지 상태 확인";
+// Machine Guarding
+"checklist.item.global.guard.001" = "작업점·말림점·회전부에 방호장치 설치";
+"checklist.item.global.guard.002" = "방호장치가 쉽게 제거·우회되지 않도록 고정";
+"checklist.item.global.guard.003" = "동력 장비의 비상정지장치 접근 가능 및 작동";
+// Fire Prevention
+"checklist.item.global.fire.001" = "소화기 거치·충약·점검 및 장애물 없음";
+"checklist.item.global.fire.002" = "피난 통로 장애물 없음 및 비상구 표지 점등";
+"checklist.item.global.fire.003" = "인화성·가연성 물질을 점화원으로부터 격리";
+// Hot Work
+"checklist.item.global.hotwork.001" = "화기 작업 허가서 발급 및 가연물 제거";
+"checklist.item.global.hotwork.002" = "화기 작업 중·후 소화기를 비치한 화재 감시자 배치";
+"checklist.item.global.hotwork.003" = "압축가스 실린더 수직 고정 및 호스·조정기 누설 점검";
+// Powered Industrial Trucks
+"checklist.item.global.pit.001" = "운전자가 사용 차종에 대해 교육·자격 보유";
+"checklist.item.global.pit.002" = "일일 사용 전 점검 완료(포크·타이어·경적·브레이크)";
+"checklist.item.global.pit.003" = "보행자 통로 분리, 안전벨트 착용 및 정격 적재량 한도 준수";
+// Confined Space
+"checklist.item.global.conf.001" = "허가 필요 밀폐공간 식별 및 표지 게시";
+"checklist.item.global.conf.002" = "진입 전·중 대기 측정(산소·인화성·독성)";
+"checklist.item.global.conf.003" = "진입 전 감시인 배치 및 구조 절차 수립";
+// Emergency Action Plan
+"checklist.item.global.eap.001" = "서면 비상조치 계획 비치 및 대피 경로 게시";
+"checklist.item.global.eap.002" = "피난 경로·집결지 표시 및 장애물 없음";
+"checklist.item.global.eap.003" = "구급함 구비 및 비상 연락처 게시";

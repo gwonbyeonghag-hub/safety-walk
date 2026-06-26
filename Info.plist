@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Partial base Info.plist. The rest of the app's Info.plist is still generated
+	  from the INFOPLIST_KEY_* build settings (GENERATE_INFOPLIST_FILE = YES merges
+	  the generated keys on top of this base). The only thing this file contributes
+	  is an explicit, appearance-adaptive launch-screen background so the static iOS
+	  launch screen tracks the SYSTEM appearance (black in Dark, white in Light)
+	  instead of relying on the auto-generated empty UILaunchScreen default — which
+	  is not guaranteed to be dark-adaptive across all supported iOS versions (17+).
+	  The color comes from the "LaunchBackground" asset (Any = white, Dark = black),
+	  matching SwiftUI's Color(.systemBackground) so the hand-off from the static
+	  launch screen to the first SwiftUI frame is seamless when the device's system
+	  appearance and the app's appearance agree. (When the user forces the app to the
+	  opposite of the system appearance, the static screen can only follow the system
+	  — iOS cannot read the app's stored preference before launch.) No launch image:
+	  the brand mark is presented by the in-app SwiftUI wordmark intro, not the static
+	  launch screen.
+	-->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
+</dict>
+</plist>

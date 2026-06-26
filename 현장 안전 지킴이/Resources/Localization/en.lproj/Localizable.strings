@@ -1,0 +1,394 @@
+// SafetyWalk — English strings
+// Keep in sync with ko.lproj/Localizable.strings and LocalizationKey.swift
+
+// MARK: - Tabs
+"tab.home"          = "Home";
+"tab.inspection"    = "Inspection";
+"tab.hazards"       = "Hazards";
+"tab.history"       = "History";
+"tab.settings"      = "Settings";
+
+// MARK: - Home
+"home.subtitle"             = "Field safety inspection at your fingertips.";
+"home.startInspection"      = "Start Inspection";
+"home.recentInspections"    = "Recent Inspections";
+"home.addHazard"            = "Add Hazard";
+"home.noInspectionsYet"     = "No inspections yet. Tap \"Start Inspection\" to begin.";
+"home.inspectionsToday"     = "Today";
+"home.openHazards"          = "Open Hazards";
+"home.allClear"             = "All clear";
+"home.noOpenHazards"        = "No open hazards";
+
+// MARK: - Inspection setup
+"inspection.noSitesYet"         = "No sites yet. Add a new site below.";
+"inspection.templateSummary"    = "%d categories · %d items";
+"inspection.noArea"             = "No specific area";
+"inspection.addNewArea"         = "Save New Area";
+"inspection.selectSite"         = "Select Site";
+"inspection.addNewSite"         = "Add New Site";
+"inspection.selectArea"         = "Select Area";
+"inspection.enterAreaFree"      = "Enter area name";
+"inspection.selectTemplate"     = "Select Checklist";
+"inspection.begin"                  = "Begin Inspection";
+"inspection.complete"               = "Complete Inspection";
+"inspection.noActiveInspections"    = "No inspections in progress.";
+
+// MARK: - Inspection deletion (task 5-9)
+"inspection.delete"         = "Delete Inspection";
+"inspection.deleteTitle"    = "Delete Inspection?";
+"inspection.deleteMessage"  = "This will delete the inspection record, checklist items, linked hazards, and local photos. This action cannot be undone.";
+
+// MARK: - Inspection scope / category selection
+"inspection.scopeTitle"             = "Inspection Scope";
+"inspection.scopeSubtitle"          = "Choose which categories apply to this inspection. Unselected categories are excluded — they are not marked N/A.";
+"inspection.selectAll"              = "Select All";
+"inspection.clearAll"               = "Clear All";
+"inspection.recommendedDefaults"    = "Recommended Defaults";
+"inspection.selectedScopeSummary"   = "%d categories · %d items";
+"inspection.noScopeSelected"        = "Select at least one category to begin.";
+"inspection.startWithScope"         = "Begin Inspection";
+
+// MARK: - Checklist item
+"checklist.pass"            = "Pass";
+"checklist.fail"            = "Fail";
+"checklist.notApplicable"   = "N/A";
+"checklist.addNote"         = "Add note…";
+"checklist.attachPhoto"     = "Attach Photo";
+"checklist.replacePhoto"    = "Replace Photo";
+"checklist.addHazard"       = "Add Hazard";
+"checklist.hazardLinked"    = "Hazard linked";
+"checklist.progress"        = "%d / %d items";
+"checklist.failedCount"     = "%d failed";
+
+// MARK: - Hazard
+"hazard.registrationTitle"      = "Register Hazard";
+"hazard.photo"                  = "Photo";
+"hazard.location"           = "Location";
+"hazard.type"               = "Hazard Type";
+"hazard.riskLevel"          = "Risk Level";
+"hazard.description"            = "Description";
+"hazard.descriptionPlaceholder" = "Describe the hazard…";
+"hazard.correctiveStatus"       = "Corrective Action Status";
+"hazard.save"               = "Save Hazard";
+"hazard.photoRequired"      = "A photo is required for every hazard.";
+"hazard.noHazardsYet"       = "No hazards recorded yet.";
+"hazard.filterAll"          = "All";
+"hazard.clearFilters"       = "Clear filters";
+"hazard.detailTitle"        = "Hazard Detail";
+"hazard.createdAt"          = "Reported";
+"hazard.updatedAt"          = "Updated";
+"hazard.noFilterResults"    = "No hazards match the selected filters.";
+"hazard.noSitesForStandalone" = "Add a site in Settings before registering a hazard outside an inspection.";
+
+// MARK: - Risk levels
+"risk.low"      = "Low";
+"risk.medium"   = "Medium";
+"risk.high"     = "High";
+
+// MARK: - Hazard types
+"hazardType.fallRisk"   = "Fall Risk";
+"hazardType.electrical" = "Electrical";
+"hazardType.fire"       = "Fire";
+"hazardType.chemical"   = "Chemical";
+"hazardType.general"    = "General";
+"hazardType.other"      = "Other";
+
+// MARK: - Corrective action status
+"status.notStarted" = "Not Started";
+"status.inProgress" = "In Progress";
+"status.completed"  = "Completed";
+
+// MARK: - Inspection status
+"inspectionStatus.inProgress"   = "In Progress";
+"inspectionStatus.completed"    = "Completed";
+
+// MARK: - Inspection detail
+"detail.continueInspection" = "Continue Inspection";
+"detail.checklistItems"     = "Checklist Items";
+"detail.linkedHazards"      = "Linked Hazards";
+
+// MARK: - History
+"history.noRecords"         = "No inspection records yet.";
+"history.title"             = "History";
+"history.noFilterResults"   = "No inspections match the selected filter.";
+
+// MARK: - Inspection summary
+"summary.title"         = "Inspection Complete";
+"summary.inspector"     = "Inspector";
+"summary.startedAt"     = "Started";
+"summary.completedAt"   = "Completed";
+"summary.totalItems"    = "Total Items";
+"summary.failedItems"   = "Failed Items";
+"summary.hazardsByRisk" = "Hazards by Risk";
+"summary.pass"          = "Pass";
+"summary.fail"          = "Fail";
+"summary.notApplicable" = "N/A";
+"summary.hazards"       = "Hazards";
+"summary.share"         = "Share Summary";
+
+// MARK: - Inspection report (Phase 4 export)
+"report.title"          = "Field Safety Inspection Report";
+"report.generatedAt"    = "Generated";
+"report.generatedBy"    = "Generated by SafetyWalk";
+"report.passRate"       = "Pass Rate";
+"report.openHazards"    = "Open Hazards";
+"report.progress"       = "Progress";
+"report.metadata"       = "Inspection Information";
+"report.checklist"      = "Checklist";
+"report.area"           = "Area";
+"report.status"         = "Status";
+"report.resultSummary"  = "Result Summary";
+"report.hazardSummary"  = "Hazard Summary";
+"report.progressRate"   = "Completion";
+"report.unchecked"      = "Unchecked";
+"report.categoryResults" = "Checklist Results by Category";
+"report.checklistItem"  = "Checklist Item";
+"report.result"         = "Result";
+"report.note"           = "Note";
+"report.hazardsAndActions" = "Hazards and Corrective Actions";
+"report.evidencePhotos" = "Evidence Photos";
+"report.noEvidencePhotos" = "No evidence photos attached.";
+"share.button"          = "Share Report";
+"share.exporting"       = "Preparing report…";
+"share.failed"          = "Could not prepare report.";
+
+// MARK: - Errors (task 5-3)
+"error.photoLoadFailed" = "Could not load the selected photo.";
+"error.photoSaveFailed" = "Could not save the photo. Please check available storage and try again.";
+
+// MARK: - Data reset (task 5-11)
+"settings.dataManagement"   = "Data Management";
+"settings.resetLocalData"   = "Reset Local Data";
+"reset.confirmTitle"        = "Reset Local Data?";
+"reset.confirmMessage"      = "All sites, areas, inspections, checklist items, hazards, and local evidence photos will be permanently deleted. This action cannot be undone.\n\nApp preferences (inspector name, language, appearance, and onboarding status) will be kept.";
+"reset.confirmAction"       = "Reset";
+"error.resetFailed"         = "Could not reset local data.";
+
+// MARK: - Accessibility (task 5-4)
+"site.areaCountAccessibility" = "%d areas";
+
+// MARK: - Onboarding (task 5-1)
+"onboarding.title"          = "Welcome to SafetyWalk";
+"onboarding.subtitle"       = "Set up your inspector profile to get started. You can change these anytime in Settings.";
+"onboarding.inspectorName"  = "Inspector Name";
+"onboarding.region"         = "Region";
+"onboarding.start"          = "Start Using SafetyWalk";
+"onboarding.nameRequired"   = "Enter your name to continue.";
+
+// MARK: - Reopen setup (task 5-14)
+"settings.appSetup"             = "App Setup";
+"settings.reopenSetup"          = "Reopen Setup";
+"setupReopen.confirmTitle"      = "Reopen Setup?";
+"setupReopen.confirmMessage"    = "The setup screen will appear again so you can update your inspector name or language. Existing inspections, hazards, sites, and photos will not be affected.";
+"setupReopen.confirmAction"     = "Reopen";
+
+// MARK: - Settings
+"settings.title"            = "Settings";
+"settings.inspectorName"    = "Inspector Name";
+"settings.language"         = "Language";
+// Language toggle options — endonyms, so the value is identical in both locales.
+"language.korean"           = "한국어";
+"language.english"          = "English";
+"settings.regionProfile"    = "Region";
+"settings.region.korea"     = "Korea";
+"settings.region.global"    = "Global";
+"settings.siteManagement"   = "Manage Sites";
+"settings.appVersion"       = "Version";
+
+// MARK: - Appearance (task 5-8)
+"settings.appearance"       = "Appearance";
+"appearance.system"         = "System";
+"appearance.light"          = "Light";
+"appearance.dark"           = "Dark";
+
+// MARK: - Site management
+"siteManagement.title"              = "Sites & Areas";
+"siteManagement.namePlaceholder"    = "Site name (required)";
+"siteManagement.addressPlaceholder" = "Address (optional)";
+"siteManagement.areaNamePlaceholder"= "Area name";
+
+// MARK: - Site management actions (task 3-2)
+"site.addSite"                = "Add Site";
+"site.noSites"                = "No sites yet. Add one below.";
+"site.areasSection"           = "Areas";
+"site.deleteSiteAction"       = "Delete Site";
+"site.deleteConfirmTitle"     = "Delete Site?";
+"site.deleteBlockedTitle"     = "Cannot Delete Site";
+"site.deleteBlockedMessage"   = "This site is referenced by existing inspections or hazards. Past records cannot be detached.";
+"area.addArea"                = "Add Area";
+"area.noAreas"                = "No areas yet.";
+"area.deleteConfirmTitle"     = "Delete Area?";
+"area.deleteBlockedTitle"     = "Cannot Delete Area";
+"area.deleteBlockedMessage"   = "This area is referenced by existing inspections. Past records cannot be detached.";
+
+// MARK: - Disclaimer
+"disclaimer.title" = "Disclaimer";
+"disclaimer.text"  = "This app supports field inspection recording and evidence organization. It does not determine legal violations or provide compliance certification. Human safety manager review is required.";
+
+// MARK: - Common
+"common.save"       = "Save";
+"common.next"       = "Next";
+"common.cancel"     = "Cancel";
+"common.delete"     = "Delete";
+"common.edit"       = "Edit";
+"common.share"      = "Share";
+"common.back"       = "Back";
+"common.confirm"    = "Confirm";
+"common.required"   = "Required";
+"common.done"       = "Done";
+"common.comingSoon" = "Soon";
+
+// MARK: - Checklist categories
+// Used as section headers in the checklist view. Keys shared by Korea and Global templates.
+"checklist.category.commonSafety"       = "General Safety";
+"checklist.category.housekeeping"       = "Housekeeping";
+"checklist.category.ppe"                = "PPE";
+"checklist.category.fallRisk"           = "Fall Risk";
+"checklist.category.electrical"         = "Electrical";
+"checklist.category.fire"               = "Fire";
+"checklist.category.chemical"           = "Chemical";
+"checklist.category.forklift"           = "Forklift";
+"checklist.category.industrialRobot"    = "Industrial Robot";
+"checklist.category.pressMachine"       = "Press Machine";
+"checklist.category.conveyorRotating"   = "Conveyor & Rotating Parts";
+"checklist.category.craneHoist"         = "Crane & Hoist";
+"checklist.category.confinedSpace"      = "Confined Space";
+"checklist.category.emergencyResponse"  = "Emergency Response";
+// US (global) template categories
+"checklist.category.walkingWorkingSurfaces"  = "Walking-Working Surfaces";
+"checklist.category.laddersScaffolds"        = "Ladders & Scaffolds";
+"checklist.category.respiratoryProtection"   = "Respiratory Protection";
+"checklist.category.hazardCommunication"     = "Hazard Communication";
+"checklist.category.lockoutTagout"           = "Lockout/Tagout";
+"checklist.category.machineGuarding"         = "Machine Guarding";
+"checklist.category.hotWork"                 = "Hot Work";
+"checklist.category.poweredIndustrialTrucks" = "Powered Industrial Trucks";
+"checklist.category.emergencyActionPlan"     = "Emergency Action Plan";
+
+// MARK: - Checklist items — Korea template (korea-general-v1)
+// General Safety
+"checklist.item.korea.common.001" = "Safety supervisor and work director confirmed on site";
+"checklist.item.korea.common.002" = "Pre-work hazard assessment completed and communicated to workers";
+"checklist.item.korea.common.003" = "Safety signs installed, visible, and identifiable";
+// Housekeeping
+"checklist.item.korea.house.001" = "Walkways and emergency exits free from materials and obstructions";
+"checklist.item.korea.house.002" = "Tools and materials stored at designated locations; floor clear";
+"checklist.item.korea.house.003" = "Waste removed and work area clean";
+// PPE
+"checklist.item.korea.ppe.001" = "Workers wearing hard hat, safety shoes, and harness where required";
+"checklist.item.korea.ppe.002" = "Task-specific PPE in use (dust mask, goggles, etc. as needed)";
+"checklist.item.korea.ppe.003" = "PPE inspected for damage or wear; replacements available on site";
+// Fall Risk
+"checklist.item.korea.fall.001" = "Safety handrail installed and secure at all elevated edges";
+"checklist.item.korea.fall.002" = "Floor openings covered or guarded with barriers";
+"checklist.item.korea.fall.003" = "Work platform condition and toe boards in place";
+// Electrical
+"checklist.item.korea.elec.001" = "Cable insulation intact with no exposed wiring";
+"checklist.item.korea.elec.002" = "Distribution board grounded and lockout applied";
+"checklist.item.korea.elec.003" = "Temporary wiring rated correctly and properly secured";
+// Fire
+"checklist.item.korea.fire.001" = "Fire extinguisher accessible, charged, and within inspection date";
+"checklist.item.korea.fire.002" = "Flammable materials stored away from work areas";
+"checklist.item.korea.fire.003" = "Emergency exits and evacuation routes clear and marked";
+// Chemical
+"checklist.item.korea.chem.001" = "Chemical containers labeled and properly sealed";
+"checklist.item.korea.chem.002" = "Safety Data Sheets (SDS) accessible on site";
+"checklist.item.korea.chem.003" = "Spill containment equipment in place and hazard zone marked";
+// Forklift
+"checklist.item.korea.fork.001" = "Forklift forks, mast, and tires visually inspected before use";
+"checklist.item.korea.fork.002" = "Pedestrian and forklift traffic areas separated";
+"checklist.item.korea.fork.003" = "Operator confirmed qualified; reverse alarm functional";
+// Industrial Robot
+"checklist.item.korea.robot.001" = "Robot work zone guarded by safety fence or interlocked barrier";
+"checklist.item.korea.robot.002" = "Emergency stop button accessible and confirmed functional";
+"checklist.item.korea.robot.003" = "Personnel access to robot operating zone controlled during operation";
+// Press Machine
+"checklist.item.korea.press.001" = "Press guard (gate, two-hand control, or equivalent) installed and functional";
+"checklist.item.korea.press.002" = "Lockout procedure applied during die changes and maintenance";
+"checklist.item.korea.press.003" = "Clear floor space and non-slip surface maintained around press";
+// Conveyor & Rotating Parts
+"checklist.item.korea.conv.001" = "Conveyor and rotating parts guarded with covers or mesh";
+"checklist.item.korea.conv.002" = "Emergency stop accessible along conveyor length and confirmed functional";
+"checklist.item.korea.conv.003" = "Entanglement hazard controls in place around rotating equipment";
+// Crane & Hoist
+"checklist.item.korea.crane.001" = "Wire ropes, hooks, and shackles inspected for wear and deformation";
+"checklist.item.korea.crane.002" = "Overload limiter and over-winding device confirmed functional";
+"checklist.item.korea.crane.003" = "Personnel excluded from lift zone during hoisting operations";
+// Confined Space
+"checklist.item.korea.conf.001" = "Oxygen level and toxic gas concentration measured before entry";
+"checklist.item.korea.conf.002" = "Attendant posted outside entry point; emergency contacts established";
+"checklist.item.korea.conf.003" = "Ventilation equipment running and supplied-air gear prepared";
+// Emergency Response
+"checklist.item.korea.emerg.001" = "Emergency contact list posted at site entrance";
+"checklist.item.korea.emerg.002" = "First aid kit location marked and supplies stocked";
+"checklist.item.korea.emerg.003" = "Evacuation routes and assembly point clearly marked";
+
+// MARK: - Checklist items — Global template (global-general-v1) — US / OSHA-oriented
+// General Safety
+"checklist.item.global.common.001" = "Site safety orientation completed and attendance documented";
+"checklist.item.global.common.002" = "Job hazard analysis completed and reviewed with the crew before work starts";
+"checklist.item.global.common.003" = "Required safety postings and signage visible at the site entrance";
+// Housekeeping
+"checklist.item.global.house.001" = "Walkways, aisles, and exits clear of materials and debris";
+"checklist.item.global.house.002" = "Tools and materials stored in designated areas; floors free of clutter";
+"checklist.item.global.house.003" = "Waste and scrap removed; spills cleaned up promptly";
+// Walking-Working Surfaces
+"checklist.item.global.wws.001" = "Floors and walking surfaces free of trip hazards, holes, and standing water";
+"checklist.item.global.wws.002" = "Floor openings and holes covered or guarded and labeled";
+"checklist.item.global.wws.003" = "Stairways have secure handrails and treads in good condition";
+// Fall Protection
+"checklist.item.global.fall.001" = "Unprotected edges and openings 6 ft or higher protected by guardrails, nets, or personal fall arrest (4 ft in general industry)";
+"checklist.item.global.fall.002" = "Personal fall arrest equipment inspected and tied off to rated anchor points";
+"checklist.item.global.fall.003" = "Holes, skylights, and roof openings covered or guarded to prevent falls";
+// Ladders & Scaffolds
+"checklist.item.global.ladder.001" = "Ladders inspected, free of defects, and set on stable, level footing";
+"checklist.item.global.ladder.002" = "Straight ladders extend about 3 ft above the landing and are secured from movement";
+"checklist.item.global.ladder.003" = "Scaffolds fully planked with guardrails and inspected before each shift";
+// PPE
+"checklist.item.global.ppe.001" = "Workers wearing required head, eye, foot, and high-visibility protection";
+"checklist.item.global.ppe.002" = "Hearing protection worn in posted high-noise areas";
+"checklist.item.global.ppe.003" = "PPE inspected for damage; replacements available on site";
+// Respiratory Protection
+"checklist.item.global.resp.001" = "Respirators provided and worn where airborne hazards are present";
+"checklist.item.global.resp.002" = "Respirator users are fit-tested and cartridges match the hazard";
+"checklist.item.global.resp.003" = "Respirators cleaned, inspected, and stored in clean, sealed containers";
+// Hazard Communication
+"checklist.item.global.hazcom.001" = "Safety Data Sheets (SDS) available and accessible for all chemicals on site";
+"checklist.item.global.hazcom.002" = "Containers labeled with GHS labels identifying contents and hazards";
+"checklist.item.global.hazcom.003" = "Workers trained on chemical hazards and the written hazard communication program is available";
+// Chemical Storage
+"checklist.item.global.chem.001" = "Hazardous chemicals stored by compatibility in labeled, closed containers";
+"checklist.item.global.chem.002" = "Flammable liquids kept in approved safety cans and flammable storage cabinets";
+"checklist.item.global.chem.003" = "Secondary containment and spill kits available where chemicals are used";
+// Electrical
+"checklist.item.global.elec.001" = "Cords and cables free of damage with no exposed conductors";
+"checklist.item.global.elec.002" = "GFCI protection used for temporary power and wet or outdoor locations";
+"checklist.item.global.elec.003" = "Electrical panels labeled, closed, and kept clear with 3 ft of access";
+// Lockout/Tagout
+"checklist.item.global.loto.001" = "Energy sources isolated, locked, and tagged before servicing equipment";
+"checklist.item.global.loto.002" = "Each authorized worker applies their own lock and tag";
+"checklist.item.global.loto.003" = "Stored energy released or restrained and a zero-energy state verified";
+// Machine Guarding
+"checklist.item.global.guard.001" = "Guards in place at points of operation, nip points, and rotating parts";
+"checklist.item.global.guard.002" = "Guards secured so they cannot be easily removed or bypassed";
+"checklist.item.global.guard.003" = "Emergency stops accessible and functional on powered equipment";
+// Fire Prevention
+"checklist.item.global.fire.001" = "Fire extinguishers mounted, charged, inspected, and unobstructed";
+"checklist.item.global.fire.002" = "Exit routes unobstructed and exit signs illuminated";
+"checklist.item.global.fire.003" = "Flammable and combustible materials kept away from ignition sources";
+// Hot Work
+"checklist.item.global.hotwork.001" = "Hot work permit issued and the area cleared of combustibles";
+"checklist.item.global.hotwork.002" = "Fire watch posted with an extinguisher during and after hot work";
+"checklist.item.global.hotwork.003" = "Compressed gas cylinders secured upright; hoses and regulators checked for leaks";
+// Powered Industrial Trucks
+"checklist.item.global.pit.001" = "Operators trained and authorized for the truck type in use";
+"checklist.item.global.pit.002" = "Daily pre-use inspection completed (forks, tires, horn, brakes)";
+"checklist.item.global.pit.003" = "Pedestrian routes separated; seat belt worn and load within rated capacity";
+// Confined Space
+"checklist.item.global.conf.001" = "Permit-required confined spaces identified and posted";
+"checklist.item.global.conf.002" = "Atmosphere tested (oxygen, flammable, toxic) before and during entry";
+"checklist.item.global.conf.003" = "Attendant posted and rescue procedures established before entry";
+// Emergency Action Plan
+"checklist.item.global.eap.001" = "Written emergency action plan available and evacuation routes posted";
+"checklist.item.global.eap.002" = "Exit routes and assembly points marked and unobstructed";
+"checklist.item.global.eap.003" = "First aid kits stocked and emergency contacts posted";

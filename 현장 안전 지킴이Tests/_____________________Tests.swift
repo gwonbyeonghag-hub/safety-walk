@@ -1,14 +1,8 @@
-//___FILEHEADER___
-
 import Testing
-@testable import ___VARIABLE_productName:identifier___
 
-struct ___FILEBASENAME:identifier___ {
-
+struct SafetyWalkTests {
     @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-        // Swift Testing Documentation
-        // https://developer.apple.com/documentation/testing
+        // Placeholder test for Phase 0 build validation.
+        // Unit tests for core logic will be added in Phase 1 (tasks 1-6, 1-7).
     }
-
 }
