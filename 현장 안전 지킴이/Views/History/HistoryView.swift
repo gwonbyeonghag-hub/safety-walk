@@ -1,4 +1,5 @@
 import SwiftUI
+import SafetyWalkCore
 import SwiftData
 
 // Named HistoryTabView to match TASKS.md; file kept as HistoryView.swift for Xcode membership.

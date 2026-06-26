@@ -1,4 +1,5 @@
 import Foundation
+import SafetyWalkCore
 
 // Persists the user's selected RegionProfile to UserDefaults.
 // All callers use RegionProfileStore.get() / .set() — no direct UserDefaults access elsewhere.

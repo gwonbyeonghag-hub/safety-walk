@@ -1,4 +1,5 @@
 import Foundation
+import SafetyWalkCore
 import Observation
 
 /// The app's UI language. Stored independently of `RegionProfile` so the two can be

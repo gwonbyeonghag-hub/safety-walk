@@ -2,21 +2,21 @@ import Foundation
 import SwiftData
 
 @Model
-final class ChecklistItem {
-    var id: UUID
-    var inspectionId: UUID
-    var templateItemId: String
+public final class ChecklistItem {
+    public var id: UUID
+    public var inspectionId: UUID
+    public var templateItemId: String
     // Title and category are copied from the template at inspection creation time
     // so the record stays valid even if the template changes later
-    var title: String
-    var category: String
-    var result: ChecklistItemResult
-    var note: String?
-    var photoPath: String?
-    var linkedHazardId: UUID?
-    var sortOrder: Int
+    public var title: String
+    public var category: String
+    public var result: ChecklistItemResult
+    public var note: String?
+    public var photoPath: String?
+    public var linkedHazardId: UUID?
+    public var sortOrder: Int
 
-    init(
+    public init(
         inspectionId: UUID,
         templateItemId: String,
         title: String,

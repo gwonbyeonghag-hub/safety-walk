@@ -1,4 +1,5 @@
 import Foundation
+import SafetyWalkCore
 
 // Type-safe access to Localizable.strings entries.
 // All SwiftUI Views must use .localized on a LocalizationKey — no raw string literals.

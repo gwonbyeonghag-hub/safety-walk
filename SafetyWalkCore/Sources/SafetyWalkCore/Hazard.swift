@@ -2,21 +2,21 @@ import Foundation
 import SwiftData
 
 @Model
-final class Hazard {
-    var id: UUID
-    var inspectionId: UUID?
-    var siteId: UUID
-    var location: String
-    var type: HazardType
-    var riskLevel: RiskLevel
+public final class Hazard {
+    public var id: UUID
+    public var inspectionId: UUID?
+    public var siteId: UUID
+    public var location: String
+    public var type: HazardType
+    public var riskLevel: RiskLevel
     // Named hazardDescription to avoid shadowing CustomStringConvertible.description
-    var hazardDescription: String
-    var photoPath: String
-    var correctiveActionStatus: CorrectiveActionStatus
-    var createdAt: Date
-    var updatedAt: Date
+    public var hazardDescription: String
+    public var photoPath: String
+    public var correctiveActionStatus: CorrectiveActionStatus
+    public var createdAt: Date
+    public var updatedAt: Date
 
-    init(
+    public init(
         siteId: UUID,
         location: String,
         type: HazardType,

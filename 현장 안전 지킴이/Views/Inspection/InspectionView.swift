@@ -1,4 +1,5 @@
 import SwiftUI
+import SafetyWalkCore
 import SwiftData
 
 struct InspectionView: View {

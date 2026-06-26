@@ -1,4 +1,5 @@
 import SwiftUI
+import SafetyWalkCore
 import SwiftData
 
 /// Final step of the Start Inspection flow. The inspector picks which template

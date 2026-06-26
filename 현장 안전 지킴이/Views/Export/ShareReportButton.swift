@@ -1,4 +1,5 @@
 import SwiftUI
+import SafetyWalkCore
 
 /// Reusable Share Report button used by both `InspectionSummaryView` (depth-3)
 /// and `InspectionDetailView` (depth-1 when status == .completed).

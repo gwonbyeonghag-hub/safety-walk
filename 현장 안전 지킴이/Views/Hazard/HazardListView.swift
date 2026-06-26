@@ -1,4 +1,5 @@
 import SwiftUI
+import SafetyWalkCore
 import SwiftData
 
 // Named HazardsTabView to match TASKS.md; file kept as HazardListView.swift for Xcode membership.

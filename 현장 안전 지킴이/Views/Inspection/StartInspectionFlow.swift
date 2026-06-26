@@ -1,4 +1,5 @@
 import SwiftUI
+import SafetyWalkCore
 
 // Typed navigation path values for the 3-step flow.
 // Using NavigationStack(path:) with a typed enum avoids the conditional-content

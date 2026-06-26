@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		5AFE17C0000000000000A003 /* SafetyWalkCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5AFE17C0000000000000A002 /* SafetyWalkCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		9A05FC732FB742D4000C5D1A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5AFE17C0000000000000A003 /* SafetyWalkCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = "현장 안전 지킴이";
 			packageProductDependencies = (
+				5AFE17C0000000000000A002 /* SafetyWalkCore */,
 			);
 			productName = "현장 안전 지킴이";
 			productReference = 9A05FC652FB742D2000C5D1A /* 현장 안전 지킴이.app */;
@@ -200,6 +206,9 @@
 			productRefGroup = 9A05FC662FB742D2000C5D1A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
+			packageReferences = (
+				5AFE17C0000000000000A001 /* XCLocalSwiftPackageReference "SafetyWalkCore" */,
+			);
 			targets = (
 				9A05FC642FB742D2000C5D1A /* 현장 안전 지킴이 */,
 				9A05FC712FB742D4000C5D1A /* 현장 안전 지킴이Tests */,
@@ -585,6 +594,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5AFE17C0000000000000A001 /* XCLocalSwiftPackageReference "SafetyWalkCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = SafetyWalkCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5AFE17C0000000000000A002 /* SafetyWalkCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SafetyWalkCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9A05FC5D2FB742D2000C5D1A /* Project object */;
 }

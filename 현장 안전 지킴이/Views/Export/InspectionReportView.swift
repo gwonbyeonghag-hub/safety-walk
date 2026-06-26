@@ -1,4 +1,5 @@
 import SwiftUI
+import SafetyWalkCore
 import UIKit
 
 /// Pure-content SwiftUI view used by `InspectionExportService` to render the

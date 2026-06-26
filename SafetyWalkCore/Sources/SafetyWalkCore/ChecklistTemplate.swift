@@ -9,13 +9,13 @@ import Foundation
 // from a nonisolated context produces a "main actor-isolated conformance" warning.
 // CodingKeys are declared so Swift can still synthesize encode(to:).
 
-struct ChecklistTemplate: Codable, Identifiable {
-    let id: String
-    let regionProfile: RegionProfile
-    let name: String
-    let categories: [ChecklistCategory]
+public struct ChecklistTemplate: Codable, Identifiable {
+    public let id: String
+    public let regionProfile: RegionProfile
+    public let name: String
+    public let categories: [ChecklistCategory]
 
-    nonisolated init(from decoder: any Decoder) throws {
+    public nonisolated init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         let rawProfile = try c.decode(String.self, forKey: .regionProfile)
@@ -37,13 +37,13 @@ struct ChecklistTemplate: Codable, Identifiable {
     }
 }
 
-struct ChecklistCategory: Codable, Identifiable {
-    let id: String
+public struct ChecklistCategory: Codable, Identifiable {
+    public let id: String
     // titleKey maps to a LocalizationKey raw value so titles are always localized
-    let titleKey: String
-    let items: [ChecklistTemplateItem]
+    public let titleKey: String
+    public let items: [ChecklistTemplateItem]
 
-    nonisolated init(from decoder: any Decoder) throws {
+    public nonisolated init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         titleKey = try c.decode(String.self, forKey: .titleKey)
@@ -55,12 +55,12 @@ struct ChecklistCategory: Codable, Identifiable {
     }
 }
 
-struct ChecklistTemplateItem: Codable, Identifiable {
-    let id: String
-    let titleKey: String
-    let descriptionKey: String?
+public struct ChecklistTemplateItem: Codable, Identifiable {
+    public let id: String
+    public let titleKey: String
+    public let descriptionKey: String?
 
-    nonisolated init(from decoder: any Decoder) throws {
+    public nonisolated init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         titleKey = try c.decode(String.self, forKey: .titleKey)

@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import 현장_안전_지킴이
+import SafetyWalkCore
 
 // MARK: - bundleFilename mapping
 // Pure string-mapping tests — no I/O, always fast and stable.
@@ -17,14 +17,14 @@ struct ChecklistTemplateLoaderFilenameTests {
     }
 }
 
-// MARK: - Happy path: loading from the app bundle
-// In a hosted test (TEST_HOST = the app), Bundle.main is the app bundle.
-// The JSON template files are present there, so no fixture bundle is needed.
+// MARK: - Happy path: loading from the module bundle
+// The default ChecklistTemplateLoader() resolves Bundle.module (SafetyWalkCore's
+// resource bundle), which contains the JSON template files processed in.
 
 @Suite("ChecklistTemplateLoader — load Korea template")
 struct ChecklistTemplateLoaderKoreaTests {
 
-    let loader = ChecklistTemplateLoader()   // uses Bundle.main
+    let loader = ChecklistTemplateLoader()   // uses Bundle.module
 
     @Test func koreaTemplateReturnsOneTemplate() throws {
         let templates = try loader.load(for: .korea)

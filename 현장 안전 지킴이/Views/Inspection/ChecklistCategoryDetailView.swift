@@ -1,4 +1,5 @@
 import SwiftUI
+import SafetyWalkCore
 
 struct ChecklistCategoryDetailView: View {
 

@@ -2,22 +2,22 @@ import Foundation
 import SwiftData
 
 @Model
-final class Inspection {
-    var id: UUID
+public final class Inspection {
+    public var id: UUID
     // Denormalized strings preserve history if the Site is later deleted
-    var siteId: UUID
-    var siteName: String
-    var areaId: UUID?
-    var areaName: String?
-    var inspectorName: String
-    var startedAt: Date
-    var completedAt: Date?
-    var status: InspectionStatus
-    var templateId: String
-    @Relationship(deleteRule: .cascade) var items: [ChecklistItem]
-    @Relationship(deleteRule: .cascade) var hazards: [Hazard]
+    public var siteId: UUID
+    public var siteName: String
+    public var areaId: UUID?
+    public var areaName: String?
+    public var inspectorName: String
+    public var startedAt: Date
+    public var completedAt: Date?
+    public var status: InspectionStatus
+    public var templateId: String
+    @Relationship(deleteRule: .cascade) public var items: [ChecklistItem]
+    @Relationship(deleteRule: .cascade) public var hazards: [Hazard]
 
-    init(
+    public init(
         siteId: UUID,
         siteName: String,
         areaId: UUID? = nil,
