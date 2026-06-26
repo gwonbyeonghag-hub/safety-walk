@@ -112,12 +112,20 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 
 ---
 
-## WO-1 — 공유 패키지 `SafetyWalkCore` 추출 🔴 OPEN
+## WO-1 — 공유 패키지 `SafetyWalkCore` 추출 🟡 IN PROGRESS (플래너 결정 반영 2026-06-27)
 
 > 골격은 위키 워크플로우 지식 적용: 목표→범위→완료조건→중단조건→금지→검증 순서
 > (`ai-agent-harness-engineering`·`ai-native-workflow-redesign`의 "위임 계약"),
 > verifiable goal(`ai-agent-goal-command`), 자가 검증 루프 Trigger→State→Plan→Work→Evaluate→Gate→Memory
 > (`ai-agent-loop-engineering`), 검토자 분리(`ai-code-review-quality-harness`).
+
+### ⚖️ 플래너 결정 (2026-06-27) — 테스트 드리프트 해소 + 진행 지시
+실행자가 발견·증명: 베이스라인(앱 미변경 상태)에서 이미 count 단언 4개가 red. 추출 전후 **실패집합 동일** → 추출이 만든 게 아님.
+플래너 직접 검증(JSON 파싱): Korea **14카테고리/42항목**, Global **17/51**, 중복 0(category key·item id·titleKey 전부 유니크), 카테고리 키가 의미상 distinct(fall/electrical/fire/ppe/ladder/wws…). → 템플릿은 **의도된 확장**, 단언(3/11·4/12)은 구식 MVP 수치 = stale.
+- **WO-1 성공기준 정정**: "기존 39 green 보존"은 잘못된 전제(실제 41테스트·이미 4 red). 추출의 올바른 기준 = **동작 중립(신규 실패 0)** → 이미 충족.
+- **단언 갱신 승인 (Option 1, 단 분리 커밋)**: "단언 변경 금지"는 추출 실패를 테스트로 은폐 못하게 한 가드. 사전 red 증명됐으니 갱신은 정당한 부채정리 → 가드 해제. **추출 커밋과 분리된 별도 커밋**으로 4개를 실측치(KR 14/42·Global 17/51)로 수정.
+- **Bundle 우회 승인**: `init(bundle: Bundle? = nil)` + 본문 `?? .module`는 SwiftPM 정석(`.module`은 internal이라 public 기본인자 불가). 동작 동일.
+- **진행 지시**: 멈추지 말고 앱 통합까지 마무리 → ① 추출(동작중립) 커밋 ② 단언 갱신 커밋. 자세한 순서는 아래 본문.
 
 ### 배경 / 목적
 v2는 iOS + 네이티브 macOS를 **하나의 데이터 모델·하나의 CloudKit 컨테이너**로 공유한다(V2_ROADMAP AD-1·AD-2).
@@ -140,7 +148,7 @@ APP의 **이식 가능한 코어**(모델·열거형·체크리스트 로더·�
 |---|---|
 | "패키지로 분리한다" | "아래 12개 파일이 `SafetyWalkCore/Sources/`로 이동, APP 타깃에서 멤버십 제거됨" |
 | "빌드 잘 되게" | "`xcodebuild build` exit 0, 신규 warning 0" |
-| "테스트 통과" | "패키지 테스트 + 앱 테스트 스위트 모두 green (기존 39테스트 보존)" |
+| "테스트 통과" | "추출 동작 중립 = 신규 실패 0 (사전 red 4개 외 새 실패 없음). 단언 갱신 커밋 후 full green" |
 | "동작 동일" | "앱 실행→점검 시작→KR/Global 템플릿 항목이 그대로 로드, KO/EN 토글 정상" |
 
 ### 스코프
@@ -192,7 +200,7 @@ git -C "$REPO" switch -c wo1-extract-safetywalkcore                # 전용 브�
 - [ ] `SafetyWalkCore/Package.swift` + `Sources/SafetyWalkCore/`에 12파일(모델7+로더1+JSON2 = 10 실파일, 폴더 포함) 존재
 - [ ] APP 타깃에 이동 파일 **잔존 0**: `find "$APP/Models" "$APP/Services/ChecklistTemplateLoader.swift" -type f 2>/dev/null | wc -l` → 0
 - [ ] 패키지 단독 빌드 green / 앱 빌드 `** BUILD SUCCEEDED **`, **신규 warning 0**
-- [ ] 테스트: 패키지 테스트 + 앱 테스트 모두 green (로더 테스트가 패키지 쪽에서 통과)
+- [ ] 테스트: 추출은 신규 실패 0(동작 중립) → 그 뒤 **별도 커밋**으로 stale 단언 4개(KR 14/42·Global 17/51) 갱신 → 패키지+앱 테스트 full green
 - [ ] 앱 실행: **점검 시작 → KR/Global 템플릿 항목 정상 로드**(=`Bundle.module` 성공), KO/EN 토글 정상(=localization 안 깨짐)
 - [ ] `git status` 깔끔(의도 변경만), `import SafetyWalkCore` ≥ 1 (`grep -rl "import SafetyWalkCore" "$APP" | wc -l`)
 - [ ] 보고: 이동 파일 목록 / public화한 타입 목록 / import 추가 파일 수 / 빌드·테스트 결과
