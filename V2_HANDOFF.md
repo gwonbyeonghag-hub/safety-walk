@@ -112,7 +112,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 
 ---
 
-## WO-1 — 공유 패키지 `SafetyWalkCore` 추출 🟡 IN PROGRESS (플래너 결정 반영 2026-06-27)
+## WO-1 — 공유 패키지 `SafetyWalkCore` 추출 ✅ DONE (검수 통과 2026-06-27)
 
 > 골격은 위키 워크플로우 지식 적용: 목표→범위→완료조건→중단조건→금지→검증 순서
 > (`ai-agent-harness-engineering`·`ai-native-workflow-redesign`의 "위임 계약"),
@@ -238,10 +238,17 @@ WO-1 결과: [완료 | 중단(사유)]
 - 막힌 점/해결: …   다음 WO 제안: …
 ```
 
-**WO-1 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+**WO-1 결과: ✅ 완료 (실행자 수행 + 플래너 검수 통과, 2026-06-27)**
+- 브랜치 `wo1-extract-safetywalkcore` → main 머지:
+  - `0b47f55` 추출(동작 중립) — 40파일/+180−102
+  - `6d1fb43` stale 단언 4개 갱신 (KR 14/42 · Global 17/51)
+- 이동: 모델7(Site/Area/Inspection/ChecklistItem/Hazard/Enums/ChecklistTemplate) + `ChecklistTemplateLoader` + JSON2 → `SafetyWalkCore/Sources/`. **JSON 체크섬 원본과 바이트 동일**.
+- public화: @Model 클래스5(프로퍼티·init 전부) / enum7 / struct3 / 로더+에러. `import SafetyWalkCore` 26개 앱 파일.
+- Bundle: `init(bundle: Bundle? = nil) { … ?? .module }` (SwiftPM 정석, 동작 동일).
+- pbxproj: 동기화 그룹(PBXFileSystemSynchronizedRootGroup)이라 멤버십 자동 해제 + `XCLocalSwiftPackageReference` 3조각. plutil OK.
+- **플래너 독립 검증**: 커밋② = 테스트 단언만 변경(JSON·로직 혼입 0) / 파일이동·체크섬·pbxproj 확인 / 패키지 `swift test` **26/26** / 앱 `xcodebuild build` **BUILD SUCCEEDED** / 앱 테스트 15/15(실행자).
+- STOP 리스크 전부 해소: @Model+public ✅ · Bundle.module ✅ · 0 warning ✅ · 동작 중립 ✅.
+- 범위 밖(미실행): 체크리스트 화면까지 UI 탭다운 인터랙션 스크립트화 안 함(WO: UI 최종 스모크만). 런타임 Bundle.module 경로는 패키지 로딩 테스트 22개로 증명됨.
 
 ---
 
