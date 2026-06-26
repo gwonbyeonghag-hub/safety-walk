@@ -13,7 +13,7 @@
 | 프로젝트 | SafetyWalk / 현장안전 지킴이 (산업안전 점검 앱) |
 | git repo (코드) | `Desktop/02_개발/03_프로젝트/09_현장 안전 지킴이/현장 안전 지킴이/` |
 | GitHub 원격 | `https://github.com/gwonbyeonghag-hub/safety-walk.git` (origin) |
-| 기획 문서 (현재) | repo **바깥** 부모 폴더 `09_현장 안전 지킴이/` 에 산재 — **WO-0에서 repo 안으로 이동** |
+| 기획 문서 (현재) | ✅ repo 루트에 편입 완료 (WO-0). `CLAUDE.md`/`V2_ROADMAP.md`/`CONTEXT.md` 등 + `docs/` + `.skills/` |
 | 마스터 계획 | `V2_ROADMAP.md` (결정·아키텍처·빌드순서·사전요건) |
 | 규칙 | `CLAUDE.md` (행동지침 + v2 규칙) |
 
@@ -47,7 +47,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 
 ---
 
-## WO-0 — 구조 재편 (repo 정리 + 문서 편입) 🔴 OPEN
+## WO-0 — 구조 재편 (repo 정리 + 문서 편입) ✅ DONE (플래너 직접 수행, 2026-06-26)
 
 **목적:** 코드만 들어있는 git repo에 기획문서·스킬·docs를 편입해 **단일 monorepo**로 만들고,
 빌드 산출물이 커밋되지 않도록 `.gitignore`를 추가한다. 이후 모든 v2 작업의 토대.
@@ -89,21 +89,26 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
    지금은 건드리지 않는다 (리스크). 이번 WO 범위 밖.
 
 **Acceptance (증거 필수):**
-- [ ] `.gitignore` 존재, `git status`에 `build/`·`*.xcuserstate`·`.DS_Store` 안 보임 (증거: `git status` 출력)
-- [ ] 기존 미커밋 작업물이 의미 있는 커밋으로 보존됨 (증거: `git log --oneline -5`)
-- [ ] 12개 기획문서 + `docs/` + `.skills/` 가 repo 안에 있고 추적됨 (증거: `git ls-files | grep -E "CLAUDE|V2_ROADMAP|CONTEXT"`)
-- [ ] GitHub에 푸시 완료, 원격에서 `CLAUDE.md`·`V2_ROADMAP.md` 보임 (증거: `git log origin/main --oneline -1` 또는 GitHub URL)
-- [ ] iOS 앱 **여전히 빌드 그린** (구조 이동이 Xcode 프로젝트 참조를 깨지 않았는지 — 문서 이동이라 영향 없어야 함; 빌드로 확인)
+- [x] `.gitignore` 존재, `git status`에 `build/`·`*.xcuserstate`·`.DS_Store` 안 보임
+- [x] 기존 미커밋 작업물이 의미 있는 커밋으로 보존됨 (`bf63532`, 63파일)
+- [x] 13개 기획문서 + `docs/` + `.skills/` 가 repo 안에 있고 추적됨 (`5fcd239`)
+- [x] GitHub에 푸시 완료, 원격 main = `5fcd239` (CLAUDE.md·V2_ROADMAP.md 원격 확인)
+- [x] iOS 앱 **빌드 그린** — `** BUILD SUCCEEDED **`
 
 **하지 말 것:**
 - repo의 기존 커밋 히스토리/원격을 새로 init 하거나 갈아엎지 말 것 (히스토리+remote 보존).
 - 소스 코드 로직 변경 금지 (이 WO는 **구조/문서만**).
 - WO-1(패키지 추출) 시작 금지 — WO-0 검토 통과 후 플래너가 WO-1을 연다.
 
-**WO-0 결과 (실행자 작성):**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+**WO-0 결과:**
+- 상태: ✅ 완료 (플래너 직접 수행, 2026-06-26)
+- 발견(중요): repo의 유일 커밋 `d82fd08 Initial Commit`은 **빈 Xcode 템플릿**뿐 — 실제 앱 소스 42개(.swift)가 **전부 미추적**이었음(GitHub에도 없음). 구조 재편이 곧 v1 앱 최초 보존이 됨.
+- 수행 커밋 (origin/main `5fcd239`까지 푸시 완료):
+  - `03d1d1d` chore: `.gitignore` 추가(Xcode/SwiftPM/macOS) + `xcuserdata` 추적 해제 → `build/`(198MB)·xcuserdata 무시 확인(`check-ignore`)
+  - `bf63532` feat: v1 앱 구현 전체 커밋 (63파일/+7952줄, Models/Views/ViewModels/Services/Utilities/템플릿/현지화/테스트/아이콘)
+  - `5fcd239` docs: 기획문서 13개 + `docs/` + `.skills/` + `아이콘 이미지/`를 repo 루트로 편입
+- Acceptance: `.gitignore` 작동(위험파일 스테이지 0), 작업물 보존, 문서 추적, **푸시 완료(원격=로컬 5fcd239)**, **iOS BUILD SUCCEEDED**(generic iOS Simulator, CODE_SIGNING_ALLOWED=NO) — 전부 충족.
+- 남은 정리(선택, 후순위): 부모/자식 "현장 안전 지킴이" 폴더 이중 중첩 — 이번 범위 밖.
 
 ---
 
