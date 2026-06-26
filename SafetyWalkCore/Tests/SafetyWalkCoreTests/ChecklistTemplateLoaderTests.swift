@@ -41,15 +41,15 @@ struct ChecklistTemplateLoaderKoreaTests {
         #expect(!template.id.isEmpty)
     }
 
-    @Test func koreaTemplateHasThreeCategories() throws {
+    @Test func koreaTemplateHasFourteenCategories() throws {
         let template = try loader.load(for: .korea)[0]
-        #expect(template.categories.count == 3)
+        #expect(template.categories.count == 14)
     }
 
-    @Test func koreaTemplateHasElevenItems() throws {
+    @Test func koreaTemplateHasFortyTwoItems() throws {
         let template = try loader.load(for: .korea)[0]
         let total = template.categories.reduce(0) { $0 + $1.items.count }
-        #expect(total == 11)
+        #expect(total == 42)
     }
 
     @Test func koreaTemplateCategoryTitleKeysAreNonEmpty() throws {
@@ -115,15 +115,15 @@ struct ChecklistTemplateLoaderGlobalTests {
         #expect(!template.id.isEmpty)
     }
 
-    @Test func globalTemplateHasFourCategories() throws {
+    @Test func globalTemplateHasSeventeenCategories() throws {
         let template = try loader.load(for: .global)[0]
-        #expect(template.categories.count == 4)
+        #expect(template.categories.count == 17)
     }
 
-    @Test func globalTemplateHasTwelveItems() throws {
+    @Test func globalTemplateHasFiftyOneItems() throws {
         let template = try loader.load(for: .global)[0]
         let total = template.categories.reduce(0) { $0 + $1.items.count }
-        #expect(total == 12)
+        #expect(total == 51)
     }
 
     @Test func globalTemplateCategoryTitleKeysAreNonEmpty() throws {
