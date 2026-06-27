@@ -43,7 +43,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·WO-1 ✅ 완료 · WO-2 🔴 OPEN(아래 상세 — 위험성평가 3단계+빈도×강도).** WO-2b 이후는 WO-2 완료·검토 후 작성된다.
+**WO-0·WO-1·WO-2 ✅ 완료 · 다음 = WO-2b(체크리스트법·JSA) 또는 WO-3(CloudKit) 중 오너 선택.**
 
 ---
 
@@ -252,7 +252,7 @@ WO-1 결과: [완료 | 중단(사유)]
 
 ---
 
-## WO-2 — 위험성평가 모듈 (3단계 + 빈도×강도 3x3) 🔴 OPEN
+## WO-2 — 위험성평가 모듈 (3단계 + 빈도×강도 3x3) ✅ DONE (검수 통과 2026-06-27)
 
 > 골격은 WO-1과 동일(위키 위임계약·verifiable goal·자가검증 루프·검토자 분리).
 > WO-1과 차이: 이건 **추출이 아니라 신규 기능** → 성공기준은 "동작 중립"이 아니라 "수용기준 충족 + 회귀 0".
@@ -361,10 +361,13 @@ iOS에서 **2기법으로 위험성평가표를 생성→항목입력→위험�
 ### 진행 / 보고
 **main에서 새 브랜치**(예: `wo2-risk-assessment`)로 작업. WO-1 handoff 형식으로 보고 → 플래너 검수 → WO-2b/ WO-3.
 
-**WO-2 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+**WO-2 결과: ✅ 완료 (실행자 수행 + 플래너 검수 통과, 2026-06-27)**
+- 브랜치 `wo2-risk-assessment` → main 머지: `288167f` core(모델+매트릭스), `224e724` iOS(화면+현지화+영속)
+- 모델(SafetyWalkCore, **CloudKit-ready 검증 ✅**): RiskAssessment/RiskAssessmentItem 전 속성 optional·기본값, 관계 optional, `.unique` 없음. enum 2종(Kind/Method) 추가(기존 enum 무변경). DOMAIN_TERMS 등재.
+- 매트릭스(데이터): `RiskMatrixConfig.threeByThree` = `[≤2 .low / ≤4 .medium / .max .high]`, `band(forScore:)` 순회. 5x5는 config 교체만.
+- iOS: Home 카드 → 목록/상세/생성/항목에디터(3단계 색버튼 · 빈도×강도 실시간 점수+밴드칩). 면책 고지 노출. EN/KO +37/+37 패리티.
+- **플래너 독립 검증**: 기존 코어 모델 무변경 · 스코프 클린(CloudKit/macOS/PDF/checklist·JSA 무손댐) · 패키지 `swift test` **35/35** · 앱 `xcodebuild build` **BUILD SUCCEEDED**. 실행자 보고(앱 18/UITest 2, 회귀 0)와 정합.
+- 엔지니어링 노트: VM SwiftUI-free 유지(IndexSet 제거), UITest가 실 네비버그(value-based NavigationLink 미등록) 포착·수정.
 
 ---
 
