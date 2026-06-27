@@ -43,7 +43,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·WO-1·WO-2 ✅ 완료 · WO-3(CloudKit) 🔴 OPEN(아래 상세).** WO-2b(체크리스트법·JSA)는 언제든 끼울 수 있는 저위험 추가작업으로 보류.
+**WO-0·WO-1·WO-2 ✅ 완료 · WO-2b(체크리스트법·JSA) 🔴 OPEN(계정 대기 중 먼저 진행) · WO-3(CloudKit) 🔴 OPEN(Apple 계정 활성화 후).**
 
 ---
 
@@ -368,6 +368,62 @@ iOS에서 **2기법으로 위험성평가표를 생성→항목입력→위험�
 - iOS: Home 카드 → 목록/상세/생성/항목에디터(3단계 색버튼 · 빈도×강도 실시간 점수+밴드칩). 면책 고지 노출. EN/KO +37/+37 패리티.
 - **플래너 독립 검증**: 기존 코어 모델 무변경 · 스코프 클린(CloudKit/macOS/PDF/checklist·JSA 무손댐) · 패키지 `swift test` **35/35** · 앱 `xcodebuild build` **BUILD SUCCEEDED**. 실행자 보고(앱 18/UITest 2, 회귀 0)와 정합.
 - 엔지니어링 노트: VM SwiftUI-free 유지(IndexSet 제거), UITest가 실 네비버그(value-based NavigationLink 미등록) 포착·수정.
+
+---
+
+## WO-2b — 위험성평가 기법 추가 (체크리스트법 + JSA/JHA) 🔴 OPEN
+
+> WO-2 모듈에 기법 2종을 얹는 **저위험 추가작업**. Apple 계정과 무관 → CloudKit 활성화 대기 중 진행.
+> WO-2의 `RiskAssessment`/`RiskAssessmentItem`·`RiskMatrixConfig`·화면을 **재사용·확장**(재작성 금지). 골격은 WO-1/2와 동일.
+
+### 배경 / 목적
+오너 결정으로 위험성평가는 4기법(V2_ROADMAP AD-3). WO-2가 3단계+빈도×강도를 깔았다. 이번에
+**체크리스트법(한국 — 점검 연계)** + **JSA/JHA(해외/미국)**를 추가해 4기법 완성. JSA는 Global 프로파일의 해외 위험성평가에 대응(AD-6).
+
+### 목표 (verifiable)
+`RiskAssessmentMethod`에 `checklist`·`jsa`를 추가하고, iOS에서 **두 기법으로 평가 생성→입력→저장→목록/상세**까지 완결. **기존 2기법·기존 테스트 회귀 0.**
+
+### 스코프
+
+**✅ 포함:**
+- enum `RiskAssessmentMethod`에 `.checklist`, `.jsa` 추가.
+- 모델: `RiskAssessmentItem`에 **`sortOrder: Int = 0`** 추가 — JSA 단계 순서용(+ CloudKit는 to-many 순서 미보장이라 명시적 순서 필드 필요, ChecklistItem과 동일 이유). **기본값이라 CloudKit-safe.** 그 외 모델 변경 없음.
+- **체크리스트법** = 기존 **Inspection 연계**: 완료된 점검을 골라 그 체크리스트 항목(특히 **부적합/Fail**)을 평가 항목으로 **시드** → 항목별 위험성(3단계 상/중/하) + 감소대책. `linkedInspectionId`(평가)·`linkedHazardId`(항목) 재사용. 점검 항목→평가 항목은 **텍스트 복사**(하드 링크 불필요).
+- **JSA/JHA** = 작업을 **순서 있는 단계**로: 각 단계(작업단계)→유해위험요인→현재/권장 안전조치→위험성 등급. US/OSHA 친화 라벨(해외). 위험성 입력은 기존 컴포넌트 재사용.
+- 생성 플로우·항목 에디터·상세에 두 기법 **분기 추가**(기존 화면 확장, 재작성 X).
+- 신규 문자열 **EN/KO 패리티**. 면책 고지 유지.
+- **DOMAIN_TERMS.md**에 신규 기법·JSA 용어(작업단계 등) 등재.
+- 테스트: 신규 enum·`sortOrder` 기본값·체크리스트 시드 로직·JSA 단계 정렬 유지.
+
+**⛔ 제외:** CloudKit(WO-3) · macOS(WO-4) · 이쁜 PDF(WO-5) · 기존 2기법 동작 변경 · 점검(Inspection)에 점수 도입.
+
+**🚫 금지:** 기존 모델 필드 **의미/이름** 변경(sortOrder 추가만 허용), 도메인 용어 임의 신설(DOMAIN_TERMS 경유), 네비게이션 대수술.
+
+### 설계 메모 (모델은 이미 거의 수용 — 추가는 sortOrder뿐)
+- `RiskAssessmentItem`의 taskDescription(작업/단계)·hazardDescription·currentControls·reductionMeasure·riskLevel·likelihood/severity가 두 기법을 이미 담는다.
+- 위험성 입력: **체크리스트법 → 3단계(상/중/하)** 권장(점검 부적합→위험성 판단에 자연스러움). **JSA → 빈도×강도**(단계별 점수) 권장. 단 latitude 허용 — `/screen-implementation-review`로 자연스러운 쪽 선택, riskLevel로 resolved 저장만 지키면 됨.
+- 지역(AD-6): 생성 시 기법 목록을 region으로 정렬/기본값 가능(KR→빈도×강도/3단계/체크리스트, Global→JSA). 간단히, 강제 아님.
+
+### 완료 조건 (증거 필수)
+- [ ] enum 2종 추가 / `sortOrder` 추가(기본값, CloudKit-safe) / 기존 모델 그 외 무변경
+- [ ] 체크리스트법: 점검 선택 → 부적합 항목 시드 → 위험성+대책 → 저장, **시뮬 런타임 검증**
+- [ ] JSA: 순서 있는 단계 입력(**정렬 유지**) → 하자드/조치 → 저장, **시뮬 런타임 검증**
+- [ ] 목록/상세에서 **4기법 모두** 정상 표시 / 면책 고지 노출
+- [ ] 신규 문자열 EN/KO 패리티 / DOMAIN_TERMS 갱신
+- [ ] 앱 빌드 green, **기존 테스트 회귀 0**(WO-2 기준 55 + 신규)
+- [ ] `/swiftui-build-qa`·`/navigation-qa`·`/screen-implementation-review`·`/design-visual-qa`·`/safetywalk-qa-guardrails`
+- [ ] 보고: 신규 enum·sortOrder·두 기법 화면·테스트·런타임 증거
+
+### 중단 조건
+- 체크리스트 시드가 모델/화면 대수술을 요구 / JSA 순서가 `sortOrder`만으로 부족 / 한국·미국 위험성평가 의미론 모호 → 멈추고 질문.
+
+### 진행 / 보고
+**main에서 새 브랜치 `wo2b-risk-methods`.** WO-1 handoff 형식으로 보고 → 플래너 검수 → (계정 활성화됐으면) WO-3.
+
+**WO-2b 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
 
 ---
 
