@@ -43,7 +43,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·WO-1·WO-2 ✅ 완료 · WO-2b(체크리스트법·JSA) 🔴 OPEN(계정 대기 중 먼저 진행) · WO-3(CloudKit) 🔴 OPEN(Apple 계정 활성화 후).**
+**WO-0·WO-1·WO-2·WO-2b ✅ 완료 (위험성평가 4기법) · WO-3(CloudKit) 🔴 OPEN(Apple 계정 활성화 후) · 이후 WO-4 macOS.**
 
 ---
 
@@ -371,7 +371,7 @@ iOS에서 **2기법으로 위험성평가표를 생성→항목입력→위험�
 
 ---
 
-## WO-2b — 위험성평가 기법 추가 (체크리스트법 + JSA/JHA) 🔴 OPEN
+## WO-2b — 위험성평가 기법 추가 (체크리스트법 + JSA/JHA) ✅ DONE (검수 통과 2026-06-27)
 
 > WO-2 모듈에 기법 2종을 얹는 **저위험 추가작업**. Apple 계정과 무관 → CloudKit 활성화 대기 중 진행.
 > WO-2의 `RiskAssessment`/`RiskAssessmentItem`·`RiskMatrixConfig`·화면을 **재사용·확장**(재작성 금지). 골격은 WO-1/2와 동일.
@@ -420,10 +420,14 @@ iOS에서 **2기법으로 위험성평가표를 생성→항목입력→위험�
 ### 진행 / 보고
 **main에서 새 브랜치 `wo2b-risk-methods`.** WO-1 handoff 형식으로 보고 → 플래너 검수 → (계정 활성화됐으면) WO-3.
 
-**WO-2b 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+**WO-2b 결과: ✅ 완료 (실행자 수행 + 플래너 검수 통과, 2026-06-27)**
+- 브랜치 `wo2b-risk-methods` → main 머지: `bce1d1e` core(`.checklist`/`.jsa` + `usesFrequencySeverity` + `sortOrder`), `2939666` iOS(체크리스트 시드·JSA 단계·화면 확장)
+- **코어 변경 최소**: enum 2케이스+분류 / RiskAssessmentItem += `sortOrder: Int = 0`(CloudKit-safe). **RiskAssessment·v1모델·매트릭스 무변경.**
+- 체크리스트법: 완료 점검 선택 → 부적합 항목 시드(`linkedInspectionId`/`linkedHazardId` 재사용) → 3단계. JSA: 순서 있는 작업단계(`sortOrder`) → 빈도×강도.
+- **플래너 독립 검증**: 스코프 클린(CloudKit/macOS/PDF 무손댐·기존 2기법 무변경) · RiskAssessmentItem=sortOrder만 · EN/KO +10/+10 · DOMAIN_TERMS 갱신 · 패키지 `swift test` **39/39** · 앱 **BUILD SUCCEEDED** · 회귀 0(WO-2 55 유지, 총 64).
+- 엔지니어링 노트: VM SwiftUI-free 유지(드래그 재정렬은 범위 밖 — "정렬 유지"는 `sortOrder`로 충족), UITest가 segmented→menu 회귀·KO 라벨 버그 자가포착·수정.
+- 잔여(경미, 수용): 실제 점검 연계 시드의 풀-스크린샷은 테스트 스토어에 완료 점검 0이라 미캡처 — 시드 정확성(부적합만·링크·등급)은 SwiftData 통합테스트 2건으로 검증됨.
+→ **위험성평가 4기법 완성.**
 
 ---
 
