@@ -48,6 +48,7 @@ struct HomeView: View {
                     statusRail
                     inspectionSummary
                     startInspectionButton
+                    riskAssessmentEntry
                     recentInspectionsSection
                 }
                 .padding(.horizontal)
@@ -199,6 +200,42 @@ struct HomeView: View {
         .sheet(isPresented: $showStartInspection) {
             StartInspectionFlow()
         }
+    }
+
+    // MARK: - Risk assessment entry (≤2 taps from Home → list → create/detail)
+
+    private var riskAssessmentEntry: some View {
+        NavigationLink {
+            RiskAssessmentListView()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "list.clipboard.fill")
+                    .font(.title3)
+                    .foregroundStyle(.orange)
+                    .frame(width: 28)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(LocalizationKey.raTitle.localized)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(LocalizationKey.raHomeCardSubtitle.localized)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(.background, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color(.separator), lineWidth: 0.5)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("ra_home_card")
     }
 
     // MARK: - Recent inspections

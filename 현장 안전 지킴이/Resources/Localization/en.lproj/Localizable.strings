@@ -392,3 +392,40 @@
 "checklist.item.global.eap.001" = "Written emergency action plan available and evacuation routes posted";
 "checklist.item.global.eap.002" = "Exit routes and assembly points marked and unobstructed";
 "checklist.item.global.eap.003" = "First aid kits stocked and emergency contacts posted";
+
+
+/* Risk Assessment (위험성평가) — WO-2 */
+"ra.title" = "Risk Assessment";
+"ra.home.cardSubtitle" = "Formal risk assessment records";
+"ra.empty" = "No risk assessments yet";
+"ra.new" = "New Risk Assessment";
+"ra.kind" = "Type";
+"ra.kind.initial" = "Initial";
+"ra.kind.regular" = "Regular";
+"ra.kind.occasional" = "Occasional";
+"ra.method" = "Method";
+"ra.method.threeLevel" = "3-Level";
+"ra.method.freqSeverity" = "Frequency × Severity";
+"ra.site" = "Site";
+"ra.site.none" = "Not specified";
+"ra.assessor" = "Assessor";
+"ra.assessor.placeholder" = "Assessor name";
+"ra.note" = "Note";
+"ra.items" = "Items";
+"ra.item.add" = "Add Item";
+"ra.item.edit" = "Edit Item";
+"ra.item.task" = "Task / Process";
+"ra.item.hazard" = "Hazard";
+"ra.item.currentControls" = "Current Controls";
+"ra.item.likelihood" = "Likelihood";
+"ra.item.severity" = "Severity";
+"ra.item.score" = "Risk Score";
+"ra.item.riskLevel" = "Risk Level";
+"ra.item.reductionMeasure" = "Reduction Measure";
+"ra.item.postRiskLevel" = "Risk After Measures";
+"ra.item.responsible" = "Responsible";
+"ra.item.dueDate" = "Due Date";
+"ra.item.setDueDate" = "Set due date";
+"ra.item.status" = "Action Status";
+"ra.items.empty" = "No items added yet";
+"ra.itemCount" = "%lld items";

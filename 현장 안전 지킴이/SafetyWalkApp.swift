@@ -28,7 +28,9 @@ struct SafetyWalkApp: App {
             Area.self,
             Inspection.self,
             ChecklistItem.self,
-            Hazard.self
+            Hazard.self,
+            RiskAssessment.self,
+            RiskAssessmentItem.self
         ])
     }
 }
