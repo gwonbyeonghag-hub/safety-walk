@@ -113,3 +113,37 @@ struct RiskAssessmentModelTests {
         #expect(item.riskLevel == .high)
     }
 }
+
+// MARK: - WO-2b: 4 methods + sortOrder
+
+@Suite("RiskAssessmentMethod — 4 methods (WO-2b)")
+struct RiskAssessmentMethodTests {
+
+    @Test func allFourMethodsExist() {
+        let all = RiskAssessmentMethod.allCases
+        #expect(all.count == 4)
+        #expect(all.contains(.checklist))
+        #expect(all.contains(.jsa))
+    }
+
+    @Test func riskInputClassification() {
+        // direct 상/중/하
+        #expect(RiskAssessmentMethod.threeLevel.usesFrequencySeverity == false)
+        #expect(RiskAssessmentMethod.checklist.usesFrequencySeverity == false)
+        // likelihood × severity
+        #expect(RiskAssessmentMethod.frequencySeverity.usesFrequencySeverity == true)
+        #expect(RiskAssessmentMethod.jsa.usesFrequencySeverity == true)
+    }
+}
+
+@Suite("RiskAssessmentItem — sortOrder (WO-2b)")
+struct RiskAssessmentItemSortOrderTests {
+
+    @Test func sortOrderDefaultsToZero() {
+        #expect(RiskAssessmentItem().sortOrder == 0)   // CloudKit-safe default
+    }
+
+    @Test func sortOrderIsSettable() {
+        #expect(RiskAssessmentItem(sortOrder: 3).sortOrder == 3)
+    }
+}

@@ -50,7 +50,10 @@ determinations** (disclaimer required, see Legal section).
 | Risk Assessment | 위험성평가 | One assessment record (평가표). Holds kind, method, site, assessor, date, and items. Code: `RiskAssessment`. |
 | Risk Assessment Item | 위험성평가 항목 | One row of an assessment: task/process, hazard, current controls, risk, reduction measure, post-measure risk, responsible, due date, status. Code: `RiskAssessmentItem`. |
 | Assessment Kind | 평가종류 | When the assessment is performed: Initial / Regular / Occasional. Code: `RiskAssessmentKind { initial, regular, occasional }`. |
-| Assessment Method | 평가기법 | How risk is determined: 3-Level (direct 상/중/하) or Frequency × Severity. Code: `RiskAssessmentMethod { threeLevel, frequencySeverity }`. (Checklist / JSA methods are deferred to WO-2b.) |
+| Assessment Method | 평가기법 | The 4 methods (AD-3). Code: `RiskAssessmentMethod { threeLevel, frequencySeverity, checklist, jsa }`. `usesFrequencySeverity` classifies the risk input: likelihood×severity (`frequencySeverity`, `jsa`) vs. direct 상/중/하 (`threeLevel`, `checklist`). |
+| Checklist method | 체크리스트법 | Method that seeds assessment items from a completed Inspection's **failed (부적합)** checklist items (text-copied); risk entered as 3-level. Reuses `linkedInspectionId` / `linkedHazardId`. |
+| JSA / JHA | JSA/JHA | Job Safety/Hazard Analysis (overseas/US, Global profile): **ordered** job steps → hazard → controls → risk (frequency×severity). Order kept via `RiskAssessmentItem.sortOrder`. |
+| Job Step | 작업 단계 | One ordered step of a JSA. Stored in `RiskAssessmentItem.taskDescription`, ordered by `sortOrder`. |
 | Likelihood | 가능성 (빈도) | Frequency×Severity input, 1–3. Code: `likelihood`. |
 | Severity | 중대성 (강도) | Frequency×Severity input, 1–3. Code: `severity`. |
 | Risk Score | 위험성 점수 | likelihood × severity (1–9). Derived, not stored on its own. |
@@ -113,7 +116,7 @@ enum InspectionStatus    { case inProgress, completed }
 enum RegionProfile       { case korea, global }
 enum HazardType          { case fallRisk, electrical, fire, chemical, general, other }
 enum RiskAssessmentKind   { case initial, regular, occasional }
-enum RiskAssessmentMethod { case threeLevel, frequencySeverity }
+enum RiskAssessmentMethod { case threeLevel, frequencySeverity, checklist, jsa }
 ```
 
 ---

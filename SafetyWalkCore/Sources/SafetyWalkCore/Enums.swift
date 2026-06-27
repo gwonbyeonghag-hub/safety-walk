@@ -68,10 +68,22 @@ public enum RiskAssessmentKind: String, Codable, CaseIterable, Identifiable, Has
     public var id: String { rawValue }
 }
 
-/// 평가기법. WO-2는 threeLevel·frequencySeverity 2종만. checklist/jsa는 WO-2b.
+/// 평가기법 (4종 — V2_ROADMAP AD-3).
 public enum RiskAssessmentMethod: String, Codable, CaseIterable, Identifiable, Hashable {
     case threeLevel          // 3단계 (상·중·하 직접 선택)
     case frequencySeverity   // 빈도×강도 (가능성 1–3 × 중대성 1–3 → 점수 → 밴드)
+    case checklist           // 체크리스트법 (완료 점검의 부적합 항목 연계; 위험성=3단계 직접)
+    case jsa                 // JSA/JHA (해외) — 순서 있는 작업단계; 위험성=빈도×강도
 
     public var id: String { rawValue }
+
+    /// Risk is entered as a likelihood×severity score (true) vs. a direct 상/중/하 level
+    /// (false). Centralizes the input/derivation branch shared by the editor, the
+    /// view model's resolution, and the detail breakdown.
+    public var usesFrequencySeverity: Bool {
+        switch self {
+        case .frequencySeverity, .jsa: return true
+        case .threeLevel, .checklist:  return false
+        }
+    }
 }

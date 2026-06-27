@@ -21,6 +21,9 @@ public final class RiskAssessmentItem {
     public var dueDate: Date?                        // 개선예정일
     public var correctiveActionStatus: CorrectiveActionStatus = CorrectiveActionStatus.notStarted
     public var linkedHazardId: UUID?               // optional link to Hazard
+    // Explicit ordering for JSA work steps; CloudKit does not preserve to-many order
+    // (same reason ChecklistItem has sortOrder). Defaulted → CloudKit-safe.
+    public var sortOrder: Int = 0
 
     public init(
         taskDescription: String = "",
@@ -34,7 +37,8 @@ public final class RiskAssessmentItem {
         responsibleName: String? = nil,
         dueDate: Date? = nil,
         correctiveActionStatus: CorrectiveActionStatus = .notStarted,
-        linkedHazardId: UUID? = nil
+        linkedHazardId: UUID? = nil,
+        sortOrder: Int = 0
     ) {
         self.id = UUID()
         self.taskDescription = taskDescription
@@ -49,5 +53,6 @@ public final class RiskAssessmentItem {
         self.dueDate = dueDate
         self.correctiveActionStatus = correctiveActionStatus
         self.linkedHazardId = linkedHazardId
+        self.sortOrder = sortOrder
     }
 }
