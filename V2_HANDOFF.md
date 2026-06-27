@@ -43,7 +43,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·WO-1·WO-2 ✅ 완료 · 다음 = WO-2b(체크리스트법·JSA) 또는 WO-3(CloudKit) 중 오너 선택.**
+**WO-0·WO-1·WO-2 ✅ 완료 · WO-3(CloudKit) 🔴 OPEN(아래 상세).** WO-2b(체크리스트법·JSA)는 언제든 끼울 수 있는 저위험 추가작업으로 보류.
 
 ---
 
@@ -368,6 +368,85 @@ iOS에서 **2기법으로 위험성평가표를 생성→항목입력→위험�
 - iOS: Home 카드 → 목록/상세/생성/항목에디터(3단계 색버튼 · 빈도×강도 실시간 점수+밴드칩). 면책 고지 노출. EN/KO +37/+37 패리티.
 - **플래너 독립 검증**: 기존 코어 모델 무변경 · 스코프 클린(CloudKit/macOS/PDF/checklist·JSA 무손댐) · 패키지 `swift test` **35/35** · 앱 `xcodebuild build` **BUILD SUCCEEDED**. 실행자 보고(앱 18/UITest 2, 회귀 0)와 정합.
 - 엔지니어링 노트: VM SwiftUI-free 유지(IndexSet 제거), UITest가 실 네비버그(value-based NavigationLink 미등록) 포착·수정.
+
+---
+
+## WO-3 — CloudKit 동기화 (iPhone↔Mac 데이터 공유) 🔴 OPEN
+
+> 골격은 WO-1/2와 동일(위임계약·verifiable goal·자가검증·검토자 분리).
+> 이건 **인프라 + 스키마 변경 + 외부 계정 의존**이 얽힌 묵직한 WO다. Phase로 나눠 진행하고, 막히면 멈춰라.
+> CloudKit 배선 = 이번 WO. macOS 앱 = WO-4(이 동기화 위에 얹음).
+
+### 배경 / 목적
+iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지**(비행기모드로도 점검 완결) — 그 위에 CloudKit 동기화 계층을 얹는다. macOS 앱(WO-4)이 같은 데이터를 보려면 이게 전제. 모든 모델은 WO-1/2에서 이미 일부 CloudKit-ready이나, **v1 모델 5종은 아직 비호환** → 이번에 retrofit.
+
+### ⚠️ Phase A — 오너 사전작업 (Apple 계정 필요)
+- **유료 Apple Developer 계정이 Xcode에 로그인**돼 있어야 함(앱이 제출 직전이었으니 보유 추정).
+- Xcode → Target `현장 안전 지킴이` → Signing & Capabilities → **+ Capability → iCloud → CloudKit 체크** → 컨테이너 **`iCloud.com.safetywalk.app`**(번들 `com.safetywalk.app` 기준) 생성/선택.
+- **+ Capability → Background Modes → Remote notifications** 체크(푸시 기반 동기화).
+- 실행자가 Xcode에서 시도 가능하나, **계정/결제 벽이면 멈추고 오너에게 요청**(중단조건).
+- 산출: 엔타이틀먼트 파일에 iCloud 컨테이너 + `aps-environment` + background modes.
+
+### 목표 (verifiable)
+앱이 CloudKit **private DB**로 동기화된다. **같은 iCloud 계정의 기기A에서 만든 점검/위험요인/위험성평가(사진 포함)가 기기B에 나타난다.** 오프라인 단독 완결성 유지, 기존 55테스트 회귀 0.
+
+### 스코프
+
+**✅ 포함:**
+- Phase A 엔타이틀먼트/capability.
+- **v1 모델 5종 CloudKit 호환 retrofit** — 모든 저장 프로퍼티에 기본값, 모든 관계 optional (정확 목록 아래).
+- **사진 동기화** — `Hazard`/`ChecklistItem` 사진을 `@Attribute(.externalStorage) var photoData: Data?`로 → CKAsset 자동 동기화. 기존 파일 사진(`photoPath` → `Documents/EvidencePhotos/`) 마이그레이션. `PhotoStorageService`·표시부 갱신.
+- ModelContainer를 **CloudKit-backed**로(`ModelConfiguration(..., cloudKitDatabase: .private("iCloud.com.safetywalk.app"))` 또는 `.automatic`).
+- 관계 optional화 **ripple 처리**: `.items`/`.areas`/`.hazards` 접근부 `?? []`.
+- **VersionedSchema v1→v2 마이그레이션** + `SWIFTDATA_MIGRATION.md` 갱신.
+- **2-시뮬레이터(같은 iCloud 로그인) 동기화 검증.**
+
+**⛔ 제외:** macOS 앱(WO-4) · CloudKit **공유DB/다중사용자**(v2 밖) · 커스텀 충돌해결(기본 last-writer-wins 사용) · 푸시 알림 UI · WO-2b(체크리스트법·JSA).
+
+**🚫 금지:** 도메인 로직 변경, 화면 재설계, 기존 모델 **필드 의미** 변경(기본값 추가는 OK, 의미·이름 변경 금지), `.unique` 추가.
+
+### retrofit 정확 목록 (전부 기본값 부여 + 관계 optional化)
+| 모델 | 기본값 줄 프로퍼티 | 관계 → optional |
+|---|---|---|
+| Site | id=UUID(), name="", createdAt=Date() | `areas: [Area]?` |
+| Area | id=UUID(), name="", siteId(기본/optional) | — |
+| Inspection | id, siteId, siteName="", inspectorName="", startedAt=Date(), status= .inProgress, templateId="" | `items:[ChecklistItem]?`, `hazards:[Hazard]?` |
+| ChecklistItem | id, inspectionId, templateItemId="", title="", category="", result= .unchecked, sortOrder=0 | — |
+| Hazard | id, siteId, location="", type= .general, riskLevel= .low, hazardDescription="", correctiveActionStatus= .notStarted, createdAt=Date(), updatedAt=Date() | — (photoPath→photoData) |
+- init은 그대로 실제 값 할당 → 선언부에 `= 기본값`만 추가하는 게 대부분. 관계 optional화가 진짜 ripple(접근부 `?? []`).
+- WO-2 모델(RiskAssessment/Item)은 이미 호환 — 손대지 마라.
+
+### 주의 (CloudKit 함정)
+- private DB는 **기기 iCloud 로그인 필수** — 시뮬레이터도 Settings에서 iCloud 로그인 후 테스트.
+- 모든 관계 optional + **inverse 관계 권장**. `.unique` 불가(이미 없음).
+- 사진을 externalStorage Data로 옮기면 PhotoStorageService(파일 저장)→Data 반환으로 역할 변경 + 표시부(썸네일 로딩) 전부 갱신 필요. **이게 광범위하면 멈추고 "사진=WO-3b 분리" 제안**(중단조건).
+
+### 완료 조건 (증거 필수)
+- [ ] 엔타이틀먼트에 컨테이너+background modes / 앱 빌드 green
+- [ ] v1 모델 5종 + 신규 모델 전부 CloudKit 호환(기본값·관계 optional·`.unique` 0)
+- [ ] 사진이 externalStorage Data로 저장·표시, 기존 파일 사진 마이그레이션 동작
+- [ ] ModelContainer CloudKit-backed
+- [ ] VersionedSchema 마이그레이션 무손실(기존 로컬 데이터 보존) + `SWIFTDATA_MIGRATION.md` 갱신
+- [ ] **2-시뮬 동기화**: A에서 점검+위험요인(사진 포함)+위험성평가 생성 → B에 출현 (양 기기 스크린샷)
+- [ ] **오프라인 단독 완결 유지**: 비행기모드로 점검 시작·완료 가능(스크린샷/설명)
+- [ ] 기존 55테스트 회귀 0, 앱 빌드 green
+- [ ] `/swiftui-build-qa` · `/safetywalk-qa-guardrails` 통과
+- [ ] 보고: 엔타이틀먼트·retrofit 목록·사진 전환·마이그레이션·2기기 동기화 증거
+
+### 중단 조건
+- Phase A에서 Apple 계정/결제 벽 → 오너 요청
+- 마이그레이션이 기존 데이터 파손 위험 → 멈추고 보고(절대 강행 금지)
+- CloudKit 스키마 푸시/동기화 에러로 막힘
+- 사진 Data 전환이 너무 광범위 → 멈추고 **WO-3b 분리** 제안
+
+### 검증 / 진행
+빌드·테스트(WO-1/2와 동일, 스킴 `-list` 캡처) + **2-시뮬레이터 같은 iCloud 로그인** 동기화. (선택: CloudKit Dashboard에서 레코드 확인.)
+**main에서 새 브랜치 `wo3-cloudkit`**. WO-1 handoff 형식 + **2기기 동기화 스크린샷**으로 보고 → 플래너 검수.
+
+**WO-3 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
 
 ---
 
