@@ -56,3 +56,22 @@ public enum AppearanceMode: String, CaseIterable, Identifiable, Hashable {
 
     public var id: String { rawValue }
 }
+
+// MARK: - Risk Assessment (위험성평가) — see DOMAIN_TERMS.md
+
+/// 평가종류: 최초 / 정기(≥연1회) / 수시.
+public enum RiskAssessmentKind: String, Codable, CaseIterable, Identifiable, Hashable {
+    case initial      // 최초
+    case regular      // 정기
+    case occasional   // 수시
+
+    public var id: String { rawValue }
+}
+
+/// 평가기법. WO-2는 threeLevel·frequencySeverity 2종만. checklist/jsa는 WO-2b.
+public enum RiskAssessmentMethod: String, Codable, CaseIterable, Identifiable, Hashable {
+    case threeLevel          // 3단계 (상·중·하 직접 선택)
+    case frequencySeverity   // 빈도×강도 (가능성 1–3 × 중대성 1–3 → 점수 → 밴드)
+
+    public var id: String { rawValue }
+}

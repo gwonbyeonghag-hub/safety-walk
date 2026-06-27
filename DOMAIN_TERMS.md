@@ -39,6 +39,29 @@ Use these names consistently — do not invent synonyms.
 
 ---
 
+## Risk Assessment Terms (위험성평가) — v2 WO-2
+
+A formal risk-assessment record, separate from an Inspection (Pass/Fail/NA) and from
+ad-hoc Hazard logging. The app **records/reminds only — it does not make legal
+determinations** (disclaimer required, see Legal section).
+
+| English (code/EN UI) | Korean (KO UI) | Definition |
+|---|---|---|
+| Risk Assessment | 위험성평가 | One assessment record (평가표). Holds kind, method, site, assessor, date, and items. Code: `RiskAssessment`. |
+| Risk Assessment Item | 위험성평가 항목 | One row of an assessment: task/process, hazard, current controls, risk, reduction measure, post-measure risk, responsible, due date, status. Code: `RiskAssessmentItem`. |
+| Assessment Kind | 평가종류 | When the assessment is performed: Initial / Regular / Occasional. Code: `RiskAssessmentKind { initial, regular, occasional }`. |
+| Assessment Method | 평가기법 | How risk is determined: 3-Level (direct 상/중/하) or Frequency × Severity. Code: `RiskAssessmentMethod { threeLevel, frequencySeverity }`. (Checklist / JSA methods are deferred to WO-2b.) |
+| Likelihood | 가능성 (빈도) | Frequency×Severity input, 1–3. Code: `likelihood`. |
+| Severity | 중대성 (강도) | Frequency×Severity input, 1–3. Code: `severity`. |
+| Risk Score | 위험성 점수 | likelihood × severity (1–9). Derived, not stored on its own. |
+| Risk Level (band) | 위험성 수준 | Resolved 상/중/하 — **reuses `RiskLevel`**. For 3-Level the user picks it directly; for Frequency × Severity it is derived from the score via `RiskMatrixConfig.band(forScore:)`. |
+| Reduction Measure | 감소대책 | Risk-reduction action recorded for an item. Code: `reductionMeasure`. |
+
+The 3×3 (and future 5×5) band boundaries live in **data** (`RiskMatrixConfig`, not
+hard-coded `if`): score ≤2 → 하(low), 3–4 → 중(medium), ≥6 → 상(high).
+
+---
+
 ## Hazard Types
 
 | English | Korean | Notes |
@@ -71,6 +94,11 @@ CorrectiveActionStatus
 ChecklistItemResult
 RegionProfile
 InspectionStatus
+RiskAssessment
+RiskAssessmentItem
+RiskAssessmentKind
+RiskAssessmentMethod
+RiskMatrixConfig
 ```
 
 ---
@@ -84,6 +112,8 @@ enum CorrectiveActionStatus { case notStarted, inProgress, completed }
 enum InspectionStatus    { case inProgress, completed }
 enum RegionProfile       { case korea, global }
 enum HazardType          { case fallRisk, electrical, fire, chemical, general, other }
+enum RiskAssessmentKind   { case initial, regular, occasional }
+enum RiskAssessmentMethod { case threeLevel, frequencySeverity }
 ```
 
 ---
@@ -92,7 +122,7 @@ enum HazardType          { case fallRisk, electrical, fire, chemical, general, o
 
 | Term | Handling |
 |---|---|
-| 위험성 평가 (Risk Assessment) | Used as a checklist category label in KO region profile only. Loaded from template data. |
+| 위험성 평가 (Risk Assessment) | A first-class module (v2 WO-2): a recorded assessment of likelihood/severity or direct level. The app **records** the user's inputs and **does not determine** legal compliance. Risk levels/scores and reduction measures are user-entered records only. Disclaimer required. (Also appears as a checklist category label in template data — unrelated.) |
 | KOSHA | Referenced in KO region profile checklist template metadata only. Not embedded in app logic. |
 | OSHA / ISO 45001 | May appear in Global region profile template metadata only. Not embedded in app logic. |
 | Legal violation determination | **Explicitly prohibited.** The app never asserts a legal violation. |
