@@ -12,6 +12,7 @@ struct RiskAssessmentCreateView: View {
     @Query(sort: \Site.name) private var sites: [Site]
     @State private var viewModel = RiskAssessmentViewModel()
     @State private var editorItem: RiskAssessmentViewModel.DraftItem?
+    @State private var showInspectionPicker = false
 
     var body: some View {
         NavigationStack {
@@ -27,13 +28,15 @@ struct RiskAssessmentCreateView: View {
                 }
 
                 Section(LocalizationKey.raMethod.localized) {
+                    // 4 methods → menu (segmented is too cramped for the labels).
                     Picker(LocalizationKey.raMethod.localized, selection: $viewModel.method) {
                         ForEach(RiskAssessmentMethod.allCases) { m in
                             Text(m.localizedLabel).tag(m)
                         }
                     }
-                    .pickerStyle(.segmented)
+                    .pickerStyle(.menu)
                     .labelsHidden()
+                    .accessibilityIdentifier("ra_method_picker")
                 }
 
                 Section {
@@ -74,6 +77,14 @@ struct RiskAssessmentCreateView: View {
                     viewModel.addOrUpdate(updated)
                 }
             }
+            .sheet(isPresented: $showInspectionPicker) {
+                InspectionSeedPickerView { inspection in
+                    viewModel.seedFromInspection(inspection)
+                    if viewModel.selectedSite == nil {
+                        viewModel.selectedSite = sites.first { $0.id == inspection.siteId }
+                    }
+                }
+            }
         }
     }
 
@@ -103,16 +114,28 @@ struct RiskAssessmentCreateView: View {
 
     private var itemsSection: some View {
         Section(LocalizationKey.raItemsSection.localized) {
+            // 체크리스트법: seed failed (부적합) items from a completed inspection.
+            if viewModel.method == .checklist {
+                Button {
+                    showInspectionPicker = true
+                } label: {
+                    Label(LocalizationKey.raSeedFromInspection.localized,
+                          systemImage: "square.and.arrow.down")
+                }
+            }
+
             if viewModel.draftItems.isEmpty {
                 Text(LocalizationKey.raItemsEmpty.localized)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(viewModel.draftItems) { item in
+                ForEach(Array(viewModel.draftItems.enumerated()), id: \.element.id) { index, item in
                     Button {
                         editorItem = item
                     } label: {
-                        DraftItemRow(item: item, level: viewModel.resolvedLevel(for: item))
+                        DraftItemRow(item: item,
+                                     level: viewModel.resolvedLevel(for: item),
+                                     stepNumber: viewModel.method == .jsa ? index + 1 : nil)
                     }
                     .buttonStyle(.plain)
                 }
@@ -122,7 +145,9 @@ struct RiskAssessmentCreateView: View {
             Button {
                 editorItem = RiskAssessmentViewModel.DraftItem()
             } label: {
-                Label(LocalizationKey.raItemAdd.localized, systemImage: "plus.circle.fill")
+                Label(viewModel.method == .jsa ? LocalizationKey.raJsaAddStep.localized
+                                               : LocalizationKey.raItemAdd.localized,
+                      systemImage: "plus.circle.fill")
             }
         }
     }
@@ -132,6 +157,7 @@ struct RiskAssessmentCreateView: View {
 private struct DraftItemRow: View {
     let item: RiskAssessmentViewModel.DraftItem
     let level: RiskLevel
+    var stepNumber: Int? = nil
 
     private var title: String {
         let t = item.taskDescription.trimmingCharacters(in: .whitespaces)
@@ -142,6 +168,13 @@ private struct DraftItemRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
+            if let n = stepNumber {
+                Text("\(n)")
+                    .font(.caption2.weight(.bold)).monospacedDigit()
+                    .foregroundStyle(.white)
+                    .frame(minWidth: 18, minHeight: 18)
+                    .background(Color.secondary, in: Circle())
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)

@@ -429,3 +429,13 @@
 "ra.item.status" = "조치 상태";
 "ra.items.empty" = "추가된 항목이 없습니다";
 "ra.itemCount" = "항목 %lld개";
+
+/* Risk Assessment methods 2/2 (체크리스트법 + JSA) — WO-2b */
+"ra.method.checklist" = "체크리스트법";
+"ra.method.jsa" = "JSA/JHA";
+"ra.seedFromInspection" = "점검에서 가져오기";
+"ra.pickInspection" = "완료된 점검 선택";
+"ra.noCompletedInspections" = "완료된 점검이 없습니다";
+"ra.seededFromInspection" = "점검 연계됨";
+"ra.jsa.step" = "작업 단계";
+"ra.jsa.addStep" = "단계 추가";

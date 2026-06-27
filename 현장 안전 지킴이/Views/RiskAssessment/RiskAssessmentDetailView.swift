@@ -7,7 +7,11 @@ import SafetyWalkCore
 struct RiskAssessmentDetailView: View {
     let assessment: RiskAssessment
 
-    private var items: [RiskAssessmentItem] { assessment.items ?? [] }
+    // Sorted by sortOrder so JSA work steps display in their entered order
+    // (CloudKit does not preserve to-many relationship order).
+    private var items: [RiskAssessmentItem] {
+        (assessment.items ?? []).sorted { $0.sortOrder < $1.sortOrder }
+    }
 
     var body: some View {
         List {
@@ -19,6 +23,9 @@ struct RiskAssessmentDetailView: View {
                 infoRow(LocalizationKey.raAssessor.localized, assessment.assessorName)
                 infoRow(LocalizationKey.commonDone.localized,
                         assessment.assessedAt.formatted(date: .abbreviated, time: .shortened))
+                if assessment.linkedInspectionId != nil {
+                    infoRow(LocalizationKey.raSeededFromInspection.localized, "✓")
+                }
                 if let note = assessment.note, !note.isEmpty {
                     infoRow(LocalizationKey.raNote.localized, note)
                 }
@@ -30,8 +37,10 @@ struct RiskAssessmentDetailView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(items) { item in
-                        ItemDetailRow(item: item, method: assessment.method)
+                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                        ItemDetailRow(item: item,
+                                      method: assessment.method,
+                                      stepNumber: assessment.method == .jsa ? index + 1 : nil)
                     }
                 }
             }
@@ -59,14 +68,25 @@ struct RiskAssessmentDetailView: View {
 private struct ItemDetailRow: View {
     let item: RiskAssessmentItem
     let method: RiskAssessmentMethod
+    let stepNumber: Int?   // 1-based JSA step number; nil for other methods
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
-                    if !item.taskDescription.isEmpty {
-                        Text(item.taskDescription)
-                            .font(.subheadline.weight(.semibold))
+                    if !item.taskDescription.isEmpty || stepNumber != nil {
+                        HStack(spacing: 6) {
+                            if let n = stepNumber {
+                                Text("\(n)")
+                                    .font(.caption2.weight(.bold))
+                                    .monospacedDigit()
+                                    .foregroundStyle(.white)
+                                    .frame(minWidth: 18, minHeight: 18)
+                                    .background(Color.secondary, in: Circle())
+                            }
+                            Text(item.taskDescription)
+                                .font(.subheadline.weight(.semibold))
+                        }
                     }
                     if !item.hazardDescription.isEmpty {
                         Text(item.hazardDescription)
@@ -78,7 +98,7 @@ private struct ItemDetailRow: View {
                 RiskBandChip(level: item.riskLevel)
             }
 
-            if method == .frequencySeverity, let l = item.likelihood, let s = item.severity {
+            if method.usesFrequencySeverity, let l = item.likelihood, let s = item.severity {
                 Text("\(LocalizationKey.raItemLikelihood.localized) \(l) × \(LocalizationKey.raItemSeverity.localized) \(s) = \(l * s)")
                     .font(.caption2)
                     .foregroundStyle(.secondary)

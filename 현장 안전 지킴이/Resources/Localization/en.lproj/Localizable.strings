@@ -429,3 +429,13 @@
 "ra.item.status" = "Action Status";
 "ra.items.empty" = "No items added yet";
 "ra.itemCount" = "%lld items";
+
+/* Risk Assessment methods 2/2 (체크리스트법 + JSA) — WO-2b */
+"ra.method.checklist" = "Checklist";
+"ra.method.jsa" = "JSA / JHA";
+"ra.seedFromInspection" = "Seed from inspection";
+"ra.pickInspection" = "Select a completed inspection";
+"ra.noCompletedInspections" = "No completed inspections";
+"ra.seededFromInspection" = "Linked to inspection";
+"ra.jsa.step" = "Job Step";
+"ra.jsa.addStep" = "Add Step";

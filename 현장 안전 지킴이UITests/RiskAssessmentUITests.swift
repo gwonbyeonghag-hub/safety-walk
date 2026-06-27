@@ -68,6 +68,7 @@ final class RiskAssessmentUITests: XCTestCase {
     func testThreeLevelEditor() throws {
         let app = launchApp()
         openCreate(app)
+        app.buttons["ra_method_picker"].tap()                       // open method menu (4 methods)
         app.buttons["3단계"].firstMatch.tap()                       // switch method
         app.buttons["항목 추가"].tap()
 

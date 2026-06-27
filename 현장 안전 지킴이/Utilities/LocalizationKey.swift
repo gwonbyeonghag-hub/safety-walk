@@ -279,6 +279,16 @@ enum LocalizationKey: String {
     case raItemsEmpty           = "ra.items.empty"
     case raItemCountFormat      = "ra.itemCount"
 
+    // MARK: - Risk Assessment methods 2/2 (체크리스트법 + JSA) — WO-2b
+    case raMethodChecklist      = "ra.method.checklist"
+    case raMethodJSA            = "ra.method.jsa"
+    case raSeedFromInspection   = "ra.seedFromInspection"
+    case raPickInspection       = "ra.pickInspection"
+    case raNoCompletedInspections = "ra.noCompletedInspections"
+    case raSeededFromInspection = "ra.seededFromInspection"
+    case raJsaStep              = "ra.jsa.step"
+    case raJsaAddStep           = "ra.jsa.addStep"
+
     var localized: String {
         // Resolve through the app's selected language bundle (LocalizationManager) so a
         // live language toggle re-renders every string without an app restart.

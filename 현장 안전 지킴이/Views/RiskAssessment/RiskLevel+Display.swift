@@ -39,7 +39,14 @@ extension RiskAssessmentMethod {
         switch self {
         case .threeLevel:        return LocalizationKey.raMethodThreeLevel.localized
         case .frequencySeverity: return LocalizationKey.raMethodFreqSeverity.localized
+        case .checklist:         return LocalizationKey.raMethodChecklist.localized
+        case .jsa:               return LocalizationKey.raMethodJSA.localized
         }
+    }
+
+    /// "공정·작업" for most methods; "작업 단계" (Job Step) for JSA.
+    var taskFieldLabel: String {
+        self == .jsa ? LocalizationKey.raJsaStep.localized : LocalizationKey.raItemTask.localized
     }
 }
 

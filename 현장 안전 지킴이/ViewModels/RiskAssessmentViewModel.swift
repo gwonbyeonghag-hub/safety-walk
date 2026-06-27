@@ -15,8 +15,10 @@ final class RiskAssessmentViewModel {
     var selectedSite: Site?
     var assessorName: String = ""
     var note: String = ""
+    /// Set when items were seeded from a completed Inspection (체크리스트법).
+    var linkedInspectionId: UUID?
 
-    // MARK: - Draft items (value type until persisted)
+    // MARK: - Draft items (value type until persisted; array order = sortOrder on save)
     var draftItems: [DraftItem] = []
 
     /// Matrix is data (CLAUDE.md): swapping to 5×5 later means a different config only.
@@ -42,6 +44,7 @@ final class RiskAssessmentViewModel {
         var hasDueDate = false
         var dueDate = Date()
         var status: CorrectiveActionStatus = .notStarted
+        var linkedHazardId: UUID?       // carried over when seeded from a checklist item
     }
 
     // MARK: - Derived
@@ -52,13 +55,9 @@ final class RiskAssessmentViewModel {
     /// Resolved 위험성 수준 for a draft under the current method.
     /// threeLevel → user's direct choice; frequencySeverity → derived from the matrix.
     func resolvedLevel(for item: DraftItem) -> RiskLevel {
-        switch method {
-        case .threeLevel:
-            return item.directRiskLevel
-        case .frequencySeverity:
-            guard let l = item.likelihood, let s = item.severity else { return .low }
-            return matrix.band(likelihood: l, severity: s)
-        }
+        guard method.usesFrequencySeverity else { return item.directRiskLevel }
+        guard let l = item.likelihood, let s = item.severity else { return .low }
+        return matrix.band(likelihood: l, severity: s)
     }
 
     /// Frequency×severity score for display (nil until both inputs chosen).
@@ -84,6 +83,35 @@ final class RiskAssessmentViewModel {
         }
     }
 
+    // MARK: - 체크리스트법: seed from a completed Inspection
+
+    /// Seeds draft items from a completed inspection's **failed (부적합)** checklist
+    /// items: the localized item title becomes the hazard, its category the task,
+    /// any note the current control. Risk is seeded from a linked Hazard's level
+    /// when present, else 보통 (a Fail warrants attention) — the user can adjust.
+    /// Template keys are resolved to literal text via `L(...)` (a text copy).
+    func seedFromInspection(_ inspection: Inspection) {
+        linkedInspectionId = inspection.id
+        let hazardsById = Dictionary(inspection.hazards.map { ($0.id, $0) },
+                                     uniquingKeysWith: { first, _ in first })
+        let failItems = inspection.items
+            .filter { $0.result == .fail }
+            .sorted { $0.sortOrder < $1.sortOrder }
+        for ci in failItems {
+            var d = DraftItem()
+            d.taskDescription = L(ci.category)
+            d.hazardDescription = L(ci.title)
+            d.currentControls = ci.note ?? ""
+            d.linkedHazardId = ci.linkedHazardId
+            if let hid = ci.linkedHazardId, let hz = hazardsById[hid] {
+                d.directRiskLevel = hz.riskLevel
+            } else {
+                d.directRiskLevel = .medium
+            }
+            draftItems.append(d)
+        }
+    }
+
     // MARK: - Persist
     func save(context: ModelContext) {
         let assessment = RiskAssessment(
@@ -92,13 +120,14 @@ final class RiskAssessmentViewModel {
             siteId: selectedSite?.id,
             siteName: selectedSite?.name ?? "",
             assessorName: assessorName.trimmingCharacters(in: .whitespaces),
-            note: note.trimmedOrNil
+            note: note.trimmedOrNil,
+            linkedInspectionId: linkedInspectionId
         )
         context.insert(assessment)
 
-        let isFreq = (method == .frequencySeverity)
+        let isFreq = method.usesFrequencySeverity
         var items: [RiskAssessmentItem] = []
-        for d in draftItems {
+        for (index, d) in draftItems.enumerated() {
             let item = RiskAssessmentItem(
                 taskDescription: d.taskDescription.trimmingCharacters(in: .whitespaces),
                 hazardDescription: d.hazardDescription.trimmingCharacters(in: .whitespaces),
@@ -110,7 +139,9 @@ final class RiskAssessmentViewModel {
                 postRiskLevel: d.postRiskLevel,
                 responsibleName: d.responsibleName.trimmedOrNil,
                 dueDate: d.hasDueDate ? d.dueDate : nil,
-                correctiveActionStatus: d.status
+                correctiveActionStatus: d.status,
+                linkedHazardId: d.linkedHazardId,
+                sortOrder: index
             )
             context.insert(item)
             items.append(item)

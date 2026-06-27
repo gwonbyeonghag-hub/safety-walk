@@ -42,15 +42,16 @@ struct RiskAssessmentItemEditorView: View {
         NavigationStack {
             Form {
                 Section {
-                    LabeledField(LocalizationKey.raItemTask.localized, text: $draft.taskDescription)
+                    LabeledField(method.taskFieldLabel, text: $draft.taskDescription)
                     LabeledField(LocalizationKey.raItemHazard.localized, text: $draft.hazardDescription)
                     LabeledField(LocalizationKey.raItemCurrentControls.localized, text: $draft.currentControls)
                 }
 
                 Section(LocalizationKey.raItemRiskLevel.localized) {
-                    switch method {
-                    case .threeLevel:    threeLevelInput
-                    case .frequencySeverity: freqSeverityInput
+                    if method.usesFrequencySeverity {
+                        freqSeverityInput
+                    } else {
+                        threeLevelInput
                     }
                 }
 
