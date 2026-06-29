@@ -43,7 +43,8 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·WO-1·WO-2·WO-2b ✅ 완료 (위험성평가 4기법) · WO-3(CloudKit) 🔴 OPEN(Apple 계정 활성화 후) · 이후 WO-4 macOS.**
+**WO-0·WO-1·WO-2·WO-2b ✅ 완료 · WO-5 iOS 디자인 폴리시 🔴 OPEN(계정 대기 중 진행) · WO-3 CloudKit(계정 활성화 후) · 이후 WO-4 macOS · 리포트.**
+(번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 WO-5를 먼저.)
 
 ---
 
@@ -504,6 +505,61 @@ iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지*
 **main에서 새 브랜치 `wo3-cloudkit`**. WO-1 handoff 형식 + **2기기 동기화 스크린샷**으로 보고 → 플래너 검수.
 
 **WO-3 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
+
+---
+
+## WO-5 — iOS 디자인 폴리시 (DESIGN_DIRECTION 적용) 🔴 OPEN
+
+> **신규 기능 아님 = 시각 폴리시.** `DESIGN_DIRECTION.md`를 기존 iOS 화면에 입혀 **시각 언어를 확립**한다.
+> 방법은 위키 `frontend-design-agent-workflow`의 Bundled Polish + Visual QA. **Apple 계정 무관 → 대기 중 진행.**
+> 리포트는 다음 WO(언어 확립 후 재사용). 성공기준은 "동작 중립 + 시각 일관" (WO-1 추출과 같은 결).
+
+### 배경 / 목적
+`DESIGN_DIRECTION.md`에서 정체성 확정: **신뢰·명료·현장감 / 시그니처 = 위험등급 컬러 시스템 / navy+orange 쿨·웜 분리 / Apple HIG liquid-glass**. 이제 기존 iOS 화면에 이 언어를 **일관 적용**한다. 이 언어가 이후 macOS(WO-4)·리포트의 토대.
+
+### 목표 (verifiable)
+기존 iOS 화면이 `DESIGN_DIRECTION.md`를 따른다: 위험등급 칩 시스템 일관, 쿨/웜 팔레트 분리, SF Pro + **monospaced 숫자**, liquid-glass 위험 칩, dense-calm. **동작 변화 0(시각만). 기존 64테스트 회귀 0.**
+
+### 스코프
+**✅ 포함:**
+- **재사용 위험 칩/레일 컴포넌트**(SwiftUI) 생성 → 위험 표시 전부 통일(홈 위험 레일·위험요인 배지·위험성평가 밴드·빈도×강도 점수 칩). 반투명 liquid-glass 머티리얼. **← 시그니처.**
+- **팔레트 쿨/웜 분리**: 인터랙티브 **액센트 = navy/blue**(현재 `AccentColor.colorset` 확인 후 쿨로 교체). **오렌지는 위험-보통 의미 전용**, green=완료 전용. ⚠️ 앱 전역 영향 → 라이트/다크 스샷으로 확인.
+- **타이포**: SF Pro 역할(display/body/utility) + **숫자 monospaced digits**(위험점수·홈 카운트·날짜 정렬).
+- HIG liquid-glass 머티리얼을 위험 칩(필요시 카드)에 일관 적용.
+- `DESIGN_DIRECTION.md` §3 **템플릿 미감 기본값 제거**(불필요 gradient/orb, 의미 없는 마커 등).
+- (가벼움) UI 문구 **명백한 위반만** 수정(§5) — 전면 재작성 아님.
+- **`design-visual-qa` 루프**: 화면별 렌더→스크린샷→`DESIGN_DIRECTION` §2 자기비판·§3 금지목록으로 비평→다듬기(라이트+다크).
+
+**⛔ 제외:** 리포트(다음 WO — 단 위험 칩은 재사용 가능하게 설계) · macOS(WO-4) · CloudKit(WO-3) · 신규 기능 · 모델/로직 변경 · 문구 전면 재작성.
+
+**🚫 금지:** 모델/로직/**동작 변경**(시각만), 위험색을 장식으로 사용, 시그니처 외 대담 요소 추가(경쟁 금지).
+
+### 대상 화면
+`Views/` Home · Inspection · Hazard · History · Settings · Onboarding · RiskAssessment. (Export=리포트 제외.)
+
+### 완료 조건 (증거 필수)
+- [ ] 재사용 위험 칩/레일 컴포넌트 + **위험 표시 전부 그걸로 통일**
+- [ ] `AccentColor` = 쿨(navy/blue), 오렌지=위험-보통 전용 (앱 전역, 라이트/다크 스샷)
+- [ ] 숫자 monospaced(점수·카운트·날짜)
+- [ ] 주요 화면 `design-visual-qa` 통과 — **전/후 스샷(라이트+다크)**, `DESIGN_DIRECTION` 일치
+- [ ] §3 템플릿 미감 기본값 잔존 0
+- [ ] **동작 변화 0**: 모델/로직 무변경, 앱 빌드 green, 기존 64테스트 회귀 0
+- [ ] 문구 손댔으면 EN/KO 패리티
+- [ ] 보고: 칩 컴포넌트·팔레트 변경·타이포·화면별 전후 스샷
+
+### 중단 조건
+- 폴리시가 모델/로직 변경을 요구 / 액센트 변경이 예기치 않게 깨짐 / `design-visual-qa`가 폴리시를 넘어선 구조 재설계를 요구 → 멈추고 보고.
+
+### Skills
+`/design-visual-qa`(핵심 — 렌더→스샷→비평 루프) · `/screen-implementation-review` · `/navigation-qa` · `/swiftui-build-qa` · `/safetywalk-qa-guardrails`. 막히면 `/diagnose`, 완료/중단 전 `/handoff`.
+
+### 진행 / 보고
+**main에서 새 브랜치 `wo5-ios-design-polish`.** WO-1 handoff 형식 + **화면별 전후 스크린샷(라이트/다크)**으로 보고 → 플래너 검수.
+
+**WO-5 결과:**
 - 상태: ☐ 미착수
 - 요약:
 - 증거 위치:
