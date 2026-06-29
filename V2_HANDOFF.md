@@ -43,8 +43,8 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·WO-1·WO-2·WO-2b ✅ 완료 · WO-5 iOS 디자인 폴리시 🔴 OPEN(계정 대기 중 진행) · WO-3 CloudKit(계정 활성화 후) · 이후 WO-4 macOS · 리포트.**
-(번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 WO-5를 먼저.)
+**WO-0·1·2·2b·5 ✅ 완료 (위험성평가 4기법 + iOS 디자인 언어 확립) · 다음 = 리포트 폴리시(계정 무관) 또는 WO-3 CloudKit(계정 활성화 후) · 이후 WO-4 macOS.**
+(번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
 ---
 
@@ -511,7 +511,7 @@ iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지*
 
 ---
 
-## WO-5 — iOS 디자인 폴리시 (DESIGN_DIRECTION 적용) 🔴 OPEN
+## WO-5 — iOS 디자인 폴리시 (DESIGN_DIRECTION 적용) ✅ DONE (검수 통과 2026-06-27)
 
 > **신규 기능 아님 = 시각 폴리시.** `DESIGN_DIRECTION.md`를 기존 iOS 화면에 입혀 **시각 언어를 확립**한다.
 > 방법은 위키 `frontend-design-agent-workflow`의 Bundled Polish + Visual QA. **Apple 계정 무관 → 대기 중 진행.**
@@ -559,10 +559,14 @@ iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지*
 ### 진행 / 보고
 **main에서 새 브랜치 `wo5-ios-design-polish`.** WO-1 handoff 형식 + **화면별 전후 스크린샷(라이트/다크)**으로 보고 → 플래너 검수.
 
-**WO-5 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+**WO-5 결과: ✅ 완료 (실행자 수행 + 플래너 검수 통과, 2026-06-27)**
+- 브랜치 `wo5-ios-design-polish` → main 머지: `381e7dc` 폴리시(시각만), `122bfb8` 스샷 투어 테스트
+- **시그니처**: `Views/Components/RiskIndicator.swift` — `RiskChip`(`.ultraThinMaterial` liquid-glass + 위험색 틴트 + dot/라벨), `RiskDot`(레일/분포). 위험 표시 전부 통일, 흩어진 `riskColor()/riskLabel()` 6벌 → 단일 소스.
+- **팔레트**: `AccentColor` navy(라이트)/blue(다크). in-progress 배지 orange→blue, RA 아이콘/버튼 쿨. **오렌지=위험-보통 전용**, green=완료 전용.
+- 타이포: monospaced 숫자(카운트·진행·점수).
+- **플래너 독립 검증**: SafetyWalkCore **0 변경(코어 무오염)** · 모델 0 · HomeViewModel은 색만(`.orange→.blue`) · 앱 **BUILD SUCCEEDED** · 테스트 64 회귀 0. **스크린샷 직접 확인**: 홈(다크) navy 액센트·green 안정·dense-calm / RA 상세(라이트) liquid-glass 위험칩(골드·주황·빨강)·면책·monospaced → `DESIGN_DIRECTION` 일치.
+- 잔여(경미, 수용): 개별 전/후 풀캡처는 홈·온보딩·RA 중심. Hazard/Inspection/History/Settings는 전역 팔레트+통일 컴포넌트가 적용되나 개별 스샷 미캡처 — 투어 테스트로 확장 가능.
+→ **iOS 시각 언어(위험칩 시스템·쿨/웜·HIG liquid-glass) 확립.** macOS(WO-4)·리포트의 토대.
 
 ---
 
