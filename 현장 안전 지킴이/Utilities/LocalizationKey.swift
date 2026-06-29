@@ -289,6 +289,18 @@ enum LocalizationKey: String {
     case raJsaStep              = "ra.jsa.step"
     case raJsaAddStep           = "ra.jsa.addStep"
 
+    // MARK: - Reports (WO-5b)
+    case reportRaTitle          = "report.ra.title"
+    case reportNo               = "report.no"
+    case reportRaOwner          = "report.ra.owner"
+    case reportInspectionTitle  = "report.inspection.title"
+    case reportJhaTitle         = "report.jha.title"
+    case reportJhaStep          = "report.jha.step"
+    case reportJhaJobStep       = "report.jha.jobStep"
+    case reportJhaHazards       = "report.jha.hazards"
+    case reportJhaControls      = "report.jha.controls"
+    case reportJhaRisk          = "report.jha.risk"
+
     var localized: String {
         // Resolve through the app's selected language bundle (LocalizationManager) so a
         // live language toggle re-renders every string without an app restart.

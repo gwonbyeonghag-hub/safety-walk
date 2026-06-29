@@ -439,3 +439,15 @@
 "ra.seededFromInspection" = "점검 연계됨";
 "ra.jsa.step" = "작업 단계";
 "ra.jsa.addStep" = "단계 추가";
+
+/* Reports — WO-5b */
+"report.ra.title" = "위험성평가표";
+"report.no" = "번호";
+"report.ra.owner" = "담당·기한";
+"report.inspection.title" = "점검 리포트";
+"report.jha.title" = "작업위험성분석(JHA)";
+"report.jha.step" = "단계";
+"report.jha.jobStep" = "작업 단계";
+"report.jha.hazards" = "유해·위험요인";
+"report.jha.controls" = "현재·권장 조치";
+"report.jha.risk" = "위험성";

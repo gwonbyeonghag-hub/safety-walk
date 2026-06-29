@@ -439,3 +439,15 @@
 "ra.seededFromInspection" = "Linked to inspection";
 "ra.jsa.step" = "Job Step";
 "ra.jsa.addStep" = "Add Step";
+
+/* Reports — WO-5b */
+"report.ra.title" = "Risk Assessment Sheet";
+"report.no" = "No.";
+"report.ra.owner" = "Owner / Due";
+"report.inspection.title" = "Inspection Report";
+"report.jha.title" = "Job Hazard Analysis (JHA)";
+"report.jha.step" = "Step";
+"report.jha.jobStep" = "Job Step";
+"report.jha.hazards" = "Hazards";
+"report.jha.controls" = "Controls / Recommended";
+"report.jha.risk" = "Risk";
