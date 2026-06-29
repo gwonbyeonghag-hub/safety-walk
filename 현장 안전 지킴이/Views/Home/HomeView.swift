@@ -108,7 +108,11 @@ struct HomeView: View {
                 .padding(.vertical, 10)
             }
         }
-        .background(railAccent.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+        .background {
+            RoundedRectangle(cornerRadius: 14)
+                .fill(railAccent.opacity(0.10))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        }
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .strokeBorder(railAccent.opacity(0.22), lineWidth: 1)
@@ -124,10 +128,8 @@ struct HomeView: View {
         let count = openCount(level)
         return VStack(spacing: 4) {
             HStack(spacing: 5) {
-                Image(systemName: "circle.fill")
-                    .font(.system(size: 9))
-                    .foregroundStyle(riskColor(level))
-                Text(riskLabel(level))
+                RiskDot(level: level, size: 9)
+                Text(level.localizedLabel)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -138,7 +140,7 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(riskLabel(level)) \(count)")
+        .accessibilityLabel("\(level.localizedLabel) \(count)")
     }
 
     // MARK: - Inspection summary (compact, one surface)
@@ -211,7 +213,7 @@ struct HomeView: View {
             HStack(spacing: 12) {
                 Image(systemName: "list.clipboard.fill")
                     .font(.title3)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.accentColor)
                     .frame(width: 28)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
@@ -272,23 +274,6 @@ struct HomeView: View {
         .padding(.vertical, 32)
     }
 
-    // MARK: - Risk helpers (DOMAIN_TERMS: low=yellow, medium=orange, high=red)
-
-    private func riskColor(_ level: RiskLevel) -> Color {
-        switch level {
-        case .low:    return .riskLow
-        case .medium: return .orange
-        case .high:   return .red
-        }
-    }
-
-    private func riskLabel(_ level: RiskLevel) -> String {
-        switch level {
-        case .low:    return LocalizationKey.riskLow.localized
-        case .medium: return LocalizationKey.riskMedium.localized
-        case .high:   return LocalizationKey.riskHigh.localized
-        }
-    }
 }
 
 // MARK: - InspectionRowView

@@ -121,6 +121,7 @@ struct InspectionSummaryView: View {
         VStack(spacing: 4) {
             Text("\(value)")
                 .font(.title2.bold())
+                .monospacedDigit()
                 .foregroundStyle(color)
             Text(label)
                 .font(.caption)
@@ -152,6 +153,7 @@ struct InspectionSummaryView: View {
         VStack(spacing: 4) {
             Text("\(count)")
                 .font(.title2.bold())
+                .monospacedDigit()
                 .foregroundStyle(count > 0 ? color : Color(.systemGray))
             Text(label)
                 .font(.caption)

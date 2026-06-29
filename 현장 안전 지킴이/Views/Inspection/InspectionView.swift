@@ -101,11 +101,11 @@ private struct ActiveInspectionRowView: View {
                 Spacer(minLength: 8)
                 Text(LocalizationKey.inspectionStatusInProgress.localized)
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(Color.orange)
+                    .foregroundStyle(Color.blue)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background {
-                        Capsule().fill(Color.orange.opacity(0.12))
+                        Capsule().fill(Color.blue.opacity(0.12))
                     }
             }
 

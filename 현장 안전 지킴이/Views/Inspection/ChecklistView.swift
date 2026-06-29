@@ -166,6 +166,7 @@ private struct CategoryRow: View {
                 HStack(spacing: 6) {
                     Text("\(checkedCount) / \(total)")
                         .font(.caption)
+                        .monospacedDigit()
                         .foregroundStyle(.secondary)
 
                     if failedCount > 0 {
@@ -386,7 +387,6 @@ struct ChecklistItemRow: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
-                .tint(Color.orange)
             }
         }
     }

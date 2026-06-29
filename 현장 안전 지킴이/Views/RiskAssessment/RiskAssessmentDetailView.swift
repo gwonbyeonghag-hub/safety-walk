@@ -95,7 +95,7 @@ private struct ItemDetailRow: View {
                     }
                 }
                 Spacer(minLength: 8)
-                RiskBandChip(level: item.riskLevel)
+                RiskChip(level: item.riskLevel)
             }
 
             if method.usesFrequencySeverity, let l = item.likelihood, let s = item.severity {

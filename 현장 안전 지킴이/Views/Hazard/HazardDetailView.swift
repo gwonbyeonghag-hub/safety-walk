@@ -45,9 +45,7 @@ struct HazardDetailView: View {
             LabeledContent(LocalizationKey.hazardType.localized,
                            value: typeLabel(hazard.type))
             LabeledContent(LocalizationKey.hazardRiskLevel.localized) {
-                Text(riskLabelString(hazard.riskLevel))
-                    .foregroundStyle(riskColor(hazard.riskLevel))
-                    .fontWeight(.semibold)
+                RiskChip(level: hazard.riskLevel)
             }
         }
     }
@@ -107,22 +105,6 @@ struct HazardDetailView: View {
         case .chemical:   return LocalizationKey.hazardTypeChemical.localized
         case .general:    return LocalizationKey.hazardTypeGeneral.localized
         case .other:      return LocalizationKey.hazardTypeOther.localized
-        }
-    }
-
-    private func riskLabelString(_ level: RiskLevel) -> String {
-        switch level {
-        case .low:    return LocalizationKey.riskLow.localized
-        case .medium: return LocalizationKey.riskMedium.localized
-        case .high:   return LocalizationKey.riskHigh.localized
-        }
-    }
-
-    private func riskColor(_ level: RiskLevel) -> Color {
-        switch level {
-        case .low:    return .riskLow
-        case .medium: return .orange
-        case .high:   return .red
         }
     }
 

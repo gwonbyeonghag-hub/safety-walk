@@ -130,7 +130,7 @@ struct RiskAssessmentItemEditorView: View {
                 if let score = derivedScore, let level = derivedLevel {
                     Text("\(score)")
                         .font(.subheadline.weight(.semibold)).monospacedDigit()
-                    RiskBandChip(level: level)
+                    RiskChip(level: level)
                 } else {
                     Text("—").foregroundStyle(.secondary)
                 }
@@ -152,20 +152,6 @@ struct RiskAssessmentItemEditorView: View {
             .labelsHidden()
             .accessibilityIdentifier(identifier)
         }
-    }
-}
-
-/// Small risk-level color chip (band) reused across the feature.
-struct RiskBandChip: View {
-    let level: RiskLevel
-    var body: some View {
-        Text(level.localizedLabel)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(level.uiColor, in: Capsule())
-            .accessibilityLabel(level.localizedLabel)
     }
 }
 

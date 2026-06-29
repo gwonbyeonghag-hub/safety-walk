@@ -42,6 +42,6 @@ final class HomeViewModel {
     }
 
     func statusColor(for inspection: Inspection) -> Color {
-        inspection.status == .completed ? .green : .orange
+        inspection.status == .completed ? .green : .blue
     }
 }

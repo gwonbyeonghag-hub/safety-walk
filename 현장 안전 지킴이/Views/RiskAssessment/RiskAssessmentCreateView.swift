@@ -189,7 +189,7 @@ private struct DraftItemRow: View {
                 }
             }
             Spacer(minLength: 8)
-            RiskBandChip(level: level)
+            RiskChip(level: level)
         }
     }
 }

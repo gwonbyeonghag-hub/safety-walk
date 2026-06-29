@@ -256,14 +256,7 @@ private struct HazardRowView: View {
     }
 
     private var riskBadge: some View {
-        Text(riskLabel(hazard.riskLevel))
-            .font(.caption.weight(.semibold))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .foregroundStyle(riskColor(hazard.riskLevel))
-            .background {
-                Capsule().fill(riskColor(hazard.riskLevel).opacity(0.12))
-            }
+        RiskChip(level: hazard.riskLevel)
     }
 
     private var statusBadge: some View {
@@ -280,22 +273,6 @@ private struct HazardRowView: View {
     private func loadThumbnail() {
         guard thumbnail == nil, !hazard.photoPath.isEmpty else { return }
         thumbnail = PhotoStorageService().load(relativePath: hazard.photoPath)
-    }
-
-    private func riskLabel(_ level: RiskLevel) -> String {
-        switch level {
-        case .low:    return LocalizationKey.riskLow.localized
-        case .medium: return LocalizationKey.riskMedium.localized
-        case .high:   return LocalizationKey.riskHigh.localized
-        }
-    }
-
-    private func riskColor(_ level: RiskLevel) -> Color {
-        switch level {
-        case .low:    return .riskLow
-        case .medium: return .orange
-        case .high:   return .red
-        }
     }
 
     private func statusLabel(_ status: CorrectiveActionStatus) -> String {

@@ -111,7 +111,7 @@ struct RiskAssessmentRowView: View {
                         let c = count(level)
                         if c > 0 {
                             HStack(spacing: 4) {
-                                Circle().fill(level.uiColor).frame(width: 8, height: 8)
+                                RiskDot(level: level)
                                 Text("\(c)")
                                     .font(.caption2).monospacedDigit()
                                     .foregroundStyle(.secondary)

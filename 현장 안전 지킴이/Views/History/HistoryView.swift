@@ -144,12 +144,12 @@ private struct InspectionHistoryRowView: View {
         let isCompleted = inspection.status == .completed
         return Text(viewModel.statusLabel(for: inspection))
             .font(.caption.weight(.medium))
-            .foregroundStyle(isCompleted ? Color.green : Color.orange)
+            .foregroundStyle(isCompleted ? Color.green : Color.blue)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background {
                 Capsule()
-                    .fill(isCompleted ? Color.green.opacity(0.12) : Color.orange.opacity(0.12))
+                    .fill(isCompleted ? Color.green.opacity(0.12) : Color.blue.opacity(0.12))
             }
     }
 

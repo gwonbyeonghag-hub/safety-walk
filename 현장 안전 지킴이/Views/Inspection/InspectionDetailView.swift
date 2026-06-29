@@ -131,9 +131,9 @@ struct InspectionDetailView: View {
                     ? LocalizationKey.inspectionStatusCompleted.localized
                     : LocalizationKey.inspectionStatusInProgress.localized)
             .font(.caption.weight(.medium))
-            .foregroundStyle(isCompleted ? .green : .orange)
+            .foregroundStyle(isCompleted ? .green : .blue)
             .padding(.horizontal, 8).padding(.vertical, 3)
-            .background((isCompleted ? Color.green : Color.orange).opacity(0.12), in: Capsule())
+            .background((isCompleted ? Color.green : Color.blue).opacity(0.12), in: Capsule())
     }
 
     // MARK: - Progress
