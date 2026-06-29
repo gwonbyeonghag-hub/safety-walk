@@ -1,0 +1,137 @@
+import XCTest
+import SwiftData
+import UIKit
+import SafetyWalkCore
+@testable import 현장_안전_지킴이
+
+/// WO-5b: renders each report to a real PDF, asserts multi-page pagination, and attaches
+/// every page as an image for visual review. Uses XCTest for XCTAttachment.
+@MainActor
+final class ReportRenderingTests: XCTestCase {
+
+    private func makeContext() throws -> ModelContext {
+        let schema = Schema([RiskAssessment.self, RiskAssessmentItem.self,
+                             Inspection.self, ChecklistItem.self, Hazard.self])
+        return ModelContext(try ModelContainer(for: schema,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
+    }
+
+    /// Rasterizes each PDF page (UIKit, test-only) and attaches it; returns page count.
+    @discardableResult
+    private func attachPages(_ url: URL, name: String) -> Int {
+        guard let doc = CGPDFDocument(url as CFURL) else { XCTFail("no PDF at \(url)"); return 0 }
+        for i in 1...max(doc.numberOfPages, 1) {
+            guard let page = doc.page(at: i) else { continue }
+            let rect = page.getBoxRect(.mediaBox)
+            let fmt = UIGraphicsImageRendererFormat(); fmt.scale = 2
+            let image = UIGraphicsImageRenderer(size: rect.size, format: fmt).image { ctx in
+                UIColor.white.set(); ctx.fill(CGRect(origin: .zero, size: rect.size))
+                let cg = ctx.cgContext
+                cg.translateBy(x: 0, y: rect.size.height); cg.scaleBy(x: 1, y: -1)
+                cg.drawPDFPage(page)
+            }
+            let a = XCTAttachment(image: image)
+            a.name = "\(name)_p\(i)"; a.lifetime = .keepAlways; add(a)
+        }
+        return doc.numberOfPages
+    }
+
+    func testRiskAssessmentReportMultiPage() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                        siteName: "○○건설 1현장", assessorName: "홍길동")
+        ctx.insert(assessment)
+        var items: [RiskAssessmentItem] = []
+        for i in 0..<28 {
+            let l = (i % 3) + 1, s = ((i + 1) % 3) + 1
+            let level = RiskMatrixConfig.threeByThree.band(likelihood: l, severity: s)
+            let item = RiskAssessmentItem(
+                taskDescription: "공정 \(i + 1) — 작업 단계 기록",
+                hazardDescription: "유해·위험요인 상세 설명 \(i + 1)",
+                currentControls: "현재 안전조치 \(i + 1)",
+                likelihood: l, severity: s, riskLevel: level,
+                reductionMeasure: "감소대책 항목 \(i + 1)",
+                responsibleName: "담당\(i + 1)", dueDate: Date(),
+                correctiveActionStatus: .notStarted, sortOrder: i)
+            ctx.insert(item); items.append(item)
+        }
+        assessment.items = items
+        try? ctx.save()
+
+        let url = try XCTUnwrap(RiskAssessmentReport.pdfURL(for: assessment), "report URL nil")
+        let pages = attachPages(url, name: "risk_assessment")
+        XCTAssertGreaterThanOrEqual(pages, 2, "28 rows should paginate to ≥2 A4 pages")
+    }
+
+    func testJHAReportMultiPage() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .jsa,
+                                        siteName: "Plant A — Line 2", assessorName: "J. Park")
+        ctx.insert(assessment)
+        var items: [RiskAssessmentItem] = []
+        for i in 0..<22 {
+            let l = (i % 3) + 1, s = ((i + 2) % 3) + 1
+            let level = RiskMatrixConfig.threeByThree.band(likelihood: l, severity: s)
+            let item = RiskAssessmentItem(
+                taskDescription: "Job step \(i + 1): position and secure equipment",
+                hazardDescription: "Pinch point / falling object hazard \(i + 1)",
+                currentControls: "LOTO; barricade exclusion zone \(i + 1)",
+                likelihood: l, severity: s, riskLevel: level,
+                reductionMeasure: "Add spotter; PPE check \(i + 1)",
+                sortOrder: i)
+            ctx.insert(item); items.append(item)
+        }
+        assessment.items = items
+        try? ctx.save()
+
+        let url = try XCTUnwrap(JHAReport.pdfURL(for: assessment), "JHA URL nil")
+        let pages = attachPages(url, name: "jha")
+        XCTAssertGreaterThanOrEqual(pages, 2, "22 steps should paginate to ≥2 Letter pages")
+    }
+
+    func testInspectionReportMultiPage() throws {
+        let ctx = try makeContext()
+        let insp = Inspection(siteId: UUID(), siteName: "○○현장", areaName: "1층 전기실",
+                              inspectorName: "김점검", templateId: "t")
+        insp.status = .completed
+        ctx.insert(insp)
+
+        var items: [ChecklistItem] = []
+        var order = 0
+        for category in ["checklist.category.electrical", "checklist.category.fire", "checklist.category.ppe"] {
+            for j in 0..<9 {
+                let item = ChecklistItem(inspectionId: insp.id, templateItemId: "t\(order)",
+                                         title: "점검 항목 \(order + 1)", category: category, sortOrder: order)
+                item.result = j % 3 == 0 ? .fail : (j % 3 == 1 ? .pass : .notApplicable)
+                if j == 0 { item.note = "비고: 추가 확인 필요 \(order)" }
+                ctx.insert(item); items.append(item); insp.items.append(item); order += 1
+            }
+        }
+
+        let photo = dummyImage()
+        var hazardPhotos: [UUID: UIImage] = [:]
+        for k in 0..<4 {
+            let level: RiskLevel = [.low, .medium, .high][k % 3]
+            let hazard = Hazard(siteId: insp.siteId, location: "위치 \(k)", type: .electrical,
+                                riskLevel: level, hazardDescription: "유해위험요인 설명 \(k)",
+                                photoPath: "p\(k)", inspectionId: insp.id)
+            ctx.insert(hazard); insp.hazards.append(hazard); hazardPhotos[hazard.id] = photo
+        }
+        var itemPhotos: [UUID: UIImage] = [:]
+        for item in items where item.sortOrder % 9 == 0 { itemPhotos[item.id] = photo }
+        try? ctx.save()
+
+        let url = try XCTUnwrap(
+            InspectionReport.pdfURL(inspection: insp, itemPhotos: itemPhotos, hazardPhotos: hazardPhotos),
+            "inspection report URL nil")
+        let pages = attachPages(url, name: "inspection")
+        XCTAssertGreaterThanOrEqual(pages, 2, "27 items + photos + hazards should paginate to ≥2 pages")
+    }
+
+    private func dummyImage() -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: 320, height: 220)).image { ctx in
+            UIColor.systemTeal.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: 320, height: 220))
+        }
+    }
+}
