@@ -43,7 +43,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·1·2·2b·5 ✅ 완료 · WO-5b 리포트(풀 A4 멀티페이지) 🔴 OPEN(계정 무관, 다음) · WO-3 CloudKit(계정 활성화 후) · WO-4 macOS.**
+**WO-0·1·2·2b·5·5b ✅ 완료 (4기법 + iOS 디자인 언어 + 멀티페이지 리포트 엔진).** 남은 핵심 = **WO-3 CloudKit(계정 Pending)** → **WO-4 macOS**(리포트 엔진 재사용, WO-3 의존). 계정 무관 잔여 거의 소진.
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
 ---
@@ -570,7 +570,7 @@ iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지*
 
 ---
 
-## WO-5b — 리포트: 풀 A4/Letter 멀티페이지 엔진 + 위험성평가표·JHA 🔴 OPEN
+## WO-5b — 리포트: 풀 A4/Letter 멀티페이지 엔진 + 위험성평가표·JHA ✅ DONE (검수 통과 2026-06-27)
 
 > **공식 제출 문서**를 제대로 만든다. 현재 `ImageRenderer` 단일 긴 페이지로는 페이지 분할 불가(행 잘림) →
 > **페이지네이션 엔진을 새로 만드는 엔지니어링 WO**(폴리시 아님). **Apple 계정 무관 → 지금 진행.**
@@ -621,10 +621,13 @@ iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지*
 ### 진행 / 보고
 **main에서 새 브랜치 `wo5b-reports`.** 단계(①→②→③→④)별로 진전, 각 단계 검증. WO-1 handoff 형식 + **≥2페이지 PDF 증거(각 리포트)** 로 보고 → 플래너 검수.
 
-**WO-5b 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+**WO-5b 결과: ✅ 완료 (실행자 수행 + 플래너 검수 통과, 2026-06-27)**
+- 브랜치 `wo5b-reports` → main 머지: `6ebfe4f` 엔진+리포트, `732ee4c` 테스트
+- **엔진**(`Views/Reports/ReportEngine`+`ReportComponents`): `ImageRenderer` + **Core Graphics PDF**(`CGDataConsumer/CGContext/beginPDFPage`, **UIKit 0**) → 크로스플랫폼, WO-4 재사용. 블록 **실측 높이**(추정 아님)로 청킹 → 행 비절단. 반복 navy 마스트헤드 + 컬럼헤더 + page n/k.
+- **리포트 3종**: 위험성평가표(KR A4, 28행→2p) · JHA(US Letter, 22단계→3p) · 점검(A4, 사진 →5p). 구 `InspectionReportView`(647줄) 제거, `exportPDF`가 엔진 사용.
+- 인쇄용(§7): solid 위험색 밴드 · navy 마스트헤드 · monospaced 숫자 · 흰 배경 · 모든 리포트 면책.
+- **플래너 독립 검증**: SafetyWalkCore 0 · 모델 0 · 엔진 UIKit 0(`CGContext` PDF 확인) · 앱 **BUILD SUCCEEDED** · 테스트 64+3 회귀 0. **PDF 직접 확인**: 위험성평가표 2p — navy 마스트헤드·반복 컬럼헤더·solid 위험밴드(점수)·monospaced·p2 면책 → `DESIGN_DIRECTION` §7 일치.
+→ **풀 멀티페이지 리포트 엔진(크로스플랫폼) 확립.** macOS(WO-4)가 그대로 재사용.
 
 ---
 
