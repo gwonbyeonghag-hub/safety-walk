@@ -43,7 +43,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·1·2·2b·5·5b ✅ 완료 (4기법 + iOS 디자인 언어 + 멀티페이지 리포트 엔진).** 남은 핵심 = **WO-3 CloudKit(계정 Pending)** → **WO-4 macOS**(리포트 엔진 재사용, WO-3 의존). 계정 무관 잔여 거의 소진.
+**WO-0·1·2·2b·5·5b ✅ 완료 (4기법 + iOS 디자인 언어 + 멀티페이지 리포트 엔진).** 진행 = **WO-4 macOS 셸 🔴 OPEN(계정 무관 — 대시보드·리포트, 시드 데이터)** · 대기 = **WO-3 CloudKit(계정 Pending — 동기화 연결)**. (WO-4 셸은 로컬/시드로 UI·리포트만; 기기 간 동기화는 WO-3.)
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
 ---
@@ -628,6 +628,60 @@ iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지*
 - 인쇄용(§7): solid 위험색 밴드 · navy 마스트헤드 · monospaced 숫자 · 흰 배경 · 모든 리포트 면책.
 - **플래너 독립 검증**: SafetyWalkCore 0 · 모델 0 · 엔진 UIKit 0(`CGContext` PDF 확인) · 앱 **BUILD SUCCEEDED** · 테스트 64+3 회귀 0. **PDF 직접 확인**: 위험성평가표 2p — navy 마스트헤드·반복 컬럼헤더·solid 위험밴드(점수)·monospaced·p2 면책 → `DESIGN_DIRECTION` §7 일치.
 → **풀 멀티페이지 리포트 엔진(크로스플랫폼) 확립.** macOS(WO-4)가 그대로 재사용.
+
+---
+
+## WO-4 — 네이티브 macOS 앱 (셸: 대시보드 + 리포트, 시드 데이터) 🔴 OPEN
+
+> D-1: **네이티브 macOS 별도 앱**(매니저 대시보드/리포트 허브). SafetyWalkCore + WO-5b 리포트 엔진 재사용.
+> **계정 무관 부분 먼저**: 타깃·대시보드·리포트를 **로컬/시드 데이터**로. WO-3(CloudKit)가 나중에 동기화만 연결.
+> ⚠️ 기기 간 동기화 검증은 WO-3까지 불가 — 시드로 UI·기능만 검증.
+
+### 배경 / 목적
+iOS는 현장 도구(대시보드 금지). **macOS = 매니저 대시보드 + 리포트 허브**(V2_ROADMAP AD-4). 아이폰이 기록한 데이터를 매니저가 Mac에서 조망·출력. 데이터 공유는 WO-3(CloudKit) 담당이나, **UI·리포트는 계정 없이 지금** 만든다(시드). WO-5 시각 언어 + WO-5b 리포트 엔진 재사용.
+
+### 목표 (verifiable)
+repo에 **네이티브 macOS 앱 타깃** 추가(SafetyWalkCore 의존), **대시보드 + 브라우즈 + 리포트 허브**가 시드 데이터로 동작. macOS 앱 빌드·실행, 대시보드 렌더, 리포트 생성/미리보기/PDF. **iOS 앱·SafetyWalkCore 무변경(추가만). 기존 64테스트 회귀 0.**
+
+### 스코프
+**✅ 포함 (단계화):**
+- **① macOS 앱 타깃** — 같은 repo/프로젝트에 별도 앱 product, SafetyWalkCore 의존. 번들 예 `com.safetywalk.macos`(iCloud 컨테이너는 WO-3에서 iOS와 공유 — 번들ID와 무관). **`#if DEBUG` 시드 데이터**(샘플 사이트/점검/위험요인/위험성평가) — 대시보드/리포트 개발·검증용.
+- **② 대시보드**(조망, AD-4 + DESIGN_DIRECTION): 사이트별 위험요인 **위험등급 분포(위험칩 언어)** · 미완료 시정조치 · 위험성평가 due(연1회) · 최근 점검. calm-dense, **macOS HIG**, navy/cool 액센트.
+- **③ 브라우즈**: 사이트·점검·위험요인·위험성평가 목록/상세(**읽기 중심**). `NavigationSplitView`(사이드바 + 디테일).
+- **④ 리포트 허브**: **WO-5b 엔진 재사용** — 위험성평가표·JHA·점검 리포트 **생성·미리보기·인쇄·PDF export**(큰 화면). 엔진은 크로스플랫폼(CG PDF)이라 재사용; **사진 로딩만 `#if os(macOS)` NSImage** 분기.
+- 현지화 KO/EN(신규 문자열 패리티).
+
+**⛔ 제외:** **CloudKit 동기화(WO-3)** — 단 `ModelContainer`는 WO-3가 CloudKit로 바꿀 수 있게 둔다 · **iOS 앱 변경** · 신규 기능/모델 · **macOS에서 현장 기록(점검/위험요인 생성)** 은 이 셸 밖(뷰+리포트 우선, 편집은 후속 WO).
+
+**🚫 금지:** SafetyWalkCore/iOS/모델 변경(macOS는 **추가만**), 위험색 장식 사용, 시드 데이터를 **릴리스 빌드에 포함**.
+
+### 리포트 엔진 재사용 (주의)
+- 엔진·RA表·JHA는 SwiftUI+CoreGraphics라 크로스플랫폼 → macOS 타깃에 **파일 공유(타깃 멤버십 추가)** 또는 가벼운 `Shared/` 이동으로 재사용. 점검 리포트 사진(UIImage)만 `#if os(macOS)` NSImage.
+- 공유가 **광범위 추출(공유 UI 패키지)** 을 요구하면 → **멈추고 보고**: 리포트를 별도 후속 WO로 분리하고 **대시보드·브라우즈 먼저** 마무리.
+
+### 완료 조건 (증거 필수)
+- [ ] macOS 앱 타깃 빌드·실행(SafetyWalkCore 의존), **시드 데이터로 대시보드 렌더**
+- [ ] 대시보드: 위험등급 분포 · 미조치 · RA due · 최근 점검(위험칩 언어)
+- [ ] 브라우즈: 사이트/점검/위험요인/위험성평가 목록·상세
+- [ ] 리포트 허브: 3종 생성·미리보기·PDF export(엔진 재사용)
+- [ ] macOS HIG · navy/cool 액센트 · `DESIGN_DIRECTION` 일치(스샷 라이트+다크)
+- [ ] **iOS 앱·SafetyWalkCore 무변경**(`git diff`로 확인 — macOS는 추가만), iOS 빌드·기존 64테스트 회귀 0
+- [ ] 시드 데이터 `#if DEBUG`(릴리스 미포함), 신규 문자열 EN/KO 패리티
+- [ ] 보고: 타깃 구성 · 대시보드 · 브라우즈 · 리포트 · 시드 방식 · macOS 스샷
+
+### 중단 조건
+- 리포트 엔진 공유가 광범위 추출 필요 → 멈추고 분리 제안 · macOS SwiftData/`NavigationSplitView` 벽 · 모델 변경 필요 · `ModelContainer` 설계가 WO-3 CloudKit와 상충 → 보고.
+
+### Skills
+`/design-visual-qa`(대시보드·리포트 macOS 렌더→스샷→§2/§3·§7 비평) · `/screen-implementation-review` · `/swiftui-build-qa` · `/safetywalk-qa-guardrails`. 막히면 `/diagnose`, 완료/중단 전 `/handoff`.
+
+### 진행 / 보고
+**main에서 새 브랜치 `wo4-macos-shell`.** 단계(①→②→③→④)별 진전, 각 검증. WO-1 handoff 형식 + **macOS 스샷(대시보드·리포트, 라이트/다크)** + **iOS 무변경 증거**로 보고 → 플래너 검수.
+
+**WO-4 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
 
 ---
 
