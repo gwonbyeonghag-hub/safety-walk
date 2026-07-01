@@ -451,3 +451,33 @@
 "report.jha.hazards" = "Hazards";
 "report.jha.controls" = "Controls / Recommended";
 "report.jha.risk" = "Risk";
+
+/* macOS manager shell — WO-4 */
+"mac.language" = "Language";
+"mac.section.dashboard" = "Dashboard";
+"mac.section.sites" = "Sites";
+"mac.section.inspections" = "Inspections";
+"mac.section.hazards" = "Hazards";
+"mac.section.riskAssessments" = "Risk Assessments";
+"mac.section.reports" = "Reports";
+"mac.dashboard.title" = "Manager Dashboard";
+"mac.stat.sites" = "Sites";
+"mac.stat.completedInspections" = "Completed";
+"mac.stat.openHazards" = "Open Hazards";
+"mac.stat.assessmentsDue" = "Assessments Due";
+"mac.riskDistribution" = "Risk by Site";
+"mac.openCorrectiveActions" = "Open Corrective Actions";
+"mac.assessmentsDue" = "Risk Assessments Due";
+"mac.recentInspections" = "Recent Inspections";
+"mac.noData" = "No data";
+"mac.noOpenItems" = "No open items";
+"mac.overdue" = "Overdue";
+"mac.dueSoon" = "Due soon";
+"mac.selectItem" = "Select an item on the left";
+"mac.areas" = "Areas";
+"mac.relatedInspections" = "Related Inspections";
+"mac.chooseReport" = "Choose a report";
+"mac.assessmentReports" = "Assessment Reports";
+"mac.inspectionReports" = "Inspection Reports";
+"mac.exportPDF" = "Export PDF";
+"mac.print" = "Print";

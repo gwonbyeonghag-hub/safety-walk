@@ -1,17 +1,29 @@
 import SwiftUI
-import UIKit
 import SafetyWalkCore
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
+
+/// Preloaded photo type — `UIImage` on iOS, `NSImage` on macOS (WO-4). Only the photo
+/// *type* diverges by platform; the report layout and the PDF engine are cross-platform.
+#if canImport(UIKit)
+typealias PlatformImage = UIImage
+#elseif canImport(AppKit)
+typealias PlatformImage = NSImage
+#endif
 
 /// 점검 리포트 (A4) — WO-5b migration to the multi-page engine. Category sections, item
 /// rows with result badges, evidence photos, and the hazards section — all as paginated
-/// blocks (photos included). Photos are preloaded UIImages (iOS); the engine itself is
-/// cross-platform.
+/// blocks (photos included). Photos are preloaded platform images; the engine itself is
+/// cross-platform (WO-4 reuses it on macOS with `NSImage`).
 @MainActor
 enum InspectionReport {
 
     static func pdfURL(inspection: Inspection,
-                       itemPhotos: [UUID: UIImage],
-                       hazardPhotos: [UUID: UIImage]) -> URL? {
+                       itemPhotos: [UUID: PlatformImage],
+                       hazardPhotos: [UUID: PlatformImage]) -> URL? {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("SafetyWalk-Inspection-\(inspection.id.uuidString).pdf")
         let dateText = inspection.startedAt.formatted(date: .abbreviated, time: .omitted)
@@ -134,9 +146,9 @@ enum InspectionReport {
         }
     }
 
-    private static func photoBlock(_ image: UIImage, caption: String) -> some View {
+    private static func photoBlock(_ image: PlatformImage, caption: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Image(uiImage: image)
+            reportImage(image)
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: 240, maxHeight: 170, alignment: .leading)
@@ -148,6 +160,16 @@ enum InspectionReport {
         }
         .padding(.horizontal, 8).padding(.vertical, 4)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Bridges the preloaded platform image into a SwiftUI `Image` (photo type is the
+    /// only platform-divergent part of the report — WO-4).
+    private static func reportImage(_ image: PlatformImage) -> Image {
+        #if canImport(UIKit)
+        Image(uiImage: image)
+        #elseif canImport(AppKit)
+        Image(nsImage: image)
+        #endif
     }
 
     // MARK: - Labels

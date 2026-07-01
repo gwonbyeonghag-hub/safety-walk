@@ -301,6 +301,36 @@ enum LocalizationKey: String {
     case reportJhaControls      = "report.jha.controls"
     case reportJhaRisk          = "report.jha.risk"
 
+    // MARK: - macOS manager shell (WO-4)
+    case macLanguage                    = "mac.language"
+    case macSectionDashboard            = "mac.section.dashboard"
+    case macSectionSites                = "mac.section.sites"
+    case macSectionInspections          = "mac.section.inspections"
+    case macSectionHazards              = "mac.section.hazards"
+    case macSectionRiskAssessments      = "mac.section.riskAssessments"
+    case macSectionReports              = "mac.section.reports"
+    case macDashboardTitle              = "mac.dashboard.title"
+    case macStatSites                   = "mac.stat.sites"
+    case macStatCompletedInspections    = "mac.stat.completedInspections"
+    case macStatOpenHazards             = "mac.stat.openHazards"
+    case macStatAssessmentsDue          = "mac.stat.assessmentsDue"
+    case macRiskDistribution            = "mac.riskDistribution"
+    case macOpenCorrectiveActions       = "mac.openCorrectiveActions"
+    case macAssessmentsDue              = "mac.assessmentsDue"
+    case macRecentInspections           = "mac.recentInspections"
+    case macNoData                      = "mac.noData"
+    case macNoOpenItems                 = "mac.noOpenItems"
+    case macOverdue                     = "mac.overdue"
+    case macDueSoon                     = "mac.dueSoon"
+    case macSelectItem                  = "mac.selectItem"
+    case macAreas                       = "mac.areas"
+    case macRelatedInspections          = "mac.relatedInspections"
+    case macChooseReport                = "mac.chooseReport"
+    case macAssessmentReports           = "mac.assessmentReports"
+    case macInspectionReports           = "mac.inspectionReports"
+    case macExportPDF                   = "mac.exportPDF"
+    case macPrint                       = "mac.print"
+
     var localized: String {
         // Resolve through the app's selected language bundle (LocalizationManager) so a
         // live language toggle re-renders every string without an app restart.
