@@ -45,7 +45,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·1·2·2b·5·5b ✅ 완료 (4기법 + iOS 디자인 언어 + 멀티페이지 리포트 엔진).** 진행 = **WO-4 macOS 셸 🔴 OPEN(계정 무관 — 대시보드·리포트, 시드 데이터)** · 대기 = **WO-3 CloudKit(계정 Pending — 동기화 연결)**. (WO-4 셸은 로컬/시드로 UI·리포트만; 기기 간 동기화는 WO-3.)
+**WO-0·1·2·2b·5·5b·4 ✅ 완료 (4기법 + iOS 디자인 언어 + 멀티페이지 리포트 엔진 + 네이티브 macOS 매니저 셸).** 남은 핵심 = **WO-3 CloudKit(계정 Pending — 컨테이너만 스왑하면 iPhone↔Mac 동기화 + v1 모델 retrofit)**. 이후 macOS 현장기록(생성/편집).
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
 ---
@@ -633,7 +633,7 @@ iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지*
 
 ---
 
-## WO-4 — 네이티브 macOS 앱 (셸: 대시보드 + 리포트, 시드 데이터) 🔴 OPEN
+## WO-4 — 네이티브 macOS 앱 (셸: 대시보드 + 리포트, 시드 데이터) ✅ DONE (검수 통과 2026-06-27)
 
 > D-1: **네이티브 macOS 별도 앱**(매니저 대시보드/리포트 허브). SafetyWalkCore + WO-5b 리포트 엔진 재사용.
 > **계정 무관 부분 먼저**: 타깃·대시보드·리포트를 **로컬/시드 데이터**로. WO-3(CloudKit)가 나중에 동기화만 연결.
@@ -680,10 +680,13 @@ repo에 **네이티브 macOS 앱 타깃** 추가(SafetyWalkCore 의존), **대�
 ### 진행 / 보고
 **main에서 새 브랜치 `wo4-macos-shell`.** 단계(①→②→③→④)별 진전, 각 검증. WO-1 handoff 형식 + **macOS 스샷(대시보드·리포트, 라이트/다크)** + **iOS 무변경 증거**로 보고 → 플래너 검수.
 
-**WO-4 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+**WO-4 결과: ✅ 완료 (실행자 수행 + 플래너 검수 통과, 2026-06-27)**
+- 브랜치 `wo4-macos-shell` → main 머지: `c2a7b49` 크로스플랫폼 사진타입+macOS 키, `108a818` macOS 셸. 20파일 +1831/−7.
+- **macOS 타깃 `SafetyWalkMac`**(`com.safetywalk.macos`, macOS 14, SafetyWalkCore 의존, 같은 프로젝트 추가만). `MacModelContainer` = **WO-3 CloudKit 단일 스왑 지점**(`#if DEBUG` 인메모리 시드).
+- **대시보드**(통계타일·현장별 위험분포·미조치·RA due·최근점검, 위험칩 언어) / **브라우즈**(NavigationSplitView, 읽기전용 현장·점검·위험요인·위험성평가) / **리포트 허브**(엔진 재사용, PDFKit 미리보기·NSSavePanel·NSPrintOperation).
+- 엔진 재사용 = **타깃 멤버십 공유(추출 아님, STOP 올바르게 회피)**. 사진만 `PlatformImage`(`#if canImport`) — iOS 경로 byte-동일.
+- **플래너 독립 검증**: SafetyWalkCore 소스 **0** · iOS는 사진가드+키만(로직 0) · 시드 `#if DEBUG` · EN/KO +30/+30 · **macOS BUILD SUCCEEDED · iOS BUILD SUCCEEDED · 코어 39/39, 회귀 0**. **스샷 직접 확인**: 관리 대시보드(라이트+다크) — 위험색 도트+monospaced 분포·미조치 위험칩·RA "기한 초과" 배지·navy 액센트·HIG. 리포트 PDF 3종(RA 2p·JHA 2p·점검 3p NSImage).
+→ **네이티브 macOS 매니저 셸 완성**(iOS 디자인 언어 + 리포트 엔진 재사용). WO-3가 컨테이너만 CloudKit로 스왑하면 iPhone↔Mac 동기화.
 
 ---
 
