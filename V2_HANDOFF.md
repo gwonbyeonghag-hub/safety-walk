@@ -45,7 +45,8 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·1·2·2b·5·5b·4 ✅ 완료 (4기법 + iOS 디자인 언어 + 멀티페이지 리포트 엔진 + 네이티브 macOS 매니저 셸).** 남은 핵심 = **WO-3 CloudKit(계정 Pending — 컨테이너만 스왑하면 iPhone↔Mac 동기화 + v1 모델 retrofit)**. 이후 macOS 현장기록(생성/편집).
+**WO-0·1·2·2b·5·5b·4 ✅ 완료 (4기법 + iOS 디자인 언어 + 멀티페이지 리포트 엔진 + 네이티브 macOS 매니저 셸).** 진행 = **WO-3 CloudKit 🔴 OPEN — 계정 Active ✅ 착수 가능**(iOS+macOS **두 앱** 컨테이너 CloudKit 스왑 → iPhone↔Mac 동기화 + v1 모델 5종 retrofit + 사진 동기화). 이후 macOS 현장기록·App Store 동시제출.
+> 📁 로컬 경로 변경: 프로젝트 폴더가 `02_개발/03_프로젝트/` → **`02_개발/02_프로젝트/`** 로 이동됨(2026-07-03, 손실 없음). GitHub 원격(`safety-walk`)이 안정 앵커.
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
 ---
@@ -434,11 +435,19 @@ iOS에서 **2기법으로 위험성평가표를 생성→항목입력→위험�
 
 ---
 
-## WO-3 — CloudKit 동기화 (iPhone↔Mac 데이터 공유) 🔴 OPEN
+## WO-3 — CloudKit 동기화 (iPhone↔Mac 데이터 공유) 🔴 OPEN — 계정 Active ✅ 착수 가능
+
+> **🔄 업데이트 (2026-07-03) — 계정 Active + macOS 앱이 이미 존재. 아래 본문의 "iOS 타깃/앱" 언급은 iOS+macOS 양쪽으로 읽는다:**
+> ① Apple Developer 계정 **활성화 완료** → Phase A 진행 가능 (Xcode Settings→Accounts에 **유료팀 로그인 확인** 먼저; 안 뜨면 Xcode 재시작).
+> ② **이제 앱이 둘**(iOS `현장 안전 지킴이` + macOS `SafetyWalkMac`) → WO-3는 **두 앱 모두** CloudKit로 연결:
+> &nbsp;&nbsp;• **두 타깃 각각** iCloud→CloudKit capability + **동일 컨테이너 `iCloud.com.safetywalk.app`** + Background Modes(Remote notifications) → 엔타이틀먼트 2개.
+> &nbsp;&nbsp;• iOS `SafetyWalkApp` 컨테이너 **와** macOS `MacModelContainer`(WO-4가 만든 단일 스왑 지점) **둘 다** CloudKit-backed로.
+> &nbsp;&nbsp;• v1 모델 5종 retrofit·사진 externalStorage·VersionedSchema 마이그레이션은 **공유 SafetyWalkCore라 한 번만**(양 앱 자동 공유).
+> ③ 검증 = **실제 iPhone↔Mac**(같은 iCloud 로그인): 아이폰에서 점검/위험요인/위험성평가(사진) 생성 → **Mac 대시보드·브라우즈에 실제로 나타남**. (WO-4 시드는 `#if DEBUG`라 실데이터와 분리.)
 
 > 골격은 WO-1/2와 동일(위임계약·verifiable goal·자가검증·검토자 분리).
-> 이건 **인프라 + 스키마 변경 + 외부 계정 의존**이 얽힌 묵직한 WO다. Phase로 나눠 진행하고, 막히면 멈춰라.
-> CloudKit 배선 = 이번 WO. macOS 앱 = WO-4(이 동기화 위에 얹음).
+> 이건 **인프라 + 스키마 변경**이 얽힌 묵직한 WO다. Phase로 나눠 진행하고, 막히면 멈춰라.
+> CloudKit 배선 = 이번 WO. **iOS·macOS 두 앱 모두** 대상.
 
 ### 배경 / 목적
 iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지**(비행기모드로도 점검 완결) — 그 위에 CloudKit 동기화 계층을 얹는다. macOS 앱(WO-4)이 같은 데이터를 보려면 이게 전제. 모든 모델은 WO-1/2에서 이미 일부 CloudKit-ready이나, **v1 모델 5종은 아직 비호환** → 이번에 retrofit.
