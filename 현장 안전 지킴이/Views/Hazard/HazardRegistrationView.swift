@@ -302,12 +302,12 @@ struct HazardRegistrationView: View {
               !trimmedLocation.isEmpty,
               !trimmedDescription.isEmpty else { return }
 
-        // Photo is saved to disk only here so cancelling leaves no orphaned files.
+        // Compress the photo only here so cancelling never mutates the model.
         // On failure, surface a localized alert and keep the sheet open so the user
         // can retry or pick a different photo. The Hazard record is NOT created.
-        let photoPath: String
+        let photoData: Data
         do {
-            photoPath = try PhotoStorageService().save(image)
+            photoData = try PhotoStorageService().data(from: image)
         } catch {
             showPhotoSaveFailed = true
             return
@@ -319,12 +319,12 @@ struct HazardRegistrationView: View {
             type: hazardType,
             riskLevel: riskLevel,
             hazardDescription: trimmedDescription,
-            photoPath: photoPath,
+            photoData: photoData,
             inspectionId: inspection?.id
         )
         modelContext.insert(hazard)
         // Link to the parent inspection only when launched in-inspection.
-        inspection?.hazards.append(hazard)
+        inspection?.hazards?.append(hazard)
 
         // Back-link to the checklist item that triggered this registration.
         checklistItem?.linkedHazardId = hazard.id

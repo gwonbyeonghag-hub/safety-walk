@@ -47,7 +47,7 @@ struct InspectionSeedPickerView: View {
 
 private struct InspectionPickRow: View {
     let inspection: Inspection
-    private var failCount: Int { inspection.items.filter { $0.result == .fail }.count }
+    private var failCount: Int { (inspection.items ?? []).filter { $0.result == .fail }.count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {

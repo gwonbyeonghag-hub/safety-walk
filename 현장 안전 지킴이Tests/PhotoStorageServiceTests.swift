@@ -28,138 +28,76 @@ private func makeImage(width: Int, height: Int, color: UIColor = .red) -> UIImag
     }
 }
 
-// MARK: - Save
+// MARK: - data(from:)
 
-@Suite("PhotoStorageService — save")
-struct PhotoStorageServiceSaveTests {
+@Suite("PhotoStorageService — data(from:)")
+struct PhotoStorageServiceDataTests {
 
-    @Test func saveReturnsPathWithEvidencePhotosPrefix() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
+    @Test func producesNonEmptyJPEGData() throws {
+        let service = PhotoStorageService()
+        let data = try service.data(from: makeImage(width: 100, height: 100))
 
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 100, height: 100))
-
-        #expect(path.hasPrefix("EvidencePhotos/"),
-                "Returned path '\(path)' must start with 'EvidencePhotos/'")
+        #expect(!data.isEmpty, "Compressed photo data should not be empty.")
     }
 
-    @Test func savePathHasJpgExtension() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
+    @Test func producesDecodableImage() throws {
+        let service = PhotoStorageService()
+        let data = try service.data(from: makeImage(width: 100, height: 100))
 
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 100, height: 100))
-
-        #expect(path.hasSuffix(".jpg"),
-                "Returned path '\(path)' must end with '.jpg'")
-    }
-
-    @Test func saveCreatesFileAtExpectedPath() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
-
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 100, height: 100))
-
-        let fileURL = tmpDir.appendingPathComponent(path)
-        #expect(FileManager.default.fileExists(atPath: fileURL.path),
-                "Expected file at \(fileURL.path) but it was not found.")
-    }
-
-    @Test func savedFileHasNonZeroSize() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
-
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 100, height: 100))
-
-        let fileURL = tmpDir.appendingPathComponent(path)
-        let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
-        let byteCount = attributes[.size] as? Int ?? 0
-        #expect(byteCount > 0, "Saved file should not be empty.")
-    }
-
-    @Test func consecutiveSavesProduceDifferentPaths() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
-
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path1 = try service.save(makeImage(width: 100, height: 100))
-        let path2 = try service.save(makeImage(width: 100, height: 100))
-
-        #expect(path1 != path2, "Each save must produce a unique path.")
+        #expect(UIImage(data: data) != nil, "Compressed data should decode back into an image.")
     }
 }
 
-// MARK: - Load
+// MARK: - Legacy file access (pre-WO-3 photoPath scheme; migration-only)
 
-@Suite("PhotoStorageService — load")
-struct PhotoStorageServiceLoadTests {
+@Suite("PhotoStorageService — legacy file access")
+struct PhotoStorageServiceLegacyTests {
 
-    @Test func loadReturnsSavedImage() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
-
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 200, height: 150))
-
-        let loaded = service.load(relativePath: path)
-
-        #expect(loaded != nil, "load() should return a UIImage for a path that was just saved.")
+    private func writeLegacyFile(in tmpDir: URL, relativePath: String, bytes: Data) throws {
+        let url = tmpDir.appendingPathComponent(relativePath)
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try bytes.write(to: url)
     }
 
-    @Test func loadReturnsNilForNonexistentPath() throws {
+    @Test func loadLegacyDataReturnsBytesForExistingFile() throws {
         let (tmpDir, cleanup) = try makeTempDirectory()
         defer { cleanup() }
+        let bytes = Data("legacy-photo".utf8)
+        try writeLegacyFile(in: tmpDir, relativePath: "EvidencePhotos/a.jpg", bytes: bytes)
 
         let service = PhotoStorageService(rootDirectory: tmpDir)
-        let result = service.load(relativePath: "EvidencePhotos/does-not-exist.jpg")
-
-        #expect(result == nil, "load() should return nil for a path that was never saved.")
+        #expect(service.loadLegacyData(relativePath: "EvidencePhotos/a.jpg") == bytes)
     }
-}
 
-// MARK: - Delete
-
-@Suite("PhotoStorageService — delete")
-struct PhotoStorageServiceDeleteTests {
-
-    @Test func deleteRemovesFileFromDisk() throws {
+    @Test func loadLegacyDataReturnsNilForMissingFile() throws {
         let (tmpDir, cleanup) = try makeTempDirectory()
         defer { cleanup() }
 
         let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 100, height: 100))
-        let fileURL = tmpDir.appendingPathComponent(path)
+        #expect(service.loadLegacyData(relativePath: "EvidencePhotos/does-not-exist.jpg") == nil)
+    }
 
-        try service.delete(relativePath: path)
+    @Test func deleteLegacyFileRemovesFileFromDisk() throws {
+        let (tmpDir, cleanup) = try makeTempDirectory()
+        defer { cleanup() }
+        try writeLegacyFile(in: tmpDir, relativePath: "EvidencePhotos/a.jpg", bytes: Data("x".utf8))
+        let fileURL = tmpDir.appendingPathComponent("EvidencePhotos/a.jpg")
+
+        let service = PhotoStorageService(rootDirectory: tmpDir)
+        try service.deleteLegacyFile(relativePath: "EvidencePhotos/a.jpg")
 
         #expect(!FileManager.default.fileExists(atPath: fileURL.path),
-                "File should no longer exist after delete().")
+                "File should no longer exist after deleteLegacyFile().")
     }
 
-    @Test func deleteNonexistentPathDoesNotThrow() throws {
+    @Test func deleteLegacyFileNonexistentPathDoesNotThrow() throws {
         let (tmpDir, cleanup) = try makeTempDirectory()
         defer { cleanup() }
 
         let service = PhotoStorageService(rootDirectory: tmpDir)
-
         // Must not throw — silently succeeds when the file is already gone
-        try service.delete(relativePath: "EvidencePhotos/does-not-exist.jpg")
-    }
-
-    @Test func loadReturnsNilAfterDelete() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
-
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 100, height: 100))
-
-        try service.delete(relativePath: path)
-
-        #expect(service.load(relativePath: path) == nil,
-                "load() should return nil after the file has been deleted.")
+        try service.deleteLegacyFile(relativePath: "EvidencePhotos/does-not-exist.jpg")
     }
 }
 
@@ -168,32 +106,25 @@ struct PhotoStorageServiceDeleteTests {
 @Suite("PhotoStorageService — resize")
 struct PhotoStorageServiceResizeTests {
 
-    // Large landscape image: longest side 2048px → must be ≤ 1024px after save/load.
+    // Large landscape image: longest side 2048px → must be ≤ 1024px after compression.
     @Test func largeImageIsResizedToAtMost1024Pixels() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
+        let service = PhotoStorageService()
+        let data = try service.data(from: makeImage(width: 2048, height: 1536))
 
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 2048, height: 1536))
-
-        let loaded = try #require(service.load(relativePath: path),
-                                  "Expected a loadable image after save.")
-        let longestSide = max(loaded.size.width, loaded.size.height)
+        let decoded = try #require(UIImage(data: data), "Expected a decodable image.")
+        let longestSide = max(decoded.size.width, decoded.size.height)
 
         #expect(longestSide <= 1024,
                 "Longest side should be ≤ 1024px after resize; got \(longestSide)px.")
     }
 
-    // Large portrait image: longest side 1536px → must be ≤ 1024px after save/load.
+    // Large portrait image: longest side 1536px → must be ≤ 1024px after compression.
     @Test func largePortraitImageIsResized() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
+        let service = PhotoStorageService()
+        let data = try service.data(from: makeImage(width: 768, height: 1536))
 
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 768, height: 1536))
-
-        let loaded = try #require(service.load(relativePath: path))
-        let longestSide = max(loaded.size.width, loaded.size.height)
+        let decoded = try #require(UIImage(data: data))
+        let longestSide = max(decoded.size.width, decoded.size.height)
 
         #expect(longestSide <= 1024,
                 "Longest side should be ≤ 1024px after resize; got \(longestSide)px.")
@@ -201,14 +132,11 @@ struct PhotoStorageServiceResizeTests {
 
     // Small image: 200×150 → must NOT be upscaled; longest side stays at 200px.
     @Test func smallImageIsNotUpscaled() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
+        let service = PhotoStorageService()
+        let data = try service.data(from: makeImage(width: 200, height: 150))
 
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 200, height: 150))
-
-        let loaded = try #require(service.load(relativePath: path))
-        let longestSide = max(loaded.size.width, loaded.size.height)
+        let decoded = try #require(UIImage(data: data))
+        let longestSide = max(decoded.size.width, decoded.size.height)
 
         #expect(longestSide <= 200,
                 "Small image (200×150) must not be upscaled; longest side was \(longestSide)px.")
@@ -216,16 +144,34 @@ struct PhotoStorageServiceResizeTests {
 
     // Image whose longest side is exactly 1024px → must not be resized.
     @Test func imageAtExactly1024pxIsNotResized() throws {
-        let (tmpDir, cleanup) = try makeTempDirectory()
-        defer { cleanup() }
+        let service = PhotoStorageService()
+        let data = try service.data(from: makeImage(width: 1024, height: 768))
 
-        let service = PhotoStorageService(rootDirectory: tmpDir)
-        let path = try service.save(makeImage(width: 1024, height: 768))
-
-        let loaded = try #require(service.load(relativePath: path))
-        let longestSide = max(loaded.size.width, loaded.size.height)
+        let decoded = try #require(UIImage(data: data))
+        let longestSide = max(decoded.size.width, decoded.size.height)
 
         #expect(longestSide <= 1024,
                 "Image at exactly 1024px must not be upscaled; longest side was \(longestSide)px.")
+    }
+}
+
+// MARK: - downsampled(_:maxDimension:)
+
+@Suite("PhotoStorageService — downsampled")
+struct PhotoStorageServiceDownsampledTests {
+
+    @Test func downsampledDecodesToAtMostMaxDimension() throws {
+        let service = PhotoStorageService()
+        let data = try service.data(from: makeImage(width: 2048, height: 1536))
+
+        let thumb = try #require(PhotoStorageService.downsampled(data, maxDimension: 300))
+        let longestSide = max(thumb.size.width, thumb.size.height)
+
+        #expect(longestSide <= 300, "Downsampled thumbnail should be ≤ 300px; got \(longestSide)px.")
+    }
+
+    @Test func downsampledReturnsNilForGarbageData() {
+        let result = PhotoStorageService.downsampled(Data("not-an-image".utf8), maxDimension: 300)
+        #expect(result == nil)
     }
 }

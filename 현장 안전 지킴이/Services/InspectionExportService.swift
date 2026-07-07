@@ -9,12 +9,7 @@ import UIKit
 @MainActor
 final class InspectionExportService {
 
-    private let photoStorage: PhotoStorageService
     private let photoMaxDimension: CGFloat = 600
-
-    init(photoStorage: PhotoStorageService = PhotoStorageService()) {
-        self.photoStorage = photoStorage
-    }
 
     // MARK: - Public
 
@@ -33,35 +28,34 @@ final class InspectionExportService {
 
     // MARK: - Photo preload (off-main)
 
-    /// Extracts photo paths on main (SwiftData objects must be touched here),
-    /// then performs file I/O + downsampling on a detached background task.
-    /// Only plain value types (UUID, String, UIImage) cross the actor boundary —
-    /// no SwiftData model instances escape the main actor.
+    /// Extracts photoData on main (SwiftData objects must be touched here), then
+    /// downsamples on a detached background task. Only plain value types (UUID, Data,
+    /// UIImage) cross the actor boundary — no SwiftData model instances escape the main actor.
     private func preloadPhotos(
         for inspection: Inspection
     ) async -> ([UUID: UIImage], [UUID: UIImage]) {
 
-        let itemPairs: [(UUID, String)] = inspection.items.compactMap { item in
-            guard let path = item.photoPath else { return nil }
-            return (item.id, path)
+        let itemPairs: [(UUID, Data)] = (inspection.items ?? []).compactMap { item in
+            guard let data = item.photoData else { return nil }
+            return (item.id, data)
         }
-        let hazardPairs: [(UUID, String)] = inspection.hazards.map {
-            ($0.id, $0.photoPath)
+        let hazardPairs: [(UUID, Data)] = (inspection.hazards ?? []).compactMap { hazard in
+            guard let data = hazard.photoData else { return nil }
+            return (hazard.id, data)
         }
 
-        let storage = photoStorage
         let maxDim = photoMaxDimension
 
         return await Task.detached(priority: .userInitiated) {
             var itemPhotos: [UUID: UIImage] = [:]
-            for (id, path) in itemPairs {
-                if let img = storage.loadDownsampled(relativePath: path, maxDimension: maxDim) {
+            for (id, data) in itemPairs {
+                if let img = PhotoStorageService.downsampled(data, maxDimension: maxDim) {
                     itemPhotos[id] = img
                 }
             }
             var hazardPhotos: [UUID: UIImage] = [:]
-            for (id, path) in hazardPairs {
-                if let img = storage.loadDownsampled(relativePath: path, maxDimension: maxDim) {
+            for (id, data) in hazardPairs {
+                if let img = PhotoStorageService.downsampled(data, maxDimension: maxDim) {
                     hazardPhotos[id] = img
                 }
             }

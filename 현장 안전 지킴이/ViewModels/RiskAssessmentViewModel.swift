@@ -92,9 +92,9 @@ final class RiskAssessmentViewModel {
     /// Template keys are resolved to literal text via `L(...)` (a text copy).
     func seedFromInspection(_ inspection: Inspection) {
         linkedInspectionId = inspection.id
-        let hazardsById = Dictionary(inspection.hazards.map { ($0.id, $0) },
+        let hazardsById = Dictionary((inspection.hazards ?? []).map { ($0.id, $0) },
                                      uniquingKeysWith: { first, _ in first })
-        let failItems = inspection.items
+        let failItems = (inspection.items ?? [])
             .filter { $0.result == .fail }
             .sorted { $0.sortOrder < $1.sortOrder }
         for ci in failItems {

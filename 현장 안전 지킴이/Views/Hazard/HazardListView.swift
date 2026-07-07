@@ -271,8 +271,8 @@ private struct HazardRowView: View {
     }
 
     private func loadThumbnail() {
-        guard thumbnail == nil, !hazard.photoPath.isEmpty else { return }
-        thumbnail = PhotoStorageService().load(relativePath: hazard.photoPath)
+        guard thumbnail == nil, let data = hazard.photoData else { return }
+        thumbnail = UIImage(data: data)
     }
 
     private func statusLabel(_ status: CorrectiveActionStatus) -> String {

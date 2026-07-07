@@ -83,8 +83,8 @@ private struct ActiveInspectionRowView: View {
     let inspection: Inspection
     let viewModel: HomeViewModel
 
-    private var checkedCount: Int { inspection.items.filter { $0.result != .unchecked }.count }
-    private var failedCount: Int  { inspection.items.filter { $0.result == .fail }.count }
+    private var checkedCount: Int { (inspection.items ?? []).filter { $0.result != .unchecked }.count }
+    private var failedCount: Int  { (inspection.items ?? []).filter { $0.result == .fail }.count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -114,10 +114,10 @@ private struct ActiveInspectionRowView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            if !inspection.items.isEmpty {
+            if !(inspection.items ?? []).isEmpty {
                 HStack(spacing: 10) {
                     Text(String(format: LocalizationKey.checklistProgress.localized,
-                                checkedCount, inspection.items.count))
+                                checkedCount, (inspection.items ?? []).count))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     if failedCount > 0 {

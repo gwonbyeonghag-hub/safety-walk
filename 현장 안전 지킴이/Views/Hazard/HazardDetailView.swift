@@ -91,8 +91,8 @@ struct HazardDetailView: View {
     // MARK: - Photo
 
     private func loadPhoto() {
-        guard photo == nil, !hazard.photoPath.isEmpty else { return }
-        photo = PhotoStorageService().load(relativePath: hazard.photoPath)
+        guard photo == nil, let data = hazard.photoData else { return }
+        photo = UIImage(data: data)
     }
 
     // MARK: - Label helpers

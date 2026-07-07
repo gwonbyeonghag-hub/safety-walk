@@ -12,7 +12,7 @@ struct InspectionSummaryView: View {
     // @Query with #Predicate inside a depth-2+ pushed destination froze the app;
     // relationship-backed source is the proven-safe pattern.
     private var items: [ChecklistItem] {
-        inspection.items.sorted { $0.sortOrder < $1.sortOrder }
+        (inspection.items ?? []).sorted { $0.sortOrder < $1.sortOrder }
     }
 
     // MARK: - Derived counts
@@ -22,7 +22,7 @@ struct InspectionSummaryView: View {
     private var naCount: Int    { items.filter { $0.result == .notApplicable }.count }
     private var failedItems: [ChecklistItem] { items.filter { $0.result == .fail } }
 
-    private var hazards: [Hazard] { inspection.hazards }
+    private var hazards: [Hazard] { inspection.hazards ?? [] }
     private var lowCount: Int    { hazards.filter { $0.riskLevel == .low }.count }
     private var mediumCount: Int { hazards.filter { $0.riskLevel == .medium }.count }
     private var highCount: Int   { hazards.filter { $0.riskLevel == .high }.count }

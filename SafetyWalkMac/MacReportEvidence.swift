@@ -33,7 +33,7 @@ enum MacReportEvidence {
         if let jsa = ras.first(where: { $0.method == .jsa }) {
             copy(JHAReport.pdfURL(for: jsa), to: "mac_jha.pdf")
         }
-        if let insp = insps.first(where: { $0.status == .completed && !$0.items.isEmpty }) {
+        if let insp = insps.first(where: { $0.status == .completed && !($0.items ?? []).isEmpty }) {
             let photos = MacReportPhotos.photos(for: insp)
             copy(InspectionReport.pdfURL(inspection: insp, itemPhotos: photos.items, hazardPhotos: photos.hazards),
                  to: "mac_inspection.pdf")

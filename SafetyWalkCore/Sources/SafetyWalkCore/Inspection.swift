@@ -3,19 +3,20 @@ import SwiftData
 
 @Model
 public final class Inspection {
-    public var id: UUID
+    public var id: UUID = UUID()
     // Denormalized strings preserve history if the Site is later deleted
-    public var siteId: UUID
-    public var siteName: String
+    public var siteId: UUID = UUID()
+    public var siteName: String = ""
     public var areaId: UUID?
     public var areaName: String?
-    public var inspectorName: String
-    public var startedAt: Date
+    public var inspectorName: String = ""
+    public var startedAt: Date = Date()
     public var completedAt: Date?
-    public var status: InspectionStatus
-    public var templateId: String
-    @Relationship(deleteRule: .cascade) public var items: [ChecklistItem]
-    @Relationship(deleteRule: .cascade) public var hazards: [Hazard]
+    public var status: InspectionStatus = InspectionStatus.inProgress
+    public var templateId: String = ""
+    // CloudKit requires every relationship to declare an inverse.
+    @Relationship(deleteRule: .cascade, inverse: \ChecklistItem.inspection) public var items: [ChecklistItem]?
+    @Relationship(deleteRule: .cascade, inverse: \Hazard.inspection) public var hazards: [Hazard]?
 
     public init(
         siteId: UUID,

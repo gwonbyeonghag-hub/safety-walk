@@ -305,7 +305,7 @@ private struct InspectionRowView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                if !inspection.items.isEmpty {
+                if !(inspection.items ?? []).isEmpty {
                     HStack(spacing: 10) {
                         Label("\(viewModel.passCount(for: inspection))",
                               systemImage: "checkmark.circle.fill")

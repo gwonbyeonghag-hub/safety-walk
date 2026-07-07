@@ -6,27 +6,22 @@ import ImageIO
 
 enum PhotoStorageError: LocalizedError {
     case compressionFailed
-    case saveFailed(underlying: Error)
-    case folderCreationFailed(underlying: Error)
 
     var errorDescription: String? {
         switch self {
         case .compressionFailed:
             return "Failed to compress image as JPEG."
-        case .saveFailed(let error):
-            return "Failed to save photo: \(error.localizedDescription)"
-        case .folderCreationFailed(let error):
-            return "Failed to create photo storage folder: \(error.localizedDescription)"
         }
     }
 }
 
 // MARK: - Service
 
-/// Saves, loads, and deletes evidence photos in Documents/EvidencePhotos/.
-/// Paths returned by save() are relative to the Documents directory so they
-/// remain valid across device restores and app updates.
-/// Inject a custom rootDirectory in unit tests to avoid writing to the real Documents folder.
+/// Compresses evidence photos into `Data` for storage in `ChecklistItem.photoData` /
+/// `Hazard.photoData` (`@Attribute(.externalStorage)`, CloudKit-synced as a CKAsset).
+/// Also provides read/delete access to the pre-WO-3 file-based photo scheme
+/// (Documents/EvidencePhotos/<uuid>.jpg) for the one-time schema migration only.
+/// Inject a custom rootDirectory in unit tests to avoid touching the real Documents folder.
 struct PhotoStorageService {
 
     nonisolated static let folderName = "EvidencePhotos"
@@ -46,39 +41,21 @@ struct PhotoStorageService {
 
     // MARK: - Public API
 
-    /// Resizes to ≤1024px on the longest side, compresses as JPEG, saves under
-    /// EvidencePhotos/ with a UUID filename, and returns the relative path.
-    nonisolated func save(_ image: UIImage) throws -> String {
+    /// Resizes to ≤1024px on the longest side and compresses as JPEG. The result is
+    /// stored directly in the model's `photoData` field — no file written to disk.
+    nonisolated func data(from image: UIImage) throws -> Data {
         let resized = Self.resized(image, maxLongSide: Self.maxLongSidePx)
         guard let data = resized.jpegData(compressionQuality: Self.jpegQuality) else {
             throw PhotoStorageError.compressionFailed
         }
-        let folder = try ensureFolder()
-        let filename = "\(UUID().uuidString).jpg"
-        let fileURL = folder.appendingPathComponent(filename)
-        do {
-            try data.write(to: fileURL, options: .atomic)
-        } catch {
-            throw PhotoStorageError.saveFailed(underlying: error)
-        }
-        return "\(Self.folderName)/\(filename)"
+        return data
     }
 
-    /// Loads a UIImage from a relative path previously returned by save().
-    /// Returns nil if the file does not exist or cannot be decoded.
-    nonisolated func load(relativePath: String) -> UIImage? {
-        let url = rootDirectory.appendingPathComponent(relativePath)
-        return UIImage(contentsOfFile: url.path)
-    }
-
-    /// Loads a memory-efficient thumbnail of the photo at `relativePath`, downsampled so
-    /// the longer side is no larger than `maxDimension` (in pixels). Uses `ImageIO` so the
+    /// Loads a memory-efficient thumbnail from already-in-memory photo `data`, downsampled
+    /// so the longer side is no larger than `maxDimension` (in pixels). Uses `ImageIO` so the
     /// full-resolution image is never decoded into memory — important for export rendering
-    /// where many photos must be loaded at once.
-    /// Returns nil if the file is missing or cannot be decoded.
-    nonisolated func loadDownsampled(relativePath: String, maxDimension: CGFloat) -> UIImage? {
-        let url = rootDirectory.appendingPathComponent(relativePath)
-        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+    /// where many photos must be loaded at once. Returns nil if `data` cannot be decoded.
+    nonisolated static func downsampled(_ data: Data, maxDimension: CGFloat) -> UIImage? {
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
@@ -86,7 +63,7 @@ struct PhotoStorageService {
             kCGImageSourceShouldCacheImmediately: true
         ]
         guard
-            let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+            let source = CGImageSourceCreateWithData(data as CFData, nil),
             let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
         else {
             return nil
@@ -94,17 +71,27 @@ struct PhotoStorageService {
         return UIImage(cgImage: cgImage)
     }
 
-    /// Deletes the file at the given relative path.
+    // MARK: - Legacy file-based photos (pre-WO-3; migration-only)
+
+    /// Reads the raw bytes at a legacy relative path written by the old file-based
+    /// save(). Used only by the ChecklistItem/Hazard schema migration to carry existing
+    /// photos into `photoData`.
+    nonisolated func loadLegacyData(relativePath: String) -> Data? {
+        let url = rootDirectory.appendingPathComponent(relativePath)
+        return FileManager.default.contents(atPath: url.path)
+    }
+
+    /// Deletes the legacy file at the given relative path once migrated.
     /// Succeeds silently if the file does not exist.
-    nonisolated func delete(relativePath: String) throws {
+    nonisolated func deleteLegacyFile(relativePath: String) throws {
         let url = rootDirectory.appendingPathComponent(relativePath)
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         try FileManager.default.removeItem(at: url)
     }
 
-    /// Removes every file inside the EvidencePhotos folder.
+    /// Removes every file inside the EvidencePhotos folder. Best-effort cleanup of any
+    /// legacy files left behind; normal operation no longer writes here.
     /// Succeeds silently if the folder does not exist.
-    /// The folder itself is preserved so future saves do not need to recreate it.
     nonisolated func deleteAllEvidencePhotos() throws {
         let folder = rootDirectory.appendingPathComponent(Self.folderName)
         guard FileManager.default.fileExists(atPath: folder.path) else { return }
@@ -116,17 +103,6 @@ struct PhotoStorageService {
     }
 
     // MARK: - Private helpers
-
-    nonisolated private func ensureFolder() throws -> URL {
-        let folder = rootDirectory.appendingPathComponent(Self.folderName)
-        guard !FileManager.default.fileExists(atPath: folder.path) else { return folder }
-        do {
-            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        } catch {
-            throw PhotoStorageError.folderCreationFailed(underlying: error)
-        }
-        return folder
-    }
 
     nonisolated private static func resized(_ image: UIImage, maxLongSide: CGFloat) -> UIImage {
         let size = image.size

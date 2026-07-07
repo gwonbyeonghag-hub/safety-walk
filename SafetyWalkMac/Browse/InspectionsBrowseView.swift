@@ -39,7 +39,7 @@ struct InspectionsBrowseView: View {
                 }
             }
 
-            let groups = grouped(insp.items)
+            let groups = grouped(insp.items ?? [])
             ForEach(groups, id: \.category) { group in
                 MacCard(title: L(group.category), systemImage: "checklist") {
                     VStack(spacing: 6) {
@@ -54,10 +54,10 @@ struct InspectionsBrowseView: View {
                 }
             }
 
-            if !insp.hazards.isEmpty {
+            if !(insp.hazards ?? []).isEmpty {
                 MacCard(title: LocalizationKey.reportHazardsAndActions.localized, systemImage: "exclamationmark.triangle") {
                     VStack(spacing: 8) {
-                        ForEach(insp.hazards.sorted { $0.riskLevel > $1.riskLevel }) { h in
+                        ForEach((insp.hazards ?? []).sorted { $0.riskLevel > $1.riskLevel }) { h in
                             HStack(spacing: 10) {
                                 RiskChip(level: h.riskLevel)
                                 VStack(alignment: .leading, spacing: 1) {

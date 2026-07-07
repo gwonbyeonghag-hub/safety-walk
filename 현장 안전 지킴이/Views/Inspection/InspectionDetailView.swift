@@ -17,7 +17,7 @@ struct InspectionDetailView: View {
     // on iOS 17/18 (see /navigation-qa Rule A); relationship-backed source is
     // the proven-safe pattern already used by ChecklistView and InspectionSummaryView.
     private var items: [ChecklistItem] {
-        inspection.items.sorted { $0.sortOrder < $1.sortOrder }
+        (inspection.items ?? []).sorted { $0.sortOrder < $1.sortOrder }
     }
 
     // MARK: - Derived
@@ -40,7 +40,7 @@ struct InspectionDetailView: View {
         return order.map { (category: $0, items: dict[$0]!) }
     }
 
-    private var hazards: [Hazard] { inspection.hazards }
+    private var hazards: [Hazard] { inspection.hazards ?? [] }
 
     // MARK: - Body
 
@@ -258,21 +258,11 @@ struct InspectionDetailView: View {
     }
 
     private func performDelete() {
-        // Snapshot photo paths before the cascade — items/hazards are removed
-        // by SwiftData when the inspection is deleted (deleteRule: .cascade).
-        let photoPaths: [String] =
-            inspection.items.compactMap(\.photoPath) +
-            inspection.hazards.map(\.photoPath)
-
+        // photoData lives on the items/hazards themselves (externalStorage), so SwiftData
+        // removes it automatically when the inspection cascades their delete — no manual
+        // file cleanup needed (unlike the old file-path scheme).
         modelContext.delete(inspection)
         try? modelContext.save()
-
-        // Best-effort: orphaned photo files don't block the delete.
-        let storage = PhotoStorageService()
-        for path in photoPaths {
-            try? storage.delete(relativePath: path)
-        }
-
         dismiss()
     }
 
@@ -324,8 +314,8 @@ private struct DetailItemRow: View {
         }
         .padding(.vertical, 2)
         .onAppear {
-            guard thumbnail == nil, let path = item.photoPath else { return }
-            thumbnail = PhotoStorageService().load(relativePath: path)
+            guard thumbnail == nil, let data = item.photoData else { return }
+            thumbnail = UIImage(data: data)
         }
     }
 

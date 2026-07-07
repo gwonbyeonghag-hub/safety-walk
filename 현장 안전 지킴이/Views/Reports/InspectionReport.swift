@@ -31,7 +31,7 @@ enum InspectionReport {
 
         var blocks: [AnyView] = [AnyView(headerGrid(inspection))]
 
-        for group in grouped(inspection.items) {
+        for group in grouped(inspection.items ?? []) {
             blocks.append(AnyView(sectionTitle(L(group.category))))
             for item in group.items {
                 blocks.append(AnyView(itemRow(item)))
@@ -41,7 +41,7 @@ enum InspectionReport {
             }
         }
 
-        let hazards = inspection.hazards.sorted { $0.createdAt < $1.createdAt }
+        let hazards = (inspection.hazards ?? []).sorted { $0.createdAt < $1.createdAt }
         if !hazards.isEmpty {
             blocks.append(AnyView(sectionTitle(LocalizationKey.reportHazardsAndActions.localized)))
             for hazard in hazards {

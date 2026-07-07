@@ -133,7 +133,7 @@ private struct InspectionHistoryRowView: View {
                 }
             }
 
-            if !inspection.items.isEmpty {
+            if !(inspection.items ?? []).isEmpty {
                 progressLine
             }
         }
@@ -154,9 +154,9 @@ private struct InspectionHistoryRowView: View {
     }
 
     private var progressLine: some View {
-        let checked = inspection.items.filter { $0.result != .unchecked }.count
-        let total   = inspection.items.count
-        let failed  = inspection.items.filter { $0.result == .fail }.count
+        let checked = (inspection.items ?? []).filter { $0.result != .unchecked }.count
+        let total   = (inspection.items ?? []).count
+        let failed  = (inspection.items ?? []).filter { $0.result == .fail }.count
         return HStack(spacing: 10) {
             Text(String(format: LocalizationKey.checklistProgress.localized, checked, total))
                 .font(.caption)

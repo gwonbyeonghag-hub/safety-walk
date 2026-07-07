@@ -104,7 +104,7 @@ final class ReportRenderingTests: XCTestCase {
                                          title: "점검 항목 \(order + 1)", category: category, sortOrder: order)
                 item.result = j % 3 == 0 ? .fail : (j % 3 == 1 ? .pass : .notApplicable)
                 if j == 0 { item.note = "비고: 추가 확인 필요 \(order)" }
-                ctx.insert(item); items.append(item); insp.items.append(item); order += 1
+                ctx.insert(item); items.append(item); insp.items?.append(item); order += 1
             }
         }
 
@@ -114,8 +114,8 @@ final class ReportRenderingTests: XCTestCase {
             let level: RiskLevel = [.low, .medium, .high][k % 3]
             let hazard = Hazard(siteId: insp.siteId, location: "위치 \(k)", type: .electrical,
                                 riskLevel: level, hazardDescription: "유해위험요인 설명 \(k)",
-                                photoPath: "p\(k)", inspectionId: insp.id)
-            ctx.insert(hazard); insp.hazards.append(hazard); hazardPhotos[hazard.id] = photo
+                                photoData: Data("p\(k)".utf8), inspectionId: insp.id)
+            ctx.insert(hazard); insp.hazards?.append(hazard); hazardPhotos[hazard.id] = photo
         }
         var itemPhotos: [UUID: UIImage] = [:]
         for item in items where item.sortOrder % 9 == 0 { itemPhotos[item.id] = photo }

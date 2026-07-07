@@ -16,6 +16,27 @@ struct SafetyWalkApp: App {
     // so every localized string re-renders in the new language without a restart.
     @State private var loc = LocalizationManager.shared
 
+    // CloudKit-backed store (WO-3). Same container id + migration plan as
+    // SafetyWalkMac/MacModelContainer.swift so both apps sync through one iCloud
+    // container. VersionedSchema/SafetyWalkMigrationPlan lives in SafetyWalkCore so a
+    // schema change only has to be made once for both targets (SWIFTDATA_MIGRATION.md).
+    static let modelContainer: ModelContainer = {
+        let schema = Schema(versionedSchema: SchemaV2.self)
+        let configuration = ModelConfiguration(
+            schema: schema,
+            cloudKitDatabase: .private("iCloud.com.gwonbyeonghag.safetywalk")
+        )
+        do {
+            return try ModelContainer(
+                for: schema,
+                migrationPlan: SafetyWalkMigrationPlan.self,
+                configurations: configuration
+            )
+        } catch {
+            fatalError("Failed to create the ModelContainer: \(error)")
+        }
+    }()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -23,15 +44,7 @@ struct SafetyWalkApp: App {
                 .id(loc.language)
                 .preferredColorScheme(appearanceMode.colorScheme)
         }
-        .modelContainer(for: [
-            Site.self,
-            Area.self,
-            Inspection.self,
-            ChecklistItem.self,
-            Hazard.self,
-            RiskAssessment.self,
-            RiskAssessmentItem.self
-        ])
+        .modelContainer(Self.modelContainer)
     }
 }
 

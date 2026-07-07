@@ -203,7 +203,7 @@ private struct SiteRowLabel: View {
             HStack(spacing: 4) {
                 Image(systemName: "mappin")
                     .font(.caption2)
-                Text("\(site.areas.count)")
+                Text("\((site.areas ?? []).count)")
                     .font(.caption2)
             }
             .foregroundStyle(.tertiary)
@@ -214,7 +214,7 @@ private struct SiteRowLabel: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(
                 String(format: LocalizationKey.siteAreaCountAccessibility.localized,
-                       site.areas.count)
+                       (site.areas ?? []).count)
             )
         }
         .padding(.vertical, 2)
@@ -258,7 +258,7 @@ private struct SiteDetailManagementView: View {
     @State private var didLoadDrafts = false
 
     private var sortedAreas: [Area] {
-        site.areas.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        (site.areas ?? []).sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     var body: some View {
@@ -429,7 +429,7 @@ private struct SiteDetailManagementView: View {
         guard !name.isEmpty else { return }
         let area = Area(name: name, siteId: site.id)
         modelContext.insert(area)
-        site.areas.append(area)
+        site.areas?.append(area)
         try? modelContext.save()
         cancelAddArea()
     }

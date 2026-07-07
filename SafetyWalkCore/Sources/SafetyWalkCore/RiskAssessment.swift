@@ -16,7 +16,8 @@ public final class RiskAssessment {
     public var assessedAt: Date = Date()
     public var note: String?
     public var linkedInspectionId: UUID?
-    @Relationship(deleteRule: .cascade) public var items: [RiskAssessmentItem]?
+    // CloudKit requires every relationship to declare an inverse.
+    @Relationship(deleteRule: .cascade, inverse: \RiskAssessmentItem.riskAssessment) public var items: [RiskAssessmentItem]?
 
     public init(
         kind: RiskAssessmentKind = .regular,

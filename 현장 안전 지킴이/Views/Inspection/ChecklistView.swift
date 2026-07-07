@@ -15,7 +15,7 @@ struct ChecklistView: View {
     // @Query with #Predicate inside a depth-2 pushed destination froze the app on iOS 17/18;
     // the relationship-backed source is the proven-safe pattern.
     private var items: [ChecklistItem] {
-        inspection.items.sorted { $0.sortOrder < $1.sortOrder }
+        (inspection.items ?? []).sorted { $0.sortOrder < $1.sortOrder }
     }
 
     // MARK: - Derived
@@ -357,16 +357,16 @@ struct ChecklistItemRow: View {
                 photoLibrary: .shared()
             ) {
                 Label(
-                    item.photoPath == nil
+                    item.photoData == nil
                         ? LocalizationKey.checklistAttachPhoto.localized
                         : LocalizationKey.checklistReplacePhoto.localized,
-                    systemImage: item.photoPath == nil ? "camera" : "arrow.triangle.2.circlepath"
+                    systemImage: item.photoData == nil ? "camera" : "arrow.triangle.2.circlepath"
                 )
                 .font(.caption)
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
-            .tint(item.photoPath == nil ? Color.secondary : Color.accentColor)
+            .tint(item.photoData == nil ? Color.secondary : Color.accentColor)
         }
     }
 
@@ -394,14 +394,14 @@ struct ChecklistItemRow: View {
     // MARK: - Photo helpers
 
     private func loadThumbnailIfNeeded() {
-        guard thumbnail == nil, let path = item.photoPath else { return }
-        thumbnail = PhotoStorageService().load(relativePath: path)
+        guard thumbnail == nil, let data = item.photoData else { return }
+        thumbnail = UIImage(data: data)
     }
 
     private func saveSelectedPhoto() async {
         guard let selected = pickerItem else { return }
 
-        // 1. Load the picker result into a UIImage. Any failure surfaces as a load error.
+        // Load the picker result into a UIImage. Any failure surfaces as a load error.
         let loadedData: Data?
         do {
             loadedData = try await selected.loadTransferable(type: Data.self)
@@ -410,32 +410,23 @@ struct ChecklistItemRow: View {
             showPhotoLoadFailed = true
             return
         }
-        guard let data = loadedData, let image = UIImage(data: data) else {
+        guard let raw = loadedData, let image = UIImage(data: raw) else {
             pickerItem = nil
             showPhotoLoadFailed = true
             return
         }
 
-        let storage = PhotoStorageService()
-
-        // 2. Save the NEW photo FIRST. If this fails, the old photo on disk is
-        //    preserved — no destructive delete-before-save sequence.
-        let newPath: String
+        let newData: Data
         do {
-            newPath = try storage.save(image)
+            newData = try PhotoStorageService().data(from: image)
         } catch {
             pickerItem = nil
             showPhotoSaveFailed = true
             return
         }
 
-        // 3. Only after the new save succeeds, clean up the old file.
-        if let oldPath = item.photoPath {
-            try? storage.delete(relativePath: oldPath)
-        }
-
-        item.photoPath = newPath
-        thumbnail = storage.load(relativePath: newPath)
+        item.photoData = newData
+        thumbnail = UIImage(data: newData)
         pickerItem = nil
     }
 }

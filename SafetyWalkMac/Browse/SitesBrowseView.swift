@@ -25,10 +25,10 @@ struct SitesBrowseView: View {
             DetailHeader(title: site.name, subtitle: site.address)
 
             MacCard(title: LocalizationKey.macAreas.localized, systemImage: "map") {
-                if site.areas.isEmpty {
+                if (site.areas ?? []).isEmpty {
                     Text("—").foregroundStyle(.secondary)
                 } else {
-                    FlowRow(site.areas.map(\.name))
+                    FlowRow((site.areas ?? []).map(\.name))
                 }
             }
 

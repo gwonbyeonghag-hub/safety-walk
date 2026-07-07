@@ -77,12 +77,12 @@ Run these before completing any relevant task:
 Site:          id, name, address?, createdAt, areas
 Area:          id, name, siteId
 Inspection:    id, siteId, areaId?, inspectorName, startedAt, completedAt?, status, templateId, items, hazards
-ChecklistItem: id, inspectionId, templateItemId, title, category, result, note?, photoPath?, linkedHazardId?
-Hazard:        id, inspectionId?, siteId, location, type, riskLevel, description, photoPath, correctiveActionStatus, createdAt, updatedAt
-RiskAssessment(신규, v2): id, kind(최초/정기/수시), siteId, assessorName, date, method, items, disclaimer  ← 설계: V2_ROADMAP.md AD-3
+ChecklistItem: id, inspectionId, templateItemId, title, category, result, note?, photoData?(externalStorage), linkedHazardId?
+Hazard:        id, inspectionId?, siteId, location, type, riskLevel, description, photoData?(externalStorage), correctiveActionStatus, createdAt, updatedAt
+RiskAssessment(v2): id, kind(최초/정기/수시), siteId, assessorName, date, method, items, disclaimer  ← 설계: V2_ROADMAP.md AD-3
 ```
 
-**CloudKit 제약 (v2 스키마 개정 시 필수):** 모든 속성은 optional 또는 **기본값 보유**; 관계는 **optional**(`[ChecklistItem]?`); `@Attribute(.unique)` 금지; 사진은 `photoPath` 대신 동기화 가능한 방식(`@Attribute(.externalStorage) Data` 권고)으로. 마이그레이션은 VersionedSchema로.
+**CloudKit 제약 (WO-3에서 실제 적용, 크래시로 검증됨):** 모든 속성은 optional 또는 **기본값 보유**; 관계는 **optional**(`[ChecklistItem]?`); **모든 관계는 inverse 필수**(`@Relationship(inverse:)` — 없으면 "CloudKit integration requires that all relationships have an inverse" 런타임 크래시. 문서/역할상 관계를 안 쓰는 쪽에도 inverse 전용 프로퍼티를 추가해야 함, 예: `Area.site: Site?`, `ChecklistItem.inspection: Inspection?` — 앱 코드는 계속 UUID 필드로 조회, inverse 프로퍼티는 읽지 않음); `@Attribute(.unique)` 금지; 사진은 `photoPath` 대신 `@Attribute(.externalStorage) Data`(`photoData`)로 동기화. 마이그레이션은 VersionedSchema(`SafetyWalkCore/Migration/`)로 — 자세한 내용은 SWIFTDATA_MIGRATION.md.
 
 ---
 

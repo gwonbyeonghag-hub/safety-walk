@@ -12,6 +12,10 @@ import SafetyWalkCore
 /// user input is never localized. Only app chrome routes through LocalizationKey.
 enum SeedData {
 
+    /// Marks a seeded item/hazard as "has a photo" without a real JPEG — MacReportPhotos
+    /// only checks for non-nil `photoData` and draws its own placeholder image.
+    static let seedPhotoMarker = Data("seed".utf8)
+
     @MainActor
     static func populate(_ context: ModelContext) {
         // Idempotent: don't double-seed if a store already has content.
@@ -110,9 +114,9 @@ enum SeedData {
             item.result = (order % failEvery == 0) ? .fail
                          : (order % 3 == 2 ? .notApplicable : .pass)
             if item.result == .fail { item.note = "재점검 필요 — 조치 후 확인" }
-            if order % photoEvery == 0 { item.photoPath = "seed" }
+            if order % photoEvery == 0 { item.photoData = Self.seedPhotoMarker }
             context.insert(item)
-            insp.items.append(item)
+            insp.items?.append(item)
             order += 1
         }
         return insp
@@ -125,13 +129,13 @@ enum SeedData {
         at: Date, context: ModelContext, photo: Bool
     ) {
         let h = Hazard(siteId: siteId, location: location, type: type, riskLevel: level,
-                       hazardDescription: desc, photoPath: photo ? "seed" : "",
+                       hazardDescription: desc, photoData: photo ? Self.seedPhotoMarker : nil,
                        inspectionId: inspection.id)
         h.correctiveActionStatus = status
         h.createdAt = at
         h.updatedAt = at
         context.insert(h)
-        inspection.hazards.append(h)
+        inspection.hazards?.append(h)
     }
 
     // MARK: - Risk assessments

@@ -24,6 +24,9 @@ public final class RiskAssessmentItem {
     // Explicit ordering for JSA work steps; CloudKit does not preserve to-many order
     // (same reason ChecklistItem has sortOrder). Defaulted → CloudKit-safe.
     public var sortOrder: Int = 0
+    // CloudKit-required inverse of RiskAssessment.items. Not read by app code —
+    // containment in RiskAssessment.items remains the source of truth.
+    public var riskAssessment: RiskAssessment?
 
     public init(
         taskDescription: String = "",

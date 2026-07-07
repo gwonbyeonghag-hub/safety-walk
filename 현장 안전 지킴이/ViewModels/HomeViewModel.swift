@@ -25,11 +25,11 @@ final class HomeViewModel {
     // MARK: - Inspection result counts (derived from snapshot items)
 
     func passCount(for inspection: Inspection) -> Int {
-        inspection.items.filter { $0.result == .pass }.count
+        (inspection.items ?? []).filter { $0.result == .pass }.count
     }
 
     func failCount(for inspection: Inspection) -> Int {
-        inspection.items.filter { $0.result == .fail }.count
+        (inspection.items ?? []).filter { $0.result == .fail }.count
     }
 
     // MARK: - Status display

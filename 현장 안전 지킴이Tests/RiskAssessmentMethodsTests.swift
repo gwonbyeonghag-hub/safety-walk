@@ -38,7 +38,7 @@ struct RiskAssessmentMethodsTests {
         let fail2 = ChecklistItem(inspectionId: insp.id, templateItemId: "f2",
                                   title: "k.fail2", category: "k.cat", sortOrder: 2)
         fail2.result = .fail
-        for ci in [pass, fail1, fail2] { ctx.insert(ci); insp.items.append(ci) }
+        for ci in [pass, fail1, fail2] { ctx.insert(ci); insp.items?.append(ci) }
 
         let vm = RiskAssessmentViewModel()
         vm.method = .checklist
@@ -57,7 +57,7 @@ struct RiskAssessmentMethodsTests {
         let fail = ChecklistItem(inspectionId: insp.id, templateItemId: "f",
                                  title: "k.fail", category: "k.cat", sortOrder: 0)
         fail.result = .fail
-        ctx.insert(fail); insp.items.append(fail)
+        ctx.insert(fail); insp.items?.append(fail)
 
         let vm = RiskAssessmentViewModel()
         vm.method = .checklist

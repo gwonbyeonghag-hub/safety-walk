@@ -2,20 +2,22 @@ import AppKit
 import SafetyWalkCore
 
 /// Builds the `NSImage` photo dictionaries the (cross-platform) `InspectionReport` needs
-/// on macOS. Seeded records mark a photo with `photoPath == "seed"`; here we render a
-/// simple placeholder image for each so the report's photo blocks are exercised. When
-/// WO-3 syncs real photos, this is where macOS would load them (NSImage) from storage.
+/// on macOS. DEBUG seed records mark a photo with `SeedData.seedPhotoMarker`; here we
+/// render a simple placeholder image for each so the report's photo blocks are exercised.
+/// Real synced photos decode `photoData` directly (CloudKit CKAsset, WO-3).
 enum MacReportPhotos {
 
     @MainActor
     static func photos(for inspection: Inspection) -> (items: [UUID: NSImage], hazards: [UUID: NSImage]) {
         var items: [UUID: NSImage] = [:]
-        for item in inspection.items where item.photoPath == "seed" {
-            items[item.id] = placeholder(tint: .systemTeal, caption: "PHOTO")
+        for item in (inspection.items ?? []) {
+            guard let data = item.photoData else { continue }
+            items[item.id] = NSImage(data: data) ?? placeholder(tint: .systemTeal, caption: "PHOTO")
         }
         var hazards: [UUID: NSImage] = [:]
-        for hazard in inspection.hazards where hazard.photoPath == "seed" {
-            hazards[hazard.id] = placeholder(tint: color(for: hazard.riskLevel), caption: "HAZARD")
+        for hazard in (inspection.hazards ?? []) {
+            guard let data = hazard.photoData else { continue }
+            hazards[hazard.id] = NSImage(data: data) ?? placeholder(tint: color(for: hazard.riskLevel), caption: "HAZARD")
         }
         return (items, hazards)
     }

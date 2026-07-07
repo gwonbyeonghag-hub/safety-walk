@@ -176,7 +176,7 @@ final class StartInspectionViewModel {
                     sortOrder: sortOrder
                 )
                 context.insert(row)
-                inspection.items.append(row)
+                inspection.items?.append(row)
                 sortOrder += 1
             }
         }

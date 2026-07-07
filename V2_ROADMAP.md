@@ -67,6 +67,7 @@
 - **CloudKit 제약 → 스키마 개정 필수 (v1 모델 감사 결과):**
   - 모든 속성은 optional 이거나 **기본값 보유**해야 함. (현재 `siteId: UUID`, `status`, `inspectorName` 등 비옵셔널·기본값 없음 → 수정)
   - **관계는 optional이어야 함**: `@Relationship var items: [ChecklistItem]` → `[ChecklistItem]?` (현재 비옵셔널 → 수정)
+  - **관계는 inverse 필수** (WO-3 실기기/시뮬레이터 실행 중 발견 — 위 3개 항목만으로는 부족): inverse 없으면 "CloudKit integration requires that all relationships have an inverse" 런타임 크래시. `Site.areas`/`Inspection.items`/`Inspection.hazards`/`RiskAssessment.items` 전부 해당 → 상대편(`Area`/`ChecklistItem`/`Hazard`/`RiskAssessmentItem`)에 inverse 전용 프로퍼티 추가 필요(앱 코드는 계속 UUID로 조회, 이 프로퍼티는 CloudKit 스키마 검증용으로만 존재). 이 때문에 v1↔v2 마이그레이션 대상이 애초 예상(ChecklistItem/Hazard의 photoPath만)보다 넓어져, 관계 그래프에 걸린 7개 모델 전부 SchemaV1 재선언이 필요해짐 — 상세: SWIFTDATA_MIGRATION.md.
   - `@Attribute(.unique)` **사용 불가** (현재 미사용 — OK 유지)
   - enum은 String Codable이면 OK (현재 OK)
 - **사진 동기화 (현재 `photoPath: String` = Documents 파일이라 동기화 안 됨):**
