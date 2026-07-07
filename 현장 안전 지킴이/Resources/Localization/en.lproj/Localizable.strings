@@ -22,6 +22,7 @@
 "home.assessmentsDue"       = "Assessments due";
 "home.overdue"              = "Overdue";
 "home.dueSoon"              = "Due soon";
+"home.noDueAssessments"     = "No assessments due";
 "ipad.sidebar.section"      = "Site";
 "ipad.sidebar.role"         = "Field supervisor";
 

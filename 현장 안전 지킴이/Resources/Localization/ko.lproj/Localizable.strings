@@ -22,6 +22,7 @@
 "home.assessmentsDue"       = "위험성평가 기한";
 "home.overdue"              = "기한 초과";
 "home.dueSoon"              = "기한 임박";
+"home.noDueAssessments"     = "임박한 위험성평가 없음";
 "ipad.sidebar.section"      = "현장";
 "ipad.sidebar.role"         = "현장 감독";
 

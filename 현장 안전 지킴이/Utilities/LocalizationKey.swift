@@ -29,6 +29,7 @@ enum LocalizationKey: String {
     case homeAssessmentsDue     = "home.assessmentsDue"
     case homeOverdue            = "home.overdue"
     case homeDueSoon            = "home.dueSoon"
+    case homeNoDueAssessments   = "home.noDueAssessments"
     case ipadSidebarSection     = "ipad.sidebar.section"
     case ipadSidebarRole        = "ipad.sidebar.role"
 

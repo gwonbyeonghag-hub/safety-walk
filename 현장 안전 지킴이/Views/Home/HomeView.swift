@@ -363,7 +363,7 @@ struct HomeView: View {
                 .font(.headline)
 
             if dueAssessments.isEmpty {
-                Text(LocalizationKey.homeNoOpenHazards.localized)
+                Text(LocalizationKey.homeNoDueAssessments.localized)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
