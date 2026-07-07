@@ -45,7 +45,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 · WO-8 macOS 디자인 폴리시 ✅ 완료 (2026-07-07).** 남은 것 = **WO-7 iPad 레이아웃 🔴 OPEN**(디자인 타겟 확정, 착수 대기) · **App Store 동시출시(WO-6)**.
+**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 · WO-8 macOS 디자인 폴리시 ✅ · WO-7 iPad 네이티브 레이아웃 ✅ 완료 (2026-07-07).** 남은 것 = **App Store 동시출시(WO-6)**.
 > 📁 로컬 경로 변경: 프로젝트 폴더가 `02_개발/03_프로젝트/` → **`02_개발/02_프로젝트/`** 로 이동됨(2026-07-03, 손실 없음). GitHub 원격(`safety-walk`)이 안정 앵커.
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
@@ -707,7 +707,7 @@ repo에 **네이티브 macOS 앱 타깃** 추가(SafetyWalkCore 의존), **대�
 
 ---
 
-## WO-7 — iPad 레이아웃 폴리시 (iOS 앱 iPad-네이티브화) 🔴 OPEN — 디자인 타겟 확정 ✅
+## WO-7 — iPad 레이아웃 폴리시 (iOS 앱 iPad-네이티브화) ✅ 완료·머지 (2026-07-07)
 
 > iOS 앱은 **이미 유니버설(`TARGETED_DEVICE_FAMILY = 1,2`)** — iPad에서 돌지만 **iPhone 레이아웃이 커진 모양**. iPad-네이티브 경험으로.
 > **동작·모델·동기화 무변경 = 시각/네비 폴리시.** iPhone·macOS는 손대지 않는다. 계정 무관 → 언제든 진행.
@@ -755,9 +755,11 @@ iPad(regular size class)에서 **iPad-네이티브 네비게이션 + 큰 캔버�
 **main에서 새 브랜치 `wo7-ipad-layout`.** WO-1 handoff 형식 + **iPad·iPhone 스샷(라이트/다크)** 으로 보고 → 플래너 검수. (선행: 오너 실기기 3기기 동기화 확인 후 착수 권장 — 단 코드상 의존은 없음.)
 
 **WO-7 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+- 상태: ✅ 완료·main FF 머지 (2026-07-07)
+- 요약: iPad(regular)에 `NavigationSplitView` 네이티브 셸(사이드바 6섹션 + 아이덴티티 헤더, navy 선택) + 홈 2단(좌 rail·빠른작업[점검시작/위험요인등록] / 우 최근점검·위험성평가 기한). iPhone·compact는 **idiom 게이트**(`idiom==.pad && hSize==.regular`)로 기존 TabView 그대로 = 무회귀. 홈 due 카드는 공유 순수함수 `RiskAssessment.dueStatus`(365+30, macOS DueBadge와 패리티) 신설·TDD 레드퍼스트. 기존 6뷰 재사용(재작성 0), `MacDesign` 미import.
+- 플래너 재검증(러버스탬프 X): **Core 49/49**(due 9 신규·회귀 0) · **iOS 빌드 green** · **macOS 빌드 green**(Core additive 무손상) · **git diff SafetyWalkMac 0건** · **MacDesign 미참조** · iPad 라이트/다크 + iPhone 무회귀 스샷 3종 목업 대조 일치. 검수 중 발견한 due 카드 빈-상태 문구 오용(`homeNoOpenHazards` 재사용)은 플래너가 전용 키 `homeNoDueAssessments`로 인라인 수정 후 재빌드 green.
+- 후속(트래킹): macOS `DashboardView.DueBadge`를 공유 `dueStatus`로 수렴(중복 제거·behavior-neutral) — 별도 소작업.
+- 증거 위치: 브랜치 `wo7-ipad-layout`(→main FF), 스샷 `wo7-shots/`(ipad_home_light/dark_landscape_win · iphone_home_light/dark), 아티팩트 ef123a9e. 커밋 216da63(실행자) + b061526(플래너 문구 수정).
 
 ---
 
@@ -812,7 +814,7 @@ macOS 앱(대시보드·브라우즈·리포트허브)이 **세련된 네이티�
 - 승인 목업 `docs/design/macos-dashboard-mockup.html` CSS 토큰을 `SafetyWalkMac/Support/MacDesign.swift`(신규·macOS 전용)로 이식 — 쿨 뉴트럴 + navy 액센트 어댑티브(라이트/다크, 외형 피커 대응), 8pt·라운딩12/8·소프트섀도우. 대시보드·브라우즈·리포트허브 통일 폴리시(스탯타일·MacCard·사이드바 아이덴티티·헤어라인·tabular).
 - **대시보드 밀도(오너 피드백 반영)**: "현장별 위험 분포"를 심각도순 **top 6로 캡**(`riskRowLimit=6`) + **"전체 N개 현장 보기 →"** navy 링크 → 현장 브라우즈. 나머지 6제한 리스트와 일관.
 - **플래너 독립 검증**: 변경 전부 `SafetyWalkMac/`(+로컬키 6개만) · **위험칩 시그니처 0 변경** · iOS/코어/모델/동기화/리포트PDF 무변경 · macOS **BUILD SUCCEEDED**(Debug+Release) · 코어 **40/40** · 스샷 목업 일치 · 분포 캡 코드(`Array(sitesBySeverity.prefix(riskRowLimit))` + `if sites.count>limit` 전체보기) 확인. (검수 중 연 `after_dashboard_light.png`은 캡 전 캐시본 — 코드는 캡 확정.)
-→ **macOS "세련된 네이티브" 완료.** 남은 것 = WO-7 iPad(선택) · App Store(WO-6).
+→ **macOS "세련된 네이티브" 완료.** WO-7 iPad 네이티브 레이아웃 ✅ 완료. 남은 것 = App Store(WO-6).
 
 ---
 
