@@ -18,6 +18,12 @@
 "home.openHazards"          = "Open Hazards";
 "home.allClear"             = "All clear";
 "home.noOpenHazards"        = "No open hazards";
+"home.quickActions"         = "Quick actions";
+"home.assessmentsDue"       = "Assessments due";
+"home.overdue"              = "Overdue";
+"home.dueSoon"              = "Due soon";
+"ipad.sidebar.section"      = "Site";
+"ipad.sidebar.role"         = "Field supervisor";
 
 // MARK: - Inspection setup
 "inspection.noSitesYet"         = "No sites yet. Add a new site below.";

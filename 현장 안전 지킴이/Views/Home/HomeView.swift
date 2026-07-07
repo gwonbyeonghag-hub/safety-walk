@@ -10,10 +10,25 @@ struct HomeView: View {
     @Query
     private var hazards: [Hazard]
 
+    // Additive queries used only by the iPad (regular) two-column layout. On iPhone
+    // (compact) the layout below never renders these, so the phone home is unchanged.
+    @Query(sort: \Site.name) private var sites: [Site]
+    @Query private var assessments: [RiskAssessment]
+
+    @Environment(\.horizontalSizeClass) private var hSize
+
     @State private var viewModel = HomeViewModel()
     @State private var showStartInspection = false
+    @State private var showAddHazard = false
 
     private var recentInspections: [Inspection] { Array(inspections.prefix(5)) }
+
+    /// 정기 assessments at/near their annual deadline — shared rule (SafetyWalkCore).
+    private var dueAssessments: [RiskAssessment] {
+        assessments
+            .filter { $0.kind == .regular && RiskAssessment.dueStatus(assessedAt: $0.assessedAt) != .notDue }
+            .sorted { $0.assessedAt < $1.assessedAt }
+    }
 
     private var todayCount: Int {
         inspections.filter { Calendar.current.isDateInToday($0.startedAt) }.count
@@ -44,12 +59,12 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    statusRail
-                    inspectionSummary
-                    startInspectionButton
-                    riskAssessmentEntry
-                    recentInspectionsSection
+                Group {
+                    if hSize == .regular {
+                        regularBody      // iPad: two columns (WO-7 mockup)
+                    } else {
+                        compactBody      // iPhone: unchanged single column
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
@@ -59,6 +74,43 @@ struct HomeView: View {
             .navigationDestination(for: Inspection.self) { inspection in
                 InspectionDetailView(inspection: inspection)
             }
+            .sheet(isPresented: $showStartInspection) {
+                StartInspectionFlow()
+            }
+            .sheet(isPresented: $showAddHazard) {
+                HazardRegistrationView(availableSites: sites)
+            }
+        }
+    }
+
+    // MARK: - Layouts
+
+    /// iPhone (compact) — the original single-column field-tool home. Unchanged.
+    private var compactBody: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            statusRail
+            inspectionSummary
+            startInspectionButton
+            riskAssessmentEntry
+            recentInspectionsSection
+        }
+    }
+
+    /// iPad (regular) — the same home content spread across two columns: left = open-hazard
+    /// rail + quick actions, right = recent inspections + assessments due (WO-7 mockup).
+    private var regularBody: some View {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
+                statusRail
+                quickActionsCard
+            }
+            .frame(maxWidth: .infinity, alignment: .top)
+
+            VStack(alignment: .leading, spacing: 20) {
+                recentInspectionsSection
+                assessmentsDueCard
+            }
+            .frame(maxWidth: .infinity, alignment: .top)
         }
     }
 
@@ -199,9 +251,8 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity, minHeight: 50)
         }
         .buttonStyle(.borderedProminent)
-        .sheet(isPresented: $showStartInspection) {
-            StartInspectionFlow()
-        }
+        // Sheet moved to body level (WO-7) so the iPad quick-actions card can trigger the
+        // same flow; presentation is identical to before on iPhone.
     }
 
     // MARK: - Risk assessment entry (≤2 taps from Home → list → create/detail)
@@ -274,6 +325,97 @@ struct HomeView: View {
         .padding(.vertical, 32)
     }
 
+    // MARK: - iPad (regular) cards
+
+    /// Quick actions (WO-7 mockup): 점검 시작 (primary) + 위험요인 추가 (secondary). Both reuse
+    /// existing flows (StartInspectionFlow / HazardRegistrationView) — no new behavior.
+    private var quickActionsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(LocalizationKey.homeQuickActions.localized)
+                .font(.headline)
+            Button {
+                showStartInspection = true
+            } label: {
+                Label(LocalizationKey.homeStartInspection.localized, systemImage: "checklist")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+            }
+            .buttonStyle(.borderedProminent)
+            Button {
+                showAddHazard = true
+            } label: {
+                Label(LocalizationKey.homeAddHazard.localized, systemImage: "plus")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(16)
+        .background(.background, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.separator), lineWidth: 0.5))
+    }
+
+    /// Assessments due (WO-7 mockup): 정기 assessments at/near their annual deadline, using
+    /// the shared `RiskAssessment.dueStatus` rule. Read-only; taps route to the RA list.
+    private var assessmentsDueCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(LocalizationKey.homeAssessmentsDue.localized)
+                .font(.headline)
+
+            if dueAssessments.isEmpty {
+                Text(LocalizationKey.homeNoOpenHazards.localized)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 4)
+            } else {
+                ForEach(dueAssessments.prefix(4)) { ra in
+                    NavigationLink {
+                        RiskAssessmentListView()
+                    } label: {
+                        HStack(spacing: 10) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(ra.siteName.isEmpty ? ra.method.localizedLabel : ra.siteName)
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                Text("\(ra.kind.localizedLabel) · \(ra.method.localizedLabel)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                            Spacer(minLength: 8)
+                            DuePill(status: RiskAssessment.dueStatus(assessedAt: ra.assessedAt))
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(16)
+        .background(.background, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.separator), lineWidth: 0.5))
+    }
+
+}
+
+// MARK: - DuePill
+
+/// Soft-tinted deadline pill for the assessments-due card. Colors are the risk-semantic
+/// ramp (overdue = high, due-soon = medium) — urgency, not decoration (DESIGN_DIRECTION).
+private struct DuePill: View {
+    let status: AssessmentDueStatus
+    var body: some View {
+        let overdue = status == .overdue
+        let color: Color = overdue ? .red : .orange
+        Text(overdue ? LocalizationKey.homeOverdue.localized : LocalizationKey.homeDueSoon.localized)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(color)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 3)
+            .background(color.opacity(0.13), in: Capsule())
+    }
 }
 
 // MARK: - InspectionRowView

@@ -117,6 +117,7 @@ struct ContentView: View {
     @AppStorage("com.safetywalk.hasCompletedOnboarding")
     private var hasCompletedOnboarding = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.horizontalSizeClass) private var hSize
 
     @State private var showIntro = true
     @State private var contentOpacity: Double = 0
@@ -138,7 +139,19 @@ struct ContentView: View {
     }
 
     @ViewBuilder private var appContent: some View {
-        if hasCompletedOnboarding { mainTabView } else { OnboardingView() }
+        if hasCompletedOnboarding { mainShell } else { OnboardingView() }
+    }
+
+    /// WO-7: iPad (regular width) → native `NavigationSplitView` shell; everything else —
+    /// iPhone (any orientation) and iPad narrow multitasking (compact) — keeps the existing
+    /// tab bar. Idiom-gated so an iPhone in regular-width landscape (Plus/Max) never
+    /// switches to the sidebar, guaranteeing iPhone has no layout change.
+    @ViewBuilder private var mainShell: some View {
+        if UIDevice.current.userInterfaceIdiom == .pad && hSize == .regular {
+            IPadRootView()
+        } else {
+            mainTabView
+        }
     }
 
     private var mainTabView: some View {

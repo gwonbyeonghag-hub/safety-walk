@@ -18,6 +18,12 @@
 "home.openHazards"          = "미처리 위험요인";
 "home.allClear"             = "안정";
 "home.noOpenHazards"        = "미처리 위험요인 없음";
+"home.quickActions"         = "빠른 작업";
+"home.assessmentsDue"       = "위험성평가 기한";
+"home.overdue"              = "기한 초과";
+"home.dueSoon"              = "기한 임박";
+"ipad.sidebar.section"      = "현장";
+"ipad.sidebar.role"         = "현장 감독";
 
 // MARK: - Inspection setup
 "inspection.noSitesYet"         = "저장된 현장이 없습니다. 아래에서 추가하세요.";

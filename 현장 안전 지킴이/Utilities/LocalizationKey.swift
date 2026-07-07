@@ -24,6 +24,13 @@ enum LocalizationKey: String {
     case homeOpenHazards        = "home.openHazards"
     case homeAllClear           = "home.allClear"
     case homeNoOpenHazards      = "home.noOpenHazards"
+    // iPad (regular) home extras — WO-7
+    case homeQuickActions       = "home.quickActions"
+    case homeAssessmentsDue     = "home.assessmentsDue"
+    case homeOverdue            = "home.overdue"
+    case homeDueSoon            = "home.dueSoon"
+    case ipadSidebarSection     = "ipad.sidebar.section"
+    case ipadSidebarRole        = "ipad.sidebar.role"
 
     // MARK: - Inspection setup
     case inspectionNoSitesYet       = "inspection.noSitesYet"
