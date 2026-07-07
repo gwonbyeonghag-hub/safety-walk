@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- SafetyWalk app icon — iOS LIGHT (default). Full-bleed 1024 square, opaque.
+       iOS masks the corners; do NOT add rounded corners here. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F59A26"/>
+      <stop offset="1" stop-color="#E5760F"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"/>
+  <ellipse cx="512" cy="666" rx="380" ry="86" fill="#FFFFFF"/>
+  <path d="M206 666 C206 416 322 286 512 286 C702 286 818 416 818 666 Z" fill="#FFFFFF"/>
+  <path d="M356 654 L378 380" stroke="#D9E1EF" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <path d="M668 654 L646 380" stroke="#D9E1EF" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <rect x="478" y="316" width="68" height="350" rx="34" fill="#21488C"/>
+</svg>

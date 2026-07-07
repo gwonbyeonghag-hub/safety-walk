@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- SafetyWalk app icon — iOS TINTED. Grayscale on opaque BLACK (#000000); the system
+       applies the user's tint by luminance. Export PNG as Gray Gamma 2.2. -->
+  <rect x="0" y="0" width="1024" height="1024" fill="#000000"/>
+  <ellipse cx="512" cy="666" rx="380" ry="86" fill="#FFFFFF"/>
+  <path d="M206 666 C206 416 322 286 512 286 C702 286 818 416 818 666 Z" fill="#FFFFFF"/>
+  <path d="M356 654 L378 380" stroke="#C0C0C0" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <path d="M668 654 L646 380" stroke="#C0C0C0" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <rect x="478" y="316" width="68" height="350" rx="34" fill="#8E8E8E"/>
+</svg>
