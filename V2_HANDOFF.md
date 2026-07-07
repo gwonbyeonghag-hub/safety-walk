@@ -842,7 +842,7 @@ macOS 앱(대시보드·브라우즈·리포트허브)이 **세련된 네이티�
 
 ### 스코프
 **✅ 포함**
-- `SafetyWalkMac.entitlements`: `com.apple.security.app-sandbox = true` + CloudKit용 `com.apple.security.network.client = true` 추가. 기존 iCloud 컨테이너/CloudKit 엔타이틀먼트 유지.
+- `SafetyWalkMac.entitlements`: `com.apple.security.app-sandbox = true` + CloudKit용 `com.apple.security.network.client = true` + **리포트 export(NSSavePanel)용 `com.apple.security.files.user-selected.read-write = true`**(플래너 결정 2026-07-07, 실행자 STOP 응답) 추가. 기존 iCloud 컨테이너/CloudKit 엔타이틀먼트 유지.
 - **공유 팩토리**를 `SafetyWalkCore`에 신설(가칭 `makeCloudKitContainer`): CloudKit+마이그레이션으로 컨테이너 생성 → 실패 시 **복구**(해당 store 파일 `*.store/-shm/-wal`을 타임스탬프 백업명으로 **이동**[삭제 아님] → fresh 재시도 → 그래도 실패면 최후 in-memory). `SafetyWalkApp.swift`(iOS Release)와 `MacModelContainer.swift`(macOS `#else`) 둘 다 이 팩토리로 교체. macOS `#if DEBUG` in-memory 시드 경로는 그대로.
 - **TDD**(Core): 일부러 비호환/손상 store를 temp URL에 만들고 → 팩토리가 **작동하는 컨테이너 반환** + 원본이 **옆으로 이동됨(존재, 삭제 아님)** 을 단언.
 
@@ -853,6 +853,7 @@ macOS 앱(대시보드·브라우즈·리포트허브)이 **세련된 네이티�
 **🔴 중단·보고(코딩 전)**
 - 샌드박스가 macOS **리포트/PDF export·사진 접근**을 깨면 → NSSavePanel/보안스코프 접근 설계를 **먼저 보고**.
 - 복구가 **iOS 기존 로컬 데이터 위치를 바꿔 고아화**할 위험이 있으면(명시 store URL 도입 등) → 데이터 연속성 계획(CloudKit 재싱크 허용?)을 **먼저 보고**.
+  → **플래너 결정(2026-07-07): iOS store URL 변경 금지.** 명시 `ModelConfiguration(url:)` 신설 없이 **기본 store URL을 대상**으로 복구(정상 실행 땐 무이동, 실패 시에만 백업 이동→재시도) = 고아화 0. macOS는 샌드박스가 저장소를 컨테이너로 자동 이동.
 
 ### 완료 조건 (증거 필수)
 - [ ] 낡은 default.store 있는 이 맥에서 **macOS Release 실행 → 크래시 없이 대시보드**(스샷).
