@@ -45,7 +45,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·1·2·2b·5·5b·4·3 ✅ 완료 — v2 기능 전부 구현 (4기법 + 디자인 + 리포트 + macOS 셸 + CloudKit 동기화).** 남은 것 = **오너 실기기 2기기 동기화 확인** → 그 후 **App Store 동시출시(WO-6)**. (`xcodebuild test`·실기기 동기화는 이 헤드리스 환경에선 불가 — 오너 몫.)
+**WO-0~3 ✅ v2 기능 전부 구현 완료 (4기법 + 디자인 + 리포트 + macOS 셸 + CloudKit).** 진행 = **① 오너 실기기 동기화 확인**(iPhone·iPad·Mac 3기기 — iPad는 이미 유니버설 `1,2`라 같은 앱·컨테이너로 자동 동기화) · **② WO-7 iPad 레이아웃 폴리시 🔴 OPEN** · 이후 **App Store 동시출시(WO-6)**. (`xcodebuild test`·실기기 동기화는 헤드리스 환경 불가 — 오너 몫.)
 > 📁 로컬 경로 변경: 프로젝트 폴더가 `02_개발/03_프로젝트/` → **`02_개발/02_프로젝트/`** 로 이동됨(2026-07-03, 손실 없음). GitHub 원격(`safety-walk`)이 안정 앵커.
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
@@ -702,6 +702,52 @@ repo에 **네이티브 macOS 앱 타깃** 추가(SafetyWalkCore 의존), **대�
 - 엔진 재사용 = **타깃 멤버십 공유(추출 아님, STOP 올바르게 회피)**. 사진만 `PlatformImage`(`#if canImport`) — iOS 경로 byte-동일.
 - **플래너 독립 검증**: SafetyWalkCore 소스 **0** · iOS는 사진가드+키만(로직 0) · 시드 `#if DEBUG` · EN/KO +30/+30 · **macOS BUILD SUCCEEDED · iOS BUILD SUCCEEDED · 코어 39/39, 회귀 0**. **스샷 직접 확인**: 관리 대시보드(라이트+다크) — 위험색 도트+monospaced 분포·미조치 위험칩·RA "기한 초과" 배지·navy 액센트·HIG. 리포트 PDF 3종(RA 2p·JHA 2p·점검 3p NSImage).
 → **네이티브 macOS 매니저 셸 완성**(iOS 디자인 언어 + 리포트 엔진 재사용). WO-3가 컨테이너만 CloudKit로 스왑하면 iPhone↔Mac 동기화.
+
+---
+
+## WO-7 — iPad 레이아웃 폴리시 (iOS 앱 iPad-네이티브화) 🔴 OPEN
+
+> iOS 앱은 **이미 유니버설(`TARGETED_DEVICE_FAMILY = 1,2`)** — iPad에서 돌지만 **iPhone 레이아웃이 커진 모양**. iPad-네이티브 경험으로.
+> **동작·모델·동기화 무변경 = 시각/네비 폴리시.** iPhone·macOS는 손대지 않는다. 계정 무관 → 언제든 진행.
+> DESIGN_DIRECTION 언어(위험칩·쿨/웜·HIG) 그대로. 방법은 WO-5와 동일(design-visual-qa 루프).
+
+### 배경 / 목적
+CONTEXT/PRD의 v1 "iPad 전용 레이아웃 없음" 제약을 v2에서 해제. iPad는 현장 감독이 큰 화면으로 쓰는 기기 → **iPad에선 `NavigationSplitView`(사이드바+디테일) 등 iPad-HIG 네비**로, iPhone(compact)은 기존 탭/스택 유지. 기존 iOS 콘텐츠 뷰를 **재사용**(재작성 X).
+
+### 목표 (verifiable)
+iPad(regular size class)에서 **iPad-네이티브 네비게이션 + 큰 캔버스 활용**. **iPhone(compact)·macOS 무변경, 모델/로직/동기화 변경 0, 기존 테스트 회귀 0.**
+
+### 스코프
+**✅ 포함:**
+- **`horizontalSizeClass` 적응**: iPad regular → `NavigationSplitView`(사이드바 = 홈/점검/위험요인/기록/위험성평가/설정 섹션, 디테일 = 콘텐츠). iPhone compact → **기존 탭바+스택 그대로**.
+- 기존 iOS 콘텐츠 뷰(체크리스트·위험요인·위험성평가·기록·설정) **재사용** — iPad shell만 추가.
+- 폼·리스트가 iPad 넓은 화면에서 자연스럽게(readable width·과도한 빈 공간 없이·다단 가능한 곳은 다단).
+- **위험칩 언어·타이포·팔레트 그대로**(DESIGN_DIRECTION). `design-visual-qa`(iPad 라이트+다크).
+
+**⛔ 제외:** iPhone 레이아웃 변경 · macOS 변경 · CloudKit/모델/로직/신규기능. **iPad 전용 대시보드(Mac식 조망)**는 이번 범위 밖(기본 = 적응형 필드도구; 원하면 후속 WO).
+
+**🚫 금지:** 모델/동작 변경, iPhone 회귀, 위험색 장식 사용.
+
+### 완료 조건 (증거 필수)
+- [ ] iPad(시뮬)에서 `NavigationSplitView` 네이티브 렌더, 전 화면 접근 가능
+- [ ] **iPhone 무회귀**(compact = 기존 탭/스택 그대로, 스샷 비교)
+- [ ] iPad 라이트+다크 `design-visual-qa` 통과(DESIGN_DIRECTION 일치·큰 화면 자연스러움)
+- [ ] **동작/모델/동기화 변경 0**: 앱 빌드 green, 기존 테스트 회귀 0, macOS 무변경
+- [ ] 보고: iPad 셸 구조·재사용한 뷰·iPad/iPhone 스샷(라이트·다크)
+
+### 중단 조건
+- split view가 특정 화면의 **재설계**를 요구 / 모델·로직 변경 필요 / iPhone compact가 깨짐 → 멈추고 보고.
+
+### Skills
+`/design-visual-qa`(iPad 렌더→스샷→비평) · `/navigation-qa`(적응형 네비 전환) · `/screen-implementation-review` · `/swiftui-build-qa` · `/safetywalk-qa-guardrails`.
+
+### 진행 / 보고
+**main에서 새 브랜치 `wo7-ipad-layout`.** WO-1 handoff 형식 + **iPad·iPhone 스샷(라이트/다크)** 으로 보고 → 플래너 검수. (선행: 오너 실기기 3기기 동기화 확인 후 착수 권장 — 단 코드상 의존은 없음.)
+
+**WO-7 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
 
 ---
 
