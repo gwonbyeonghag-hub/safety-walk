@@ -45,7 +45,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0·1·2·2b·5·5b·4 ✅ 완료 (4기법 + iOS 디자인 언어 + 멀티페이지 리포트 엔진 + 네이티브 macOS 매니저 셸).** 진행 = **WO-3 CloudKit 🔴 OPEN — 계정 Active ✅ 착수 가능**(iOS+macOS **두 앱** 컨테이너 CloudKit 스왑 → iPhone↔Mac 동기화 + v1 모델 5종 retrofit + 사진 동기화). 이후 macOS 현장기록·App Store 동시제출.
+**WO-0·1·2·2b·5·5b·4·3 ✅ 완료 — v2 기능 전부 구현 (4기법 + 디자인 + 리포트 + macOS 셸 + CloudKit 동기화).** 남은 것 = **오너 실기기 2기기 동기화 확인** → 그 후 **App Store 동시출시(WO-6)**. (`xcodebuild test`·실기기 동기화는 이 헤드리스 환경에선 불가 — 오너 몫.)
 > 📁 로컬 경로 변경: 프로젝트 폴더가 `02_개발/03_프로젝트/` → **`02_개발/02_프로젝트/`** 로 이동됨(2026-07-03, 손실 없음). GitHub 원격(`safety-walk`)이 안정 앵커.
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
@@ -435,7 +435,7 @@ iOS에서 **2기법으로 위험성평가표를 생성→항목입력→위험�
 
 ---
 
-## WO-3 — CloudKit 동기화 (iPhone↔Mac 데이터 공유) 🟡 IN PROGRESS — Phase A ✅ 완료 (2026-07-07)
+## WO-3 — CloudKit 동기화 (iPhone↔Mac 데이터 공유) ✅ DONE (코드 검수 통과 2026-07-07 · 실기기 2기기 동기화만 오너 확인 대기)
 
 > **✅ Phase A 완료 (플래너 직접 수행):** 근본원인 = 번들 `com.safetywalk.app` **선점(사용불가)**. → **고유 ID로 변경**: iOS `com.gwonbyeonghag.safetywalk` / macOS `com.gwonbyeonghag.safetywalk.mac`(+ 테스트). **CloudKit 컨테이너 = `iCloud.com.gwonbyeonghag.safetywalk`** (엔타이틀먼트 `SafetyWalk_iOS.entitlements`·`SafetyWalkMac/SafetyWalkMac.entitlements`, Push/aps는 뺌 = **CloudKit only**, 실시간 푸시는 후속). 두 타깃 `-allowProvisioningUpdates` 빌드 성공 → App ID 등록·iOS/Mac Team 프로파일 생성·컨테이너 생성·기기 등록 완료. 커밋 `d2ccda1`. **실행자는 이제 CloudKit 코드 배선(ModelContainer CloudKit swap + v1 모델 5종 retrofit)만.** 아래 본문의 컨테이너 ID는 전부 `iCloud.com.gwonbyeonghag.safetywalk`로 읽는다.
 
@@ -517,10 +517,14 @@ iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지*
 빌드·테스트(WO-1/2와 동일, 스킴 `-list` 캡처) + **2-시뮬레이터 같은 iCloud 로그인** 동기화. (선택: CloudKit Dashboard에서 레코드 확인.)
 **main에서 새 브랜치 `wo3-cloudkit`**. WO-1 handoff 형식 + **2기기 동기화 스크린샷**으로 보고 → 플래너 검수.
 
-**WO-3 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+**WO-3 결과: ✅ 코드 완료 (실행자 수행 + 플래너 검수 통과, 2026-07-07)**
+- 브랜치 `wo3-cloudkit` → main 머지. **Phase A**(프로비저닝, 플래너): 고유 번들ID `com.gwonbyeonghag.safetywalk`(+.mac) · 컨테이너 `iCloud.com.gwonbyeonghag.safetywalk` · 커밋 `d2ccda1`. **Phase B**(코드, 실행자): `daf0a2b`.
+- v1 모델 5종 CloudKit 호환(기본값·관계 optional) · **사진 `photoData`(externalStorage Data)** 전환 + VersionedSchema V1→V2 마이그레이션(파일사진→Data, 원본삭제) · 양 앱 CloudKit ModelContainer(동일 컨테이너) · 관계 call-site ~30 + 사진 6곳 리플.
+- **⚠️ 문서에 없던 CloudKit 제약 발견·수정**: 모든 관계에 **inverse 필수**(없으면 런타임 fatalError). Area.site·ChecklistItem.inspection·Hazard.inspection·RiskAssessmentItem.riskAssessment 추가. **3개 문서에 제약 명시**(다음 스키마 변경 대비).
+- **플래너 독립 검증**: 코어 `swift test` **40/40**(신규 마이그레이션 correctness 테스트 — 실디스크 V1→V2·사진 바이트 보존·원본삭제) · inverse 4쌍·컨테이너 양앱 일치·externalStorage·`.unique` 0(주석뿐) 확인 · **iOS+macOS 컴파일 green** · CloudKit 컨테이너 iOS시뮬+macOS(Debug/Release) 실행 무크래시.
+- **🔴 남은 확인(오너, 실기기)**: 실제 iPhone↔Mac 2기기 동기화(이 환경엔 기기·iCloud 없어 불가). `xcodebuild test`도 이 환경 러너-attach 한계로 실행 불가(컴파일은 항상 성공). → 오너가 실기기로 최종 확인.
+- 부수: 기존 `~/Library/Application Support/default.store`(7/1, 스키마 불일치)는 백업만(삭제 X) — 오너 판단.
+→ **CloudKit 코드 완성. v2 기능 전부 완성** (실기기 동기화 확인 후 App Store 동시제출 WO-6).
 
 ---
 
