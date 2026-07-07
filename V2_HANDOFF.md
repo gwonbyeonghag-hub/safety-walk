@@ -45,7 +45,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 · WO-8 macOS 디자인 폴리시 ✅ 완료 (2026-07-07).** 남은 것 = **WO-7 iPad 레이아웃 🔴 OPEN**(선택) · **App Store 동시출시(WO-6)**.
+**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 · WO-8 macOS 디자인 폴리시 ✅ 완료 (2026-07-07).** 남은 것 = **WO-7 iPad 레이아웃 🔴 OPEN**(디자인 타겟 확정, 착수 대기) · **App Store 동시출시(WO-6)**.
 > 📁 로컬 경로 변경: 프로젝트 폴더가 `02_개발/03_프로젝트/` → **`02_개발/02_프로젝트/`** 로 이동됨(2026-07-03, 손실 없음). GitHub 원격(`safety-walk`)이 안정 앵커.
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
@@ -707,11 +707,19 @@ repo에 **네이티브 macOS 앱 타깃** 추가(SafetyWalkCore 의존), **대�
 
 ---
 
-## WO-7 — iPad 레이아웃 폴리시 (iOS 앱 iPad-네이티브화) 🔴 OPEN
+## WO-7 — iPad 레이아웃 폴리시 (iOS 앱 iPad-네이티브화) 🔴 OPEN — 디자인 타겟 확정 ✅
 
 > iOS 앱은 **이미 유니버설(`TARGETED_DEVICE_FAMILY = 1,2`)** — iPad에서 돌지만 **iPhone 레이아웃이 커진 모양**. iPad-네이티브 경험으로.
 > **동작·모델·동기화 무변경 = 시각/네비 폴리시.** iPhone·macOS는 손대지 않는다. 계정 무관 → 언제든 진행.
 > DESIGN_DIRECTION 언어(위험칩·쿨/웜·HIG) 그대로. 방법은 WO-5와 동일(design-visual-qa 루프).
+
+### 🎨 디자인 타겟 (오너 승인 2026-07-07 — "이대로")
+**목업 = `docs/design/ipad-home-mockup.html`** · 아티팩트: https://claude.ai/code/artifact/c8270787-0626-455f-9bc9-1be98afbc7bd (라이트/다크)
+- **레이아웃**: iPad 가로(regular) = `NavigationSplitView`(사이드바 ~264pt + 콘텐츠 디테일). 사이드바 = 앱 아이덴티티 헤더(방패+"현장 안전 지킴이"+역할) + 섹션 리스트(홈·점검·위험요인·기록·위험성평가·설정, **navy 선택 틴트**).
+- **홈 디테일 = 2단 그리드**(iPhone 세로 한 줄 → iPad는 좌우로): **좌** = "미조치 위험요인"(위험 rail: 높음/보통/낮음 카운트) + "빠른 작업"(점검 시작 = primary navy 버튼 · 위험요인 추가 = secondary); **우** = "최근 점검" 리스트 + "위험성평가 기한".
+- **디자인 토큰**: macOS 폴리시와 **동일 팔레트**(쿨 뉴트럴 + navy 액센트 어댑티브, 위험칩, 카드 r14·소프트섀도우, tabular 숫자) — DESIGN_DIRECTION 한 언어. **단 구현은 iOS 디자인 자산 재사용**(`RiskChip` 등 WO-5 산출물). ⚠️ **`MacDesign.swift`는 macOS 전용 → import 금지**; iPad는 iOS/공유 레이어 토큰만. 공유가 필요하면 공유 레이어에 두되 중복 토큰 신설은 피한다.
+- **adaptive**: iPad regular = 사이드바 / iPhone·compact(세로 포함) = **기존 탭바+스택 그대로**(무회귀).
+- **원칙**: 홈은 **현장 도구**(대시보드 아님 — 조망 대시보드는 macOS 담당). iPad는 그 홈을 **넓게** 펼칠 뿐.
 
 ### 배경 / 목적
 CONTEXT/PRD의 v1 "iPad 전용 레이아웃 없음" 제약을 v2에서 해제. iPad는 현장 감독이 큰 화면으로 쓰는 기기 → **iPad에선 `NavigationSplitView`(사이드바+디테일) 등 iPad-HIG 네비**로, iPhone(compact)은 기존 탭/스택 유지. 기존 iOS 콘텐츠 뷰를 **재사용**(재작성 X).
