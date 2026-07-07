@@ -303,6 +303,9 @@ enum LocalizationKey: String {
 
     // MARK: - macOS manager shell (WO-4)
     case macLanguage                    = "mac.language"
+    case macSidebarOverview             = "mac.sidebar.overview"
+    case macSidebarRole                 = "mac.sidebar.role"
+    case macAppName                     = "mac.app.name"
     case macSectionDashboard            = "mac.section.dashboard"
     case macSectionSites                = "mac.section.sites"
     case macSectionInspections          = "mac.section.inspections"
@@ -310,6 +313,8 @@ enum LocalizationKey: String {
     case macSectionRiskAssessments      = "mac.section.riskAssessments"
     case macSectionReports              = "mac.section.reports"
     case macDashboardTitle              = "mac.dashboard.title"
+    case macDashboardSubtitle           = "mac.dashboard.subtitle"
+    case macViewAllSites                = "mac.dashboard.viewAllSites"
     case macStatSites                   = "mac.stat.sites"
     case macStatCompletedInspections    = "mac.stat.completedInspections"
     case macStatOpenHazards             = "mac.stat.openHazards"

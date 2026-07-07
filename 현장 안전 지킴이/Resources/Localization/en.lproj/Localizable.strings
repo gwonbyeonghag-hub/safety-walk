@@ -454,6 +454,9 @@
 
 /* macOS manager shell — WO-4 */
 "mac.language" = "Language";
+"mac.sidebar.overview" = "Overview";
+"mac.sidebar.role" = "Manager";
+"mac.app.name" = "SafetyWalk";
 "mac.section.dashboard" = "Dashboard";
 "mac.section.sites" = "Sites";
 "mac.section.inspections" = "Inspections";
@@ -461,6 +464,8 @@
 "mac.section.riskAssessments" = "Risk Assessments";
 "mac.section.reports" = "Reports";
 "mac.dashboard.title" = "Manager Dashboard";
+"mac.dashboard.subtitle" = "%d sites · safety status today";
+"mac.dashboard.viewAllSites" = "View all %d sites";
 "mac.stat.sites" = "Sites";
 "mac.stat.completedInspections" = "Completed";
 "mac.stat.openHazards" = "Open Hazards";

@@ -454,6 +454,9 @@
 
 /* macOS manager shell — WO-4 */
 "mac.language" = "언어";
+"mac.sidebar.overview" = "개요";
+"mac.sidebar.role" = "관리자";
+"mac.app.name" = "현장 안전 지킴이";
 "mac.section.dashboard" = "대시보드";
 "mac.section.sites" = "현장";
 "mac.section.inspections" = "점검";
@@ -461,6 +464,8 @@
 "mac.section.riskAssessments" = "위험성평가";
 "mac.section.reports" = "리포트";
 "mac.dashboard.title" = "관리 대시보드";
+"mac.dashboard.subtitle" = "%d개 현장 · 오늘 기준 안전 현황";
+"mac.dashboard.viewAllSites" = "전체 %d개 현장 보기";
 "mac.stat.sites" = "현장";
 "mac.stat.completedInspections" = "완료 점검";
 "mac.stat.openHazards" = "미조치 위험";

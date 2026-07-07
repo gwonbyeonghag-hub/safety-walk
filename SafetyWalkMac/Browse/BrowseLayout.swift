@@ -16,34 +16,39 @@ struct BrowseLayout<Item: Identifiable, Row: View, Detail: View>: View where Ite
                 row(item).tag(item.id)
             }
             .listStyle(.inset)
+            .tint(Color.macAccent)
             .frame(width: 300)
 
             Divider()
 
             Group {
                 if let id = selection, let item = items.first(where: { $0.id == id }) {
-                    ScrollView { detail(item).padding(20) }
+                    ScrollView { detail(item).padding(MacTheme.s6) }
                 } else {
                     ContentUnavailableView(LocalizationKey.macSelectItem.localized,
                                            systemImage: "sidebar.left")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.macBg)
         }
         .onAppear { if selection == nil { selection = items.first?.id } }
-        .background(.background)
     }
 }
 
-/// Shared section header for the read-only detail panes.
+/// Shared section header for the read-only detail panes (mockup `.h1`/`.sub`).
 struct DetailHeader: View {
     let title: String
     var subtitle: String?
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(title).font(.title2.weight(.semibold))
+            Text(title)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(Color.macInk)
             if let subtitle, !subtitle.isEmpty {
-                Text(subtitle).font(.callout).foregroundStyle(.secondary)
+                Text(subtitle)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.macMuted)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -56,8 +61,13 @@ struct DetailField: View {
     let value: String
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(label).font(.callout).foregroundStyle(.secondary).frame(width: 90, alignment: .leading)
-            Text(value.isEmpty ? "—" : value).font(.callout)
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.macMuted)
+                .frame(width: 92, alignment: .leading)
+            Text(value.isEmpty ? "—" : value)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.macInk)
             Spacer(minLength: 0)
         }
     }

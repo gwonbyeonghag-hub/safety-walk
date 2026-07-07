@@ -24,11 +24,13 @@ struct ReportHubView: View {
                 }
             }
             .listStyle(.sidebar)
+            .tint(Color.macAccent)
             .frame(width: 320)
 
             Divider()
 
             preview
+                .background(Color.macBg)
         }
         .navigationTitle(LocalizationKey.macSectionReports.localized)
         .onAppear { if selection == nil { selection = assessmentEntries.first?.id } }
@@ -91,8 +93,13 @@ struct ReportHubView: View {
 
     private func row(_ entry: ReportEntry) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(entry.title).font(.body)
-            Text(entry.subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            Text(entry.title)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Color.macInk)
+            Text(entry.subtitle)
+                .font(.system(size: 11.5))
+                .foregroundStyle(Color.macMuted)
+                .lineLimit(1)
         }
         .padding(.vertical, 2)
     }

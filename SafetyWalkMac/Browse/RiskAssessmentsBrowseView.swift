@@ -75,9 +75,10 @@ struct ReportDisclaimerInline: View {
     var body: some View {
         Text(LocalizationKey.disclaimerText.localized)
             .font(.caption)
-            .foregroundStyle(.secondary)
-            .padding(10)
+            .foregroundStyle(Color.macMuted)
+            .padding(MacTheme.s3)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
+            .background(Color.macSurface2, in: RoundedRectangle(cornerRadius: MacTheme.smallRadius))
+            .overlay(RoundedRectangle(cornerRadius: MacTheme.smallRadius).strokeBorder(Color.macBorder, lineWidth: 1))
     }
 }

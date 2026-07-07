@@ -18,9 +18,9 @@ extension AppearanceMode {
 
 extension Color {
     /// Cool interactive accent (DESIGN_DIRECTION §1: navy = app chrome / interactive,
-    /// warm ramp reserved for risk). Slightly brighter than the print `reportNavy` so it
-    /// reads as a live control tint in both light and dark.
-    static let brandNavy = Color(red: 0.13, green: 0.30, blue: 0.55)
+    /// warm ramp reserved for risk). WO-8: now the adaptive mockup accent
+    /// (`#2360C9` light / `#5C9BF5` dark) so every control tint tracks light/dark.
+    static var brandNavy: Color { .macAccent }
 }
 
 /// Manager dashboard section identity (sidebar).
@@ -108,32 +108,23 @@ struct FlowLayout: Layout {
     }
 }
 
-/// A calm card container used across the dashboard (DESIGN_DIRECTION: calm-dense, HIG).
+/// A calm card container used across the dashboard and browse detail panes.
+/// WO-8: mockup card — token surface + hairline border + soft shadow, with the small
+/// uppercase `MacCardLabel` header (DESIGN_DIRECTION: calm-dense, HIG).
 struct MacCard<Content: View>: View {
     var title: String? = nil
     var systemImage: String? = nil
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: MacTheme.s3) {
             if let title {
-                Label {
-                    Text(title).font(.headline)
-                } icon: {
-                    if let systemImage {
-                        Image(systemName: systemImage).foregroundStyle(Color.brandNavy)
-                    }
-                }
-                .labelStyle(.titleAndIcon)
+                MacCardLabel(text: title, systemImage: systemImage)
             }
             content
         }
-        .padding(16)
+        .padding(MacTheme.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(.separator.opacity(0.6), lineWidth: 0.5)
-        )
+        .macCardSurface()
     }
 }
