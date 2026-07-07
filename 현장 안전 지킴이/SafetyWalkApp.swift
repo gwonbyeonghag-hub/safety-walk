@@ -20,22 +20,10 @@ struct SafetyWalkApp: App {
     // SafetyWalkMac/MacModelContainer.swift so both apps sync through one iCloud
     // container. VersionedSchema/SafetyWalkMigrationPlan lives in SafetyWalkCore so a
     // schema change only has to be made once for both targets (SWIFTDATA_MIGRATION.md).
-    static let modelContainer: ModelContainer = {
-        let schema = Schema(versionedSchema: SchemaV2.self)
-        let configuration = ModelConfiguration(
-            schema: schema,
-            cloudKitDatabase: .private("iCloud.com.gwonbyeonghag.safetywalk")
-        )
-        do {
-            return try ModelContainer(
-                for: schema,
-                migrationPlan: SafetyWalkMigrationPlan.self,
-                configurations: configuration
-            )
-        } catch {
-            fatalError("Failed to create the ModelContainer: \(error)")
-        }
-    }()
+    // The shared factory recovers instead of trapping if the store can't be opened
+    // (WO-9 / F-1 defense) — see SafetyWalkCore/ModelContainerFactory.swift.
+    static let modelContainer: ModelContainer =
+        SafetyWalkModelContainer.makeCloudKitContainer(containerID: "iCloud.com.gwonbyeonghag.safetywalk")
 
     var body: some Scene {
         WindowGroup {
