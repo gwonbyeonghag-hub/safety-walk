@@ -45,7 +45,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 · WO-8 macOS 디자인 폴리시 ✅ · WO-7 iPad 네이티브 레이아웃 ✅ 완료 (2026-07-07).** 남은 것 = **App Store 동시출시(WO-6)**.
+**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 · WO-8 macOS 디자인 폴리시 ✅ · WO-7 iPad 네이티브 레이아웃 ✅ · 앱 아이콘(안전모, iOS 라·다·틴티드+macOS) ✅ 완료 (2026-07-07).** 남은 것 = **WO-9 macOS 샌드박스+ModelContainer 폴백 🔴 OPEN**(Release 크래시 수정·F-1 방어) · **App Store 동시출시(WO-6)**. (F-1: iOS 실기기 첫 실행 정상 = 시뮬 전용 확정.)
 > 📁 로컬 경로 변경: 프로젝트 폴더가 `02_개발/03_프로젝트/` → **`02_개발/02_프로젝트/`** 로 이동됨(2026-07-03, 손실 없음). GitHub 원격(`safety-walk`)이 안정 앵커.
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
@@ -828,3 +828,46 @@ macOS 앱(대시보드·브라우즈·리포트허브)이 **세련된 네이티�
 
 각 WO 검토 시: ① Acceptance 증거 실재 확인 ② `CLAUDE.md` 규칙 위반 없음(도메인 용어/현지화/스코프)
 ③ 스키마 변경 시 `SWIFTDATA_MIGRATION.md` 절차 준수 ④ 스코프 크리프 없음 ⑤ iOS 빌드 그린 유지.
+
+---
+
+## WO-9 — macOS 샌드박스 + ModelContainer 폴백 (Release 크래시 수정 + F-1 방어) 🔴 OPEN
+
+> **증상**: macOS **Release** 앱이 실행 즉시 크래시 — `MacModelContainer.swift:41` `fatalError("Failed to create the macOS ModelContainer: SwiftDataError … migration with an unknown model version")`.
+> **근본원인**: 맥앱이 **비샌드박스**(엔타이틀먼트에 `app-sandbox` 없음)라 공용 `~/Library/Application Support/default.store`를 쓰는데, 그 저장소가 **예전 스키마**(플랜의 V1=1.0.0 / V2=2.0.0 어느 것도 아님)라 마이그레이션이 못 알아봄. iOS는 샌드박스(앱 전용 저장소)+clean install이라 안 겪음(실기기 iPhone 첫 실행 정상 확인 = **F-1 iOS는 시뮬 전용**).
+> 두 수정이 한 덩어리: ① 맥앱 **샌드박스**(macOS App Store 필수 + 저장소가 앱 전용 컨테이너로 이동 → 공용 store 충돌 소멸) ② **ModelContainer 폴백**(생성 실패 시 fatalError 대신 복구 = F-1 방어, iOS/macOS 공용).
+
+### 목표 (verifiable)
+낡은 `default.store`가 남아있는 **이 맥에서 macOS Release 앱이 크래시 없이 대시보드까지 뜬다.** ModelContainer 생성은 정상 상황에서 절대 `fatalError` 안 함 — 실패 시 복구(store 옆으로 치우고 재시도, 최후엔 in-memory)하고 앱은 뜬다. **iOS 무회귀(첫 실행 온보딩 정상·데이터 유지), Core 테스트 green(+신규 복구 테스트), 스키마/모델/마이그레이션 무변경.**
+
+### 스코프
+**✅ 포함**
+- `SafetyWalkMac.entitlements`: `com.apple.security.app-sandbox = true` + CloudKit용 `com.apple.security.network.client = true` 추가. 기존 iCloud 컨테이너/CloudKit 엔타이틀먼트 유지.
+- **공유 팩토리**를 `SafetyWalkCore`에 신설(가칭 `makeCloudKitContainer`): CloudKit+마이그레이션으로 컨테이너 생성 → 실패 시 **복구**(해당 store 파일 `*.store/-shm/-wal`을 타임스탬프 백업명으로 **이동**[삭제 아님] → fresh 재시도 → 그래도 실패면 최후 in-memory). `SafetyWalkApp.swift`(iOS Release)와 `MacModelContainer.swift`(macOS `#else`) 둘 다 이 팩토리로 교체. macOS `#if DEBUG` in-memory 시드 경로는 그대로.
+- **TDD**(Core): 일부러 비호환/손상 store를 temp URL에 만들고 → 팩토리가 **작동하는 컨테이너 반환** + 원본이 **옆으로 이동됨(존재, 삭제 아님)** 을 단언.
+
+**⛔ 제외 / 🚫 금지**
+- `~/Library/Application Support/default.store` **삭제·복원 금지**(프로젝트 규칙 — 타 앱 것일 수 있음). 이동은 오직 앱 자신의 지정 store에 한함.
+- 스키마/모델/마이그레이션 플랜 변경 금지. iOS를 공유 팩토리로 라우팅하는 것 외 iOS 동작 변경 금지.
+
+**🔴 중단·보고(코딩 전)**
+- 샌드박스가 macOS **리포트/PDF export·사진 접근**을 깨면 → NSSavePanel/보안스코프 접근 설계를 **먼저 보고**.
+- 복구가 **iOS 기존 로컬 데이터 위치를 바꿔 고아화**할 위험이 있으면(명시 store URL 도입 등) → 데이터 연속성 계획(CloudKit 재싱크 허용?)을 **먼저 보고**.
+
+### 완료 조건 (증거 필수)
+- [ ] 낡은 default.store 있는 이 맥에서 **macOS Release 실행 → 크래시 없이 대시보드**(스샷).
+- [ ] 샌드박스 후 macOS **리포트/PDF export·브라우즈** 무회귀(확인).
+- [ ] 폴백 복구 테스트: 비호환 store 재현 → 앱 뜸 + 원본 **이동됨(삭제 아님)**. Core green(신규 포함).
+- [ ] **iOS 빌드 green + 첫 실행(온보딩) 정상 + 무회귀**.
+- [ ] 원본 `~/Library/Application Support/default.store` **미삭제** 확인.
+
+### Skills
+`/grill-with-docs`(store URL·복구전략·샌드박스 파일접근 설계) · `/tdd`(복구 레드퍼스트) · `/swiftui-build-qa` · `/safetywalk-qa-guardrails`.
+
+### 진행 / 보고
+main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Release 실행 스샷(크래시 안 남)** + 테스트 결과 + 샌드박스 후 리포트 export 확인. push는 하되 main 머지는 플래너 검수 후.
+
+**WO-9 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
