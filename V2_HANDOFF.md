@@ -753,7 +753,10 @@ iPad(regular size class)에서 **iPad-네이티브 네비게이션 + 큰 캔버�
 
 ---
 
-## WO-8 — macOS 디자인 폴리시 (세련된 네이티브) 🔴 OPEN
+## WO-8 — macOS 디자인 폴리시 (세련된 네이티브) 🔴 OPEN — 디자인 타겟 확정 ✅
+
+> **✅ 디자인 타겟 (오너 승인 2026-07-07): `docs/design/macos-dashboard-mockup.html`** — 이 목업이 대시보드의 **정확한 타겟**이다. 실행자는 이 HTML의 CSS `:root` **디자인 토큰(색·여백·라운딩·타이포)을 SwiftUI로 옮긴다.** 브라우저로 열어 라이트/다크 둘 다 확인.
+> **요약 토큰:** 뉴트럴(쿨) — light `bg #F4F6F9`/`surface #FFF`/`sidebar #EEF1F6`/`border #E3E7EE`/`ink #1A1E26`/`muted #727B8C`, dark `#15181E`/`#1D2027`/`#191C22`/`#2B303A`/`#E9ECF2`/`#8B93A2`. 액센트(쿨) `#2360C9`(L)/`#5C9BF5`(D). 위험램프(의미 전용) 낮음 `#A9790A`/`#D2A63C`·보통 `#DA761A`/`#EE9040`·높음 `#CF3F3F`/`#E4615C`·안정 green `#2C9A57`/`#40B673`. 카드 라운딩 12(sm 8)·그림자 은은(`0 1px 2px`+`0 4px 16px`)·**SF Pro(system)**·숫자 `tabular-nums`·위험칩=색 pill+dot·**8pt 간격**. **대시보드가 타겟이고 브라우즈·리포트허브도 같은 토큰·카드 스타일로 통일.**
 
 > WO-4는 기능 "셸"이라 디자인 폴리시 패스를 못 받음(iOS는 WO-5에서 받음). 이번에 macOS를 다듬는다.
 > **오너 결정(2026-07-07): 방향 = 세련된 네이티브** — Apple HIG 유지 + premium 대시보드(Linear/Stripe/Vercel 감성)의 **여백·정돈·깊이**를 흡수. **커스텀 웹룩으로는 가지 않음.**
