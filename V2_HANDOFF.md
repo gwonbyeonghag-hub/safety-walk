@@ -45,7 +45,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 완료 (2026-07-07).** 폴리시 = **WO-8 macOS 디자인 폴리시(세련된 네이티브) 🔴 OPEN** · **WO-7 iPad 레이아웃 🔴 OPEN**(선택) · 이후 **App Store 동시출시(WO-6)**.
+**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 · WO-8 macOS 디자인 폴리시 ✅ 완료 (2026-07-07).** 남은 것 = **WO-7 iPad 레이아웃 🔴 OPEN**(선택) · **App Store 동시출시(WO-6)**.
 > 📁 로컬 경로 변경: 프로젝트 폴더가 `02_개발/03_프로젝트/` → **`02_개발/02_프로젝트/`** 로 이동됨(2026-07-03, 손실 없음). GitHub 원격(`safety-walk`)이 안정 앵커.
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
@@ -753,7 +753,7 @@ iPad(regular size class)에서 **iPad-네이티브 네비게이션 + 큰 캔버�
 
 ---
 
-## WO-8 — macOS 디자인 폴리시 (세련된 네이티브) 🔴 OPEN — 디자인 타겟 확정 ✅
+## WO-8 — macOS 디자인 폴리시 (세련된 네이티브) ✅ DONE (검수 통과 2026-07-07)
 
 > **✅ 디자인 타겟 (오너 승인 2026-07-07): `docs/design/macos-dashboard-mockup.html`** — 이 목업이 대시보드의 **정확한 타겟**이다. 실행자는 이 HTML의 CSS `:root` **디자인 토큰(색·여백·라운딩·타이포)을 SwiftUI로 옮긴다.** 브라우저로 열어 라이트/다크 둘 다 확인.
 > **요약 토큰:** 뉴트럴(쿨) — light `bg #F4F6F9`/`surface #FFF`/`sidebar #EEF1F6`/`border #E3E7EE`/`ink #1A1E26`/`muted #727B8C`, dark `#15181E`/`#1D2027`/`#191C22`/`#2B303A`/`#E9ECF2`/`#8B93A2`. 액센트(쿨) `#2360C9`(L)/`#5C9BF5`(D). 위험램프(의미 전용) 낮음 `#A9790A`/`#D2A63C`·보통 `#DA761A`/`#EE9040`·높음 `#CF3F3F`/`#E4615C`·안정 green `#2C9A57`/`#40B673`. 카드 라운딩 12(sm 8)·그림자 은은(`0 1px 2px`+`0 4px 16px`)·**SF Pro(system)**·숫자 `tabular-nums`·위험칩=색 pill+dot·**8pt 간격**. **대시보드가 타겟이고 브라우즈·리포트허브도 같은 토큰·카드 스타일로 통일.**
@@ -799,10 +799,12 @@ macOS 앱(대시보드·브라우즈·리포트허브)이 **세련된 네이티�
 ### 진행 / 보고
 **main에서 새 브랜치 `wo8-macos-polish`.** WO-1 handoff 형식 + **macOS 화면별 전/후 스샷(라이트·다크)** 으로 보고 → 플래너 검수.
 
-**WO-8 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+**WO-8 결과: ✅ 완료 (실행자 수행 + 플래너 검수 통과, 2026-07-07)**
+- 브랜치 `wo8-macos-polish` @ `bb349c2` → main 머지. 전/후 아티팩트: https://claude.ai/code/artifact/0eec2253-503f-4d28-a6cf-c86adf4e9d7f
+- 승인 목업 `docs/design/macos-dashboard-mockup.html` CSS 토큰을 `SafetyWalkMac/Support/MacDesign.swift`(신규·macOS 전용)로 이식 — 쿨 뉴트럴 + navy 액센트 어댑티브(라이트/다크, 외형 피커 대응), 8pt·라운딩12/8·소프트섀도우. 대시보드·브라우즈·리포트허브 통일 폴리시(스탯타일·MacCard·사이드바 아이덴티티·헤어라인·tabular).
+- **대시보드 밀도(오너 피드백 반영)**: "현장별 위험 분포"를 심각도순 **top 6로 캡**(`riskRowLimit=6`) + **"전체 N개 현장 보기 →"** navy 링크 → 현장 브라우즈. 나머지 6제한 리스트와 일관.
+- **플래너 독립 검증**: 변경 전부 `SafetyWalkMac/`(+로컬키 6개만) · **위험칩 시그니처 0 변경** · iOS/코어/모델/동기화/리포트PDF 무변경 · macOS **BUILD SUCCEEDED**(Debug+Release) · 코어 **40/40** · 스샷 목업 일치 · 분포 캡 코드(`Array(sitesBySeverity.prefix(riskRowLimit))` + `if sites.count>limit` 전체보기) 확인. (검수 중 연 `after_dashboard_light.png`은 캡 전 캐시본 — 코드는 캡 확정.)
+→ **macOS "세련된 네이티브" 완료.** 남은 것 = WO-7 iPad(선택) · App Store(WO-6).
 
 ---
 
