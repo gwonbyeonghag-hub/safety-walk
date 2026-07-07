@@ -435,7 +435,9 @@ iOS에서 **2기법으로 위험성평가표를 생성→항목입력→위험�
 
 ---
 
-## WO-3 — CloudKit 동기화 (iPhone↔Mac 데이터 공유) 🔴 OPEN — 계정 Active ✅ 착수 가능
+## WO-3 — CloudKit 동기화 (iPhone↔Mac 데이터 공유) 🟡 IN PROGRESS — Phase A ✅ 완료 (2026-07-07)
+
+> **✅ Phase A 완료 (플래너 직접 수행):** 근본원인 = 번들 `com.safetywalk.app` **선점(사용불가)**. → **고유 ID로 변경**: iOS `com.gwonbyeonghag.safetywalk` / macOS `com.gwonbyeonghag.safetywalk.mac`(+ 테스트). **CloudKit 컨테이너 = `iCloud.com.gwonbyeonghag.safetywalk`** (엔타이틀먼트 `SafetyWalk_iOS.entitlements`·`SafetyWalkMac/SafetyWalkMac.entitlements`, Push/aps는 뺌 = **CloudKit only**, 실시간 푸시는 후속). 두 타깃 `-allowProvisioningUpdates` 빌드 성공 → App ID 등록·iOS/Mac Team 프로파일 생성·컨테이너 생성·기기 등록 완료. 커밋 `d2ccda1`. **실행자는 이제 CloudKit 코드 배선(ModelContainer CloudKit swap + v1 모델 5종 retrofit)만.** 아래 본문의 컨테이너 ID는 전부 `iCloud.com.gwonbyeonghag.safetywalk`로 읽는다.
 
 > **🔄 업데이트 (2026-07-03) — 계정 Active + macOS 앱이 이미 존재. 아래 본문의 "iOS 타깃/앱" 언급은 iOS+macOS 양쪽으로 읽는다:**
 > ① Apple Developer 계정 **활성화 완료** → Phase A 진행 가능 (Xcode Settings→Accounts에 **유료팀 로그인 확인** 먼저; 안 뜨면 Xcode 재시작).
@@ -468,7 +470,7 @@ iPhone↔Mac 연동의 핵심(V2_ROADMAP AD-2). **오프라인 우선은 유지*
 - Phase A 엔타이틀먼트/capability.
 - **v1 모델 5종 CloudKit 호환 retrofit** — 모든 저장 프로퍼티에 기본값, 모든 관계 optional (정확 목록 아래).
 - **사진 동기화** — `Hazard`/`ChecklistItem` 사진을 `@Attribute(.externalStorage) var photoData: Data?`로 → CKAsset 자동 동기화. 기존 파일 사진(`photoPath` → `Documents/EvidencePhotos/`) 마이그레이션. `PhotoStorageService`·표시부 갱신.
-- ModelContainer를 **CloudKit-backed**로(`ModelConfiguration(..., cloudKitDatabase: .private("iCloud.com.safetywalk.app"))` 또는 `.automatic`).
+- ModelContainer를 **CloudKit-backed**로(`ModelConfiguration(..., cloudKitDatabase: .private("iCloud.com.gwonbyeonghag.safetywalk"))` 또는 `.automatic`).
 - 관계 optional화 **ripple 처리**: `.items`/`.areas`/`.hazards` 접근부 `?? []`.
 - **VersionedSchema v1→v2 마이그레이션** + `SWIFTDATA_MIGRATION.md` 갱신.
 - **2-시뮬레이터(같은 iCloud 로그인) 동기화 검증.**
