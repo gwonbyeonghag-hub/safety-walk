@@ -45,7 +45,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0~3 ✅ v2 기능 전부 구현 완료 (4기법 + 디자인 + 리포트 + macOS 셸 + CloudKit).** 진행 = **① 오너 실기기 동기화 확인**(iPhone·iPad·Mac 3기기 — iPad는 이미 유니버설 `1,2`라 같은 앱·컨테이너로 자동 동기화) · **② WO-7 iPad 레이아웃 폴리시 🔴 OPEN** · 이후 **App Store 동시출시(WO-6)**. (`xcodebuild test`·실기기 동기화는 헤드리스 환경 불가 — 오너 몫.)
+**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 완료 (2026-07-07: iPhone→Mac CloudKit 실작동 확인).** 남은 것 = **WO-7 iPad 레이아웃 폴리시 🔴 OPEN**(선택) · **App Store 동시출시(WO-6)**. v2 기능 검증 종료.
 > 📁 로컬 경로 변경: 프로젝트 폴더가 `02_개발/03_프로젝트/` → **`02_개발/02_프로젝트/`** 로 이동됨(2026-07-03, 손실 없음). GitHub 원격(`safety-walk`)이 안정 앵커.
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
@@ -435,7 +435,9 @@ iOS에서 **2기법으로 위험성평가표를 생성→항목입력→위험�
 
 ---
 
-## WO-3 — CloudKit 동기화 (iPhone↔Mac 데이터 공유) ✅ DONE (코드 검수 통과 2026-07-07 · 실기기 2기기 동기화만 오너 확인 대기)
+## WO-3 — CloudKit 동기화 (iPhone↔Mac 데이터 공유) ✅✅ DONE + 실기기 동기화 확인 완료 (2026-07-07)
+
+> **✅ 실기기 검증 완료 (오너, 2026-07-07):** 아이폰(실기기)에서 위험성평가("동기화테스트") 생성 → macOS Release(CloudKit) 앱에 **실제로 나타남** 확인. iPhone→Mac CloudKit 동기화 end-to-end 작동. (iPad는 동일 유니버설 앱+컨테이너라 동일 동작.)
 
 > **✅ Phase A 완료 (플래너 직접 수행):** 근본원인 = 번들 `com.safetywalk.app` **선점(사용불가)**. → **고유 ID로 변경**: iOS `com.gwonbyeonghag.safetywalk` / macOS `com.gwonbyeonghag.safetywalk.mac`(+ 테스트). **CloudKit 컨테이너 = `iCloud.com.gwonbyeonghag.safetywalk`** (엔타이틀먼트 `SafetyWalk_iOS.entitlements`·`SafetyWalkMac/SafetyWalkMac.entitlements`, Push/aps는 뺌 = **CloudKit only**, 실시간 푸시는 후속). 두 타깃 `-allowProvisioningUpdates` 빌드 성공 → App ID 등록·iOS/Mac Team 프로파일 생성·컨테이너 생성·기기 등록 완료. 커밋 `d2ccda1`. **실행자는 이제 CloudKit 코드 배선(ModelContainer CloudKit swap + v1 모델 5종 retrofit)만.** 아래 본문의 컨테이너 ID는 전부 `iCloud.com.gwonbyeonghag.safetywalk`로 읽는다.
 
