@@ -758,7 +758,7 @@ iPad(regular size class)에서 **iPad-네이티브 네비게이션 + 큰 캔버�
 - 상태: ✅ 완료·main FF 머지 (2026-07-07)
 - 요약: iPad(regular)에 `NavigationSplitView` 네이티브 셸(사이드바 6섹션 + 아이덴티티 헤더, navy 선택) + 홈 2단(좌 rail·빠른작업[점검시작/위험요인등록] / 우 최근점검·위험성평가 기한). iPhone·compact는 **idiom 게이트**(`idiom==.pad && hSize==.regular`)로 기존 TabView 그대로 = 무회귀. 홈 due 카드는 공유 순수함수 `RiskAssessment.dueStatus`(365+30, macOS DueBadge와 패리티) 신설·TDD 레드퍼스트. 기존 6뷰 재사용(재작성 0), `MacDesign` 미import.
 - 플래너 재검증(러버스탬프 X): **Core 49/49**(due 9 신규·회귀 0) · **iOS 빌드 green** · **macOS 빌드 green**(Core additive 무손상) · **git diff SafetyWalkMac 0건** · **MacDesign 미참조** · iPad 라이트/다크 + iPhone 무회귀 스샷 3종 목업 대조 일치. 검수 중 발견한 due 카드 빈-상태 문구 오용(`homeNoOpenHazards` 재사용)은 플래너가 전용 키 `homeNoDueAssessments`로 인라인 수정 후 재빌드 green.
-- 후속(트래킹): macOS `DashboardView.DueBadge`를 공유 `dueStatus`로 수렴(중복 제거·behavior-neutral) — 별도 소작업.
+- 후속 ✅ 완료(2026-07-07, `wo7b-mac-due-converge`): macOS `DashboardView.DueBadge`의 인라인 365/30 규칙을 제거하고 공유 `RiskAssessment.dueStatus`로 수렴(iOS와 동일 패턴). behavior-neutral(패리티 테스트 보장) · macOS 빌드 green · diff 1파일(+5/−10). → **due 규칙 단일 진실원천 확립(iOS·macOS 공용).**
 - 증거 위치: 브랜치 `wo7-ipad-layout`(→main FF), 스샷 `wo7-shots/`(ipad_home_light/dark_landscape_win · iphone_home_light/dark), 아티팩트 ef123a9e. 커밋 216da63(실행자) + b061526(플래너 문구 수정).
 
 ---

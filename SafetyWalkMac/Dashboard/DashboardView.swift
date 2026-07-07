@@ -186,7 +186,7 @@ struct DashboardView: View {
     private var completedInspections: [Inspection] { inspections.filter { $0.status == .completed } }
     private var openHazards: [Hazard] { hazards.filter { $0.correctiveActionStatus != .completed } }
     private var dueAssessments: [RiskAssessment] {
-        assessments.filter { $0.kind == .regular && DueBadge.isDue($0.assessedAt) }
+        assessments.filter { $0.kind == .regular && RiskAssessment.dueStatus(assessedAt: $0.assessedAt) != .notDue }
     }
 
     private func distribution(for site: Site) -> [RiskLevel: Int] {
@@ -283,16 +283,11 @@ private struct RiskDistributionBar: View {
 private struct DueBadge: View {
     let assessedAt: Date
 
-    /// Regular assessments should be re-run at least annually; flag when the 1-year mark
-    /// is within 30 days or already passed.
-    static func isDue(_ assessedAt: Date) -> Bool {
-        guard let deadline = Calendar.current.date(byAdding: .day, value: 365, to: assessedAt) else { return false }
-        return Date() >= Calendar.current.date(byAdding: .day, value: -30, to: deadline)!
-    }
-
+    // Deadline urgency comes from the single shared rule (SafetyWalkCore
+    // RiskAssessment.dueStatus, 365d + 30d grace) — no macOS-local copy. Parity is
+    // covered by AssessmentDueTests.matchesMacDueBadgeRule (0–420 day sweep).
     private var overdue: Bool {
-        guard let deadline = Calendar.current.date(byAdding: .day, value: 365, to: assessedAt) else { return false }
-        return Date() >= deadline
+        RiskAssessment.dueStatus(assessedAt: assessedAt) == .overdue
     }
 
     var body: some View {
