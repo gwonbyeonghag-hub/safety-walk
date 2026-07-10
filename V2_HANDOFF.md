@@ -884,3 +884,43 @@ main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Releas
 - 잔여(플래너 확인 필요):
   - 리포트 PDF export **NSSavePanel 저장 클릭스루**는 대화형이라 헤드리스 자동화 불가(터미널 Accessibility 권한 없음). 엔타이틀먼트 존재 + 임시디렉터리(컨테이너 내) PDF 생성 = 검증됨. 샌드박스 설계상 사용자 패널 선택으로만 완결 → **실제 저장 1회 수동 확인 권장** → 플래너 검수 시 GUI 자동화(Stage Manager)로 완결 못 함 — **오너 1클릭 확인으로 이관**(리포트→PDF 내보내기→저장).
   - `swift test` 종료 시 CoreData atexit `signal 6` 로그 = 결과 기록 후 발생, exit code 0, 다중 온디스크 컨테이너 하니스 아티팩트(테스트 실패 아님, 신규 테스트 단독 실행 시 미발생).
+
+---
+
+## WO-6 — App Store 동시출시 준비 (제출 자료 일체) 🔴 OPEN
+
+> v2 기능·디자인·크래시fix 전부 완료. 이 WO = **계정 없이 만들 수 있는 제출 자료 전부**를 실행자가 준비하고, App Store Connect 업로드·제출은 **오너 체크리스트**(§오너)로 분리. 코드 변경은 사실상 0(스샷용 데이터 입력·아카이브 검증만).
+
+### 목표 (verifiable)
+`docs/appstore/`에 **제출 자료 풀세트**: 규격 스크린샷(iOS+iPad+macOS, ko/en) · 메타데이터 초안(ko/en) · 개인정보 처리방침 · App Privacy 설문 답안 · 심사 메모. **양 타깃 Release 아카이브 빌드 성공 확인.** 코드/모델/버전 무변경(버전 1.0/1 유지 — 첫 공개 릴리스).
+
+### 산출물 (docs/appstore/)
+1. **스크린샷** — populated 데이터로(시드 없으니 시뮬에서 직접 입력: 현장 2·점검 1완료·위험요인 3[상중하]·위험성평가 4기법 각1):
+   - iPhone 6.9"(iPhone 16 Pro Max 시뮬, 1320×2868) 5~6장: 홈·점검 체크리스트·위험요인·위험성평가(매트릭스 입력)·리포트 미리보기
+   - iPad 13"(iPad Pro 13 시뮬, 2064×2752) 2~3장: split view 홈·위험성평가
+   - macOS(2880×1800) 2~3장: 관리 대시보드·리포트 허브 (DEBUG 시드 사용 가능)
+   - 각 ko 우선, 여력 되면 en. 다크 1~2장 섞기. `xcrun simctl io screenshot` + macOS는 창 캡처.
+2. **metadata_ko.md / metadata_en.md**: 앱명("현장 안전 지킴이 - SafetyWalk" 계열, 30자)·부제(30자)·프로모션(170자)·설명(4000자, 위험성평가 4기법+리포트+동기화 중심, "기록 도구이지 판정 아님" 면책 톤 유지)·키워드(100자: 위험성평가,안전점검,JSA,TBM,건설안전…)·지원 URL 제안·카테고리(비즈니스)·연령(4+).
+3. **privacy_policy.md**: 수집 데이터 0 · 모든 데이터는 사용자 iCloud 개인 DB(CloudKit private)와 기기 내 저장 · 제3자 공유 없음 · 사진은 사용자 첨부용. (오너가 GitHub Pages 등에 게시할 원문.)
+4. **app_privacy_answers.md**: Connect "앱 개인정보 보호" 설문 예상 문항별 답("데이터 수집 안 함" 근거 포함) + 암호화 수출규정(표준 암호화만 = 면제, `ITSAppUsesNonExemptEncryption=NO` 권고 여부 명시).
+5. **review_notes.md**: 심사원용(ko/en) — 테스트 방법(온보딩→점검→위험성평가), iCloud 필수 아님(로컬 동작), 면책 고지 위치.
+6. **아카이브 검증**: `xcodebuild archive` 양 타깃 성공(서명은 자동, 실패 시 로그만 보고 — 업로드는 오너).
+
+### 🚫 금지 / 중단
+- 코드·모델·번들ID·버전·엔타이틀먼트 변경 금지(아카이브 실패가 코드 원인이면 **멈추고 보고**).
+- 스샷은 본인 앱 화면만. 과장 문구·"판정/인증" 뉘앙스 금지(CLAUDE.md 도메인 프레이밍: 기록).
+
+### 완료 보고
+스샷 목록(규격 확인)·메타데이터 전문·아카이브 결과 → 플래너 검수(규격·문구·면책 톤) 후 오너 체크리스트 발동.
+
+**WO-6 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
+
+### §오너 체크리스트 (Connect — 실행자 자료 검수 후)
+1. developer.apple.com → Identifiers에 두 번들ID 확인(자동 생성돼 있을 것) → App Store Connect → "나의 앱" → **＋ 신규 앱 2건**(iOS: `com.gwonbyeonghag.safetywalk` / macOS: `com.gwonbyeonghag.safetywalk.mac`, 이름·기본언어 ko, SKU 자유).
+2. privacy_policy.md를 URL로 게시(GitHub Pages 권장) → 두 앱에 URL 입력.
+3. 메타데이터·스크린샷 업로드(실행자 산출물 그대로) · 가격 무료 · 앱 개인정보 설문(app_privacy_answers.md 따라).
+4. Xcode → Product→Archive(타깃별) → Organizer→Distribute→App Store Connect 업로드.
+5. 빌드 연결 → 심사 메모 붙여넣기 → **두 앱 동시 제출**.
