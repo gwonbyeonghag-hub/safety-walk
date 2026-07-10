@@ -927,7 +927,7 @@ main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Releas
 
 ---
 
-## WO-10 — SafetyWalk Pro 구독 (StoreKit 2 페이월) 🔴 OPEN — WO-6보다 선행
+## WO-10 — SafetyWalk Pro 구독 (StoreKit 2 페이월) 🟡 실행 완료 · 검수 대기 (2026-07-10) — WO-6보다 선행
 
 > 오너 결정(2026-07-08): **B안 — 구독 넣고 출시.** 페이월 = "기록 무료 / 업무가치 Pro". **로그인·계정·서버 없음** — 결제=Apple 계정, 검증=StoreKit 2 온디바이스, 복원="구매 복원" 버튼. 법인/팀 기능은 v3(스코프 밖).
 
@@ -967,6 +967,9 @@ StoreKit 2 기반 Pro 게이트가 위 규칙대로 동작: 비구독=평가 신
 main에서 브랜치 `wo10-pro-subscription`. handoff + 페이월/게이트 스샷 → 플래너 검수 후 main 머지 → **WO-6 재개**(메타데이터에 구독·가격 정보 반영, Connect 오너 체크리스트에 구독 상품 등록 추가).
 
 **WO-10 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+- 상태: 🟡 실행 완료 · 검수 대기 — 브랜치 `wo10-pro-subscription` (`461e6bb`) 푸시, main 머지는 검수 후.
+- 요약: StoreKit 2 Pro 게이트 구현. `ProEntitlement`(순수 판정, TDD 10케이스) + `ProStore`(온디바이스 currentEntitlements·복원=AppStore.sync, 앱루트 주입). 게이트 2곳 = RA 신규작성(RiskAssessmentListView) · iOS 리포트 export(ShareReportButton). **조회는 무게이트**(만료=조회O). 페이월 1장(navy·위험색 X·"기록 도구" 톤·혜택 2줄·월/연 displayPrice·복원·"구독 끝나도 조회 가능" 문구·약관/개인정보=LegalLinks 빈 상수). 설정 "SafetyWalk Pro" 행. `Products.storekit`(상품 2개, 로컬 테스트) + SKTestSession UI데모. ko/en parity 410=410. 모델/스키마/CloudKit/리포트 무변경, 무료 플로우 무게이트, 가격 하드코딩 X.
+  - **부수 발견·수정**: RA 빈상태 "새 위험성평가" 버튼이 게이트를 우회(showCreate 직접 호출)했고, 스택된 두 `.sheet`가 충돌 → 둘 다 단일 `.sheet(item:)`으로 수정(페이월이 실제로 뜨도록).
+  - **디바이션(승인 요청)**: (1) 스킴에 StoreKit config 미연결 — 계정없는 테스트는 SKTestSession(+커밋된 Products.storekit)로 제공(헤드리스 표준). 오너는 Xcode Edit Scheme→Run→Options에서 1클릭 연결 가능. 공유 스킴(xcshareddata)은 관례대로 미커밋(자동생성 스킴이 테스트타깃 포함). (2) `#if DEBUG` 전용 UI테스트 훅 `-com.safetywalk.uitestPro`(시뮬 StoreKit 테스트 스토어를 헤드리스로 못 비워 isPro 고정) — **Release 빌드에서 스트립 확인**.
+- 증거 위치: `scratchpad/wo10_shots/` (paywall_ko/en_light/dark.png·unlocked_create·settings_pro_status); 판정테스트 `ProEntitlementTests`(10 green)·UI데모 `ProPaywallUITests`(3 green)·회귀 `RiskAssessment/RiskMethods/WO5 UITests`(green); iOS Debug/Release·macOS 빌드 green.
+- 잔여(오너): Connect에 구독상품 등록(pro.monthly/.yearly, 그룹 "SafetyWalk Pro")+실가격 · `LegalLinks.terms/.privacy` URL(WO-6) · (선택) Products.storekit을 Run 스킴에 연결.
