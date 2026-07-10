@@ -27,19 +27,10 @@ enum MacModelContainer {
             fatalError("Failed to create the macOS ModelContainer: \(error)")
         }
         #else
-        let configuration = ModelConfiguration(
-            schema: schema,
-            cloudKitDatabase: .private("iCloud.com.gwonbyeonghag.safetywalk")
-        )
-        do {
-            return try ModelContainer(
-                for: schema,
-                migrationPlan: SafetyWalkMigrationPlan.self,
-                configurations: configuration
-            )
-        } catch {
-            fatalError("Failed to create the macOS ModelContainer: \(error)")
-        }
+        // Sandboxed (WO-9) so the store lives in the app's own container, not the shared
+        // ~/Library/Application Support/default.store that caused the Release crash. The
+        // shared factory also recovers instead of trapping if the store can't be opened.
+        return SafetyWalkModelContainer.makeCloudKitContainer(containerID: "iCloud.com.gwonbyeonghag.safetywalk")
         #endif
     }
 }
