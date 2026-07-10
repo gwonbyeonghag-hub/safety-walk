@@ -887,7 +887,7 @@ main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Releas
 
 ---
 
-## WO-6 — App Store 동시출시 준비 (제출 자료 일체) 🔴 OPEN
+## WO-6 — App Store 동시출시 준비 (제출 자료 일체) ⏸ HOLD — WO-10(구독) 머지 후 재개, 메타데이터에 구독 정보 포함
 
 > v2 기능·디자인·크래시fix 전부 완료. 이 WO = **계정 없이 만들 수 있는 제출 자료 전부**를 실행자가 준비하고, App Store Connect 업로드·제출은 **오너 체크리스트**(§오너)로 분리. 코드 변경은 사실상 0(스샷용 데이터 입력·아카이브 검증만).
 
@@ -924,3 +924,49 @@ main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Releas
 3. 메타데이터·스크린샷 업로드(실행자 산출물 그대로) · 가격 무료 · 앱 개인정보 설문(app_privacy_answers.md 따라).
 4. Xcode → Product→Archive(타깃별) → Organizer→Distribute→App Store Connect 업로드.
 5. 빌드 연결 → 심사 메모 붙여넣기 → **두 앱 동시 제출**.
+
+---
+
+## WO-10 — SafetyWalk Pro 구독 (StoreKit 2 페이월) 🔴 OPEN — WO-6보다 선행
+
+> 오너 결정(2026-07-08): **B안 — 구독 넣고 출시.** 페이월 = "기록 무료 / 업무가치 Pro". **로그인·계정·서버 없음** — 결제=Apple 계정, 검증=StoreKit 2 온디바이스, 복원="구매 복원" 버튼. 법인/팀 기능은 v3(스코프 밖).
+
+### 페이월 규칙 (오너 승인안)
+- **무료(영구)**: 온보딩 · 현장/구역 관리 · **점검 체크리스트 전체** · 위험요인 등록/관리 · 기록 조회 · 설정 · CloudKit 동기화. (= 현장 도구 본체. 심사 5.1.1 "핵심 기능 무료" 충족)
+- **Pro(구독)**: ① **위험성평가 4기법 "신규 작성"** ② **PDF 리포트 내보내기/공유(iOS)**. macOS 앱은 무료 컴패니언(읽기 대시보드) 유지.
+- **데이터 인질 금지(중요)**: 구독 만료 시에도 **기존 위험성평가 조회는 항상 허용** — 잠그는 건 "신규 작성·내보내기"뿐. 사용자가 만든 기록을 볼모로 잡지 않는다(신뢰·심사 모두).
+- 상품: 구독그룹 "SafetyWalk Pro" — `com.gwonbyeonghag.safetywalk.pro.monthly` / `.yearly`. 가격은 오너가 Connect에서 설정(코드에 하드코딩 금지 — StoreKit이 내려주는 displayPrice만 표시).
+
+### 목표 (verifiable)
+StoreKit 2 기반 Pro 게이트가 위 규칙대로 동작: 비구독=평가 신규작성·PDF내보내기 진입 시 페이월 / 구독=전부 해제 / 만료=조회 가능·신규만 잠김 / "구매 복원" 동작. **모델/CloudKit/기존 화면 구조 무변경, 기존 테스트 회귀 0.**
+
+### 스코프
+**✅ 포함**
+- `StoreKit.configuration` 파일(로컬 테스트용, 상품 2개) + 스킴 연결 — 계정 없이 시뮬 구매/만료 테스트 가능.
+- 엔타이틀먼트 서비스(iOS 앱 레이어, 가칭 `ProStore`): `Transaction.currentEntitlements` 구독 + 게이트 판정 노출. **판정 로직은 순수 함수로 분리해 /tdd 레드퍼스트**(비구독/구독/만료/복원 케이스).
+- 게이트 지점 2곳: 위험성평가 "신규 작성" 진입(RiskAssessmentCreateView 진입 전) · 리포트 공유/내보내기 버튼. 기존 화면 구조는 유지하고 진입점에서 페이월 시트 제시.
+- **페이월 시트 1장**: DESIGN_DIRECTION(navy primary·위험색 금지·과장 금지). 내용 = Pro 혜택 2줄(4기법 작성·PDF 내보내기) + 월/연 상품(StoreKit displayPrice) + **구매 복원** + 이용약관/개인정보 링크 자리. "판정/인증" 뉘앙스 금지 — "기록 도구" 톤 유지.
+- 설정에 "SafetyWalk Pro" 행(상태 표시 + 복원 + 구독 관리 링크).
+- ko/en 문자열 parity.
+
+**⛔ 제외 / 🚫 금지**
+- 로그인/계정/서버/영수증 서버검증 · macOS 페이월(v2.1 후속: CloudKit pro 플래그 best-effort) · 가격 하드코딩 · 모델/스키마 변경 · 무료 기능(점검·위험요인)에 게이트 · 기존 평가 조회 잠금.
+
+**🔴 중단·보고**: 게이트 위치가 화면 재설계를 요구 / 만료 시 조회 허용이 구조적으로 어려움 / StoreKit 테스트가 시뮬에서 불가 → 멈추고 보고.
+
+### 완료 조건 (증거)
+- [ ] StoreKit config로 시뮬 데모: 비구독→페이월 표시(스샷) → 테스트 구매→해제 → 만료 시뮬→조회 가능·신규 잠김 → 복원 동작
+- [ ] 판정 로직 테스트 green(레드퍼스트) + 기존 테스트 회귀 0
+- [ ] 무료 플로우(점검·위험요인) 무회귀 — 페이월 노출 0
+- [ ] iOS 빌드 green · macOS 무변경 · 페이월 ko/en 스샷(라/다)
+
+### Skills
+`/grill-with-docs`(게이트 지점·만료 시맨틱 설계 선보고) · `/tdd` · `/design-visual-qa`(페이월) · `/safetywalk-qa-guardrails`.
+
+### 진행 / 보고
+main에서 브랜치 `wo10-pro-subscription`. handoff + 페이월/게이트 스샷 → 플래너 검수 후 main 머지 → **WO-6 재개**(메타데이터에 구독·가격 정보 반영, Connect 오너 체크리스트에 구독 상품 등록 추가).
+
+**WO-10 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
