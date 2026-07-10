@@ -1091,6 +1091,8 @@ DashboardView(mac)·모델·CloudKit·페이월 규칙 변경 금지. iPhone 경
 ### 진행 / 보고
 main에서 브랜치 `wo12-ipad-ra-sheet`. `/tdd`(red = 제공된 프로브) · handoff 보고 → 플래너 검수 후 머지.
 
+> **플래너 검수(2026-07-10)**: diff 정독(.balanced + columnVisibility=.all 2줄, 주석·근거 충실) ✅ · iPad 회귀 3종 직접 실행 green ✅ · iPhone ProPaywallUITests 3종 직접 실행 green(회귀 0) ✅ · 신규 iPad 스샷 2064×2752 실측 정확 ✅ · tapUntilAppears retry-once = 정직 문서화(2탭 실패 시 여전히 fail loud) 승인 · 잔여 플래키니스(드문 첫탭 흡수, 2탭 해결)는 "완전 불능→드문 UX 거슬림" 강등 판단 동의, 알려진 이슈로 트래킹(출시 비차단). 부수: 사이드바 상시 노출은 WO-7 승인 목업과도 더 일치.
+
 **WO-12 결과:**
 - 상태: ✅ 완료 (2026-07-10). 프로브 green(iPad 13, 반복 재현 포함) · 非Pro 페이월 스샷 확보 ·
   iPhone ProPaywallUITests 3종 green(회귀 0) · iOS/macOS 빌드 green.
