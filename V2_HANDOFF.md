@@ -887,7 +887,7 @@ main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Releas
 
 ---
 
-## WO-6 — App Store 동시출시 준비 (제출 자료 일체) ⏸ HOLD — WO-10(구독) 머지 후 재개, 메타데이터에 구독 정보 포함
+## WO-6 — App Store 동시출시 준비 (제출 자료 일체) 🟡 실행 완료 · 검수 대기 (2026-07-10) — WO-10 머지 반영
 
 > v2 기능·디자인·크래시fix 전부 완료. 이 WO = **계정 없이 만들 수 있는 제출 자료 전부**를 실행자가 준비하고, App Store Connect 업로드·제출은 **오너 체크리스트**(§오너)로 분리. 코드 변경은 사실상 0(스샷용 데이터 입력·아카이브 검증만).
 
@@ -914,9 +914,12 @@ main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Releas
 스샷 목록(규격 확인)·메타데이터 전문·아카이브 결과 → 플래너 검수(규격·문구·면책 톤) 후 오너 체크리스트 발동.
 
 **WO-6 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+- 상태: 🟡 실행 완료 · 검수 대기 — 브랜치 `wo6-appstore-prep`, main 머지는 검수 후 → 오너 Connect 단계.
+- 요약: `docs/appstore/` 제출 패키지 작성(코드/모델/버전 무변경, 1.0/build 1). 메타데이터 ko/en(위험성평가 4기법·iCloud 동기화·iPad/Mac·**SafetyWalk Pro 구독** 반영, 가격 비하드코딩) · 개인정보처리방침(게시용 ko/en) · App Privacy 설문 답 · 심사 메모(구독 테스트법 포함) · 스크린샷 계획+자산. **양 타깃 `xcodebuild archive` = ARCHIVE SUCCEEDED**(코드 무결성, 서명 제외 — 업로드는 오너).
+  - **⚠️ 정확성 수정(중요)**: 기존 v1 자료(`APP_STORE_SUBMISSION.md`·`docs/privacy-policy.md`)가 **"완전 오프라인/네트워크 없음"** 이라 서술 → v2는 **CloudKit 비공개 DB 동기화**를 하므로 **허위**. `docs/appstore/`에서 정정: 앱은 오프라인 작동하되 **사용자 본인 iCloud(비공개)로 동기화**, 제공자는 접근 불가, 수집=0 유지. (기존 v1 자료는 폐기·미갱신 상태로 남겨둠 — 필요 시 정리 별건.)
+  - 구독 반영: 설명에 무료/Pro 경계 + "구독 끝나도 조회 가능" 톤 · Connect 필수 고지(자동갱신·가격은 Connect 참조) · privacy 설문에 구매=Apple 처리·앱 수집 0.
+- 증거 위치: `docs/appstore/`(README·metadata_ko/en·privacy_policy·app_privacy_answers·review_notes·screenshots + `screenshots/`). 아카이브 로그 `scratchpad/wo6_ios_archive.log`·`wo6_mac_archive.log`.
+- 잔여: 완전 populated iOS/iPad 스샷 세트(사진첨부·자동화 한계 → 짧은 캡처 패스 권장, 방법은 `screenshots.md`) · 오너 Connect 단계(§오너, 구독상품 등록·LegalLinks URL 포함).
 
 ### §오너 체크리스트 (Connect — 실행자 자료 검수 후)
 1. developer.apple.com → Identifiers에 두 번들ID 확인(자동 생성돼 있을 것) → App Store Connect → "나의 앱" → **＋ 신규 앱 2건**(iOS: `com.gwonbyeonghag.safetywalk` / macOS: `com.gwonbyeonghag.safetywalk.mac`, 이름·기본언어 ko, SKU 자유).
@@ -924,6 +927,10 @@ main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Releas
 3. 메타데이터·스크린샷 업로드(실행자 산출물 그대로) · 가격 무료 · 앱 개인정보 설문(app_privacy_answers.md 따라).
 4. Xcode → Product→Archive(타깃별) → Organizer→Distribute→App Store Connect 업로드.
 5. 빌드 연결 → 심사 메모 붙여넣기 → **두 앱 동시 제출**.
+6. **(WO-10 추가) 구독 상품 등록**: Connect → 앱 내 구입 → 자동 갱신 구독 → 그룹 **"SafetyWalk Pro"** 생성 → `com.gwonbyeonghag.safetywalk.pro.monthly`/`.yearly` 등록·**실가격 설정** → **앱 최초 심사 시 구독도 함께 제출**(미승인 시 앱 심사 막힘).
+7. **(WO-10 추가) LegalLinks URL 2개**: `현장 안전 지킴이/Utilities/LegalLinks.swift`의 `terms`/`privacy`에 게시한 약관·개인정보 URL 입력(코드 1커밋 → 재아카이브).
+
+> 최신 전체 체크리스트·앱 사실·아카이브 결과는 **`docs/appstore/README.md`** 참조(이번 WO 산출물).
 
 ---
 
@@ -974,3 +981,38 @@ main에서 브랜치 `wo10-pro-subscription`. handoff + 페이월/게이트 스�
   - **디바이션(승인 요청)**: (1) 스킴에 StoreKit config 미연결 — 계정없는 테스트는 SKTestSession(+커밋된 Products.storekit)로 제공(헤드리스 표준). 오너는 Xcode Edit Scheme→Run→Options에서 1클릭 연결 가능. 공유 스킴(xcshareddata)은 관례대로 미커밋(자동생성 스킴이 테스트타깃 포함). (2) `#if DEBUG` 전용 UI테스트 훅 `-com.safetywalk.uitestPro`(시뮬 StoreKit 테스트 스토어를 헤드리스로 못 비워 isPro 고정) — **Release 빌드에서 스트립 확인**.
 - 증거 위치: `scratchpad/wo10_shots/` (paywall_ko/en_light/dark.png·unlocked_create·settings_pro_status); 판정테스트 `ProEntitlementTests`(10 green)·UI데모 `ProPaywallUITests`(3 green)·회귀 `RiskAssessment/RiskMethods/WO5 UITests`(green); iOS Debug/Release·macOS 빌드 green.
 - 잔여(오너): Connect에 구독상품 등록(pro.monthly/.yearly, 그룹 "SafetyWalk Pro")+실가격 · `LegalLinks.terms/.privacy` URL(WO-6) · (선택) Products.storekit을 Run 스킴에 연결.
+
+---
+
+## WO-11 — macOS 대시보드 카드 균일화 (고정 높이 + 상시 "전체 보기") 🔴 OPEN — WO-6 macOS 스샷 전에
+
+> 오너 관찰(2026-07-10, 스샷): 카드 높이가 내용량 따라 늘었다 줄었다 해서 그리드가 삐뚤빼뚤 — 분포 카드 주변 여백·기한 카드 잘림. **모든 콘텐츠 카드를 같은 높이로 고정하고, 넘치는 내용은 "전체 보기 →"로.**
+
+### 목표 (verifiable)
+대시보드 4개 콘텐츠 카드(현장별 위험 분포 · 미조치 시정조치 · 위험성평가 기한 · 최근 점검)가 **어떤 데이터량에서도 동일 높이**로 정렬. 각 카드 footer에 **상시 "전체 보기 →"**(해당 섹션으로 전환). 데이터·로직·iOS/코어 무변경.
+
+### 스코프
+**✅ 포함** (`SafetyWalkMac/Dashboard/DashboardView.swift` 중심)
+- 행 수 통일: 4카드 모두 **상위 5행**(`prefix(5)`, 분포는 기존 `riskRowLimit` 조정). 정렬 기준 유지(심각도/기한/최신).
+- **카드 높이 고정**: 5행+헤더+footer 기준 단일 높이(`frame(height:)` 또는 `minHeight=maxHeight`) — 행이 5개 미만이면 위에서 채우고 아래는 빈 공간(카드 크기는 불변). 빈 상태("데이터 없음")도 같은 높이.
+- **footer 상시화**: 기존 "전체 현장 보기" 패턴(구분선+링크, `onSelectSection`)을 4카드 전부로 — 분포→`.sites`, 미조치→`.hazards`, 기한→`.riskAssessments`, 최근→`.inspections`. 조건부 노출 금지(항상 표시 = 높이 불변·예측 가능). 라벨은 기존 `macViewAllSites` 스타일로 카드별 문자열(ko/en parity).
+- 그리드 정렬 확인: `.adaptive(minimum: 340)` 유지하되 같은 행의 카드 상단·하단이 딱 맞게.
+
+**⛔ 제외/🚫 금지**: 데이터/정렬 로직 변경 · 스탯 타일(상단 4개) 변경 · iOS/코어 · 위험색 언어 · MacDesign 토큰 재작업.
+
+### 완료 조건 (증거)
+- [ ] 시드 데이터(불균등: 미조치5 vs 분포3 vs 기한1)에서 4카드 **높이 동일** 스샷(라/다)
+- [ ] 데이터 0(빈 상태)에서도 동일 높이 스샷
+- [ ] "전체 보기" 4곳 각각 올바른 섹션 전환(확인)
+- [ ] macOS 빌드 green · iOS/코어 diff 0
+
+### Skills
+`/design-visual-qa` · `/swiftui-build-qa` · `/safetywalk-qa-guardrails`.
+
+### 진행 / 보고
+main에서 브랜치 `wo11-dashboard-uniform`. handoff + 스샷 → 플래너 검수 후 머지. **WO-6의 macOS 스크린샷은 이 머지 후에 촬영**(제출 스샷에 반영되게).
+
+**WO-11 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
