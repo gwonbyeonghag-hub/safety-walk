@@ -473,6 +473,9 @@
 "mac.dashboard.title" = "Manager Dashboard";
 "mac.dashboard.subtitle" = "%d sites · safety status today";
 "mac.dashboard.viewAllSites" = "View all %d sites";
+"mac.dashboard.viewAllHazards" = "View all hazards";
+"mac.dashboard.viewAllAssessments" = "View all risk assessments";
+"mac.dashboard.viewAllInspections" = "View all inspections";
 "mac.stat.sites" = "Sites";
 "mac.stat.completedInspections" = "Completed";
 "mac.stat.openHazards" = "Open Hazards";

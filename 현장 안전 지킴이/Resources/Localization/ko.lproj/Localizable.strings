@@ -473,6 +473,9 @@
 "mac.dashboard.title" = "관리 대시보드";
 "mac.dashboard.subtitle" = "%d개 현장 · 오늘 기준 안전 현황";
 "mac.dashboard.viewAllSites" = "전체 %d개 현장 보기";
+"mac.dashboard.viewAllHazards" = "전체 위험요인 보기";
+"mac.dashboard.viewAllAssessments" = "전체 위험성평가 보기";
+"mac.dashboard.viewAllInspections" = "전체 점검 보기";
 "mac.stat.sites" = "현장";
 "mac.stat.completedInspections" = "완료 점검";
 "mac.stat.openHazards" = "미조치 위험";

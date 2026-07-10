@@ -16,7 +16,13 @@ struct DashboardView: View {
     @Query private var assessments: [RiskAssessment]
 
     private let columns = [GridItem(.adaptive(minimum: 340), spacing: MacTheme.s4)]
-    private let riskRowLimit = 6
+
+    /// WO-11: all 4 cards show the same top-N and settle to the same fixed height
+    /// regardless of how much data each has, so the grid stays even instead of
+    /// jagged. Short lists top-align and leave blank space above the footer;
+    /// the "전체 보기" footer is always visible (not conditional on overflow).
+    private let cardRowLimit = 5
+    private let cardBodyHeight: CGFloat = 300
 
     var body: some View {
         ScrollView {
@@ -66,34 +72,21 @@ struct DashboardView: View {
 
     private var riskBySiteCard: some View {
         MacCard(title: LocalizationKey.macRiskDistribution.localized, systemImage: "chart.bar") {
-            if sites.isEmpty {
-                EmptyLine()
-            } else {
-                // Most-severe first (open 높음 desc → 보통 desc), top 6 — consistent with the
-                // other 6-row cards. The full list lives in the 현장 (Sites) section.
-                MacCardRows(data: Array(sitesBySeverity.prefix(riskRowLimit))) { site in
-                    HStack {
-                        Text(site.name)
-                            .font(.system(size: 13.5, weight: .medium))
-                            .foregroundStyle(Color.macInk)
-                        Spacer()
-                        RiskDistributionBar(distribution: distribution(for: site))
-                    }
-                }
-                if sites.count > riskRowLimit {
-                    Rectangle().fill(Color.macBorder).frame(height: 1)
-                    Button {
-                        onSelectSection(.sites)
-                    } label: {
-                        HStack(spacing: 5) {
-                            Text(String(format: LocalizationKey.macViewAllSites.localized, sites.count))
-                            Image(systemName: "arrow.right")
+            cardBody(footerLabel: String(format: LocalizationKey.macViewAllSites.localized, sites.count), section: .sites) {
+                if sites.isEmpty {
+                    EmptyLine()
+                } else {
+                    // Most-severe first (open 높음 desc → 보통 desc), top N — consistent with
+                    // the other cards. The full list lives in the 현장 (Sites) section.
+                    MacCardRows(data: Array(sitesBySeverity.prefix(cardRowLimit))) { site in
+                        HStack {
+                            Text(site.name)
+                                .font(.system(size: 13.5, weight: .medium))
+                                .foregroundStyle(Color.macInk)
+                            Spacer()
+                            RiskDistributionBar(distribution: distribution(for: site))
                         }
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Color.macAccent)
-                        .padding(.top, MacTheme.s2 + 2)
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
@@ -101,26 +94,28 @@ struct DashboardView: View {
 
     private var openActionsCard: some View {
         MacCard(title: LocalizationKey.macOpenCorrectiveActions.localized, systemImage: "wrench.and.screwdriver") {
-            let items = Array(openHazards.sorted { $0.riskLevel > $1.riskLevel }.prefix(6))
-            if items.isEmpty {
-                EmptyLine(textKey: .macNoOpenItems)
-            } else {
-                MacCardRows(data: items) { h in
-                    HStack(spacing: MacTheme.s3) {
-                        RiskChip(level: h.riskLevel)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(h.hazardDescription)
-                                .font(.system(size: 13.5, weight: .medium))
-                                .foregroundStyle(Color.macInk)
-                                .lineLimit(1)
-                            Text("\(siteName(h.siteId)) · \(h.location)")
+            cardBody(footerLabel: LocalizationKey.macViewAllHazards.localized, section: .hazards) {
+                let items = Array(openHazards.sorted { $0.riskLevel > $1.riskLevel }.prefix(cardRowLimit))
+                if items.isEmpty {
+                    EmptyLine(textKey: .macNoOpenItems)
+                } else {
+                    MacCardRows(data: items) { h in
+                        HStack(spacing: MacTheme.s3) {
+                            RiskChip(level: h.riskLevel)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(h.hazardDescription)
+                                    .font(.system(size: 13.5, weight: .medium))
+                                    .foregroundStyle(Color.macInk)
+                                    .lineLimit(1)
+                                Text("\(siteName(h.siteId)) · \(h.location)")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color.macMuted)
+                            }
+                            Spacer(minLength: MacTheme.s2)
+                            Text(h.correctiveActionStatus.localizedLabel)
                                 .font(.system(size: 12))
                                 .foregroundStyle(Color.macMuted)
                         }
-                        Spacer(minLength: MacTheme.s2)
-                        Text(h.correctiveActionStatus.localizedLabel)
-                            .font(.system(size: 12))
-                            .foregroundStyle(Color.macMuted)
                     }
                 }
             }
@@ -129,23 +124,25 @@ struct DashboardView: View {
 
     private var assessmentsDueCard: some View {
         MacCard(title: LocalizationKey.macAssessmentsDue.localized, systemImage: "calendar.badge.exclamationmark") {
-            let due = Array(dueAssessments.sorted { $0.assessedAt < $1.assessedAt }.prefix(6))
-            if due.isEmpty {
-                EmptyLine(textKey: .macNoOpenItems)
-            } else {
-                MacCardRows(data: due) { ra in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(ra.siteName.isEmpty ? ra.method.localizedLabel : ra.siteName)
-                                .font(.system(size: 13.5, weight: .medium))
-                                .foregroundStyle(Color.macInk)
-                                .lineLimit(1)
-                            Text(ra.method.localizedLabel)
-                                .font(.system(size: 12))
-                                .foregroundStyle(Color.macMuted)
+            cardBody(footerLabel: LocalizationKey.macViewAllAssessments.localized, section: .riskAssessments) {
+                let due = Array(dueAssessments.sorted { $0.assessedAt < $1.assessedAt }.prefix(cardRowLimit))
+                if due.isEmpty {
+                    EmptyLine(textKey: .macNoOpenItems)
+                } else {
+                    MacCardRows(data: due) { ra in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(ra.siteName.isEmpty ? ra.method.localizedLabel : ra.siteName)
+                                    .font(.system(size: 13.5, weight: .medium))
+                                    .foregroundStyle(Color.macInk)
+                                    .lineLimit(1)
+                                Text(ra.method.localizedLabel)
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color.macMuted)
+                            }
+                            Spacer(minLength: MacTheme.s2)
+                            DueBadge(assessedAt: ra.assessedAt)
                         }
-                        Spacer(minLength: MacTheme.s2)
-                        DueBadge(assessedAt: ra.assessedAt)
                     }
                 }
             }
@@ -154,31 +151,61 @@ struct DashboardView: View {
 
     private var recentInspectionsCard: some View {
         MacCard(title: LocalizationKey.macRecentInspections.localized, systemImage: "clock") {
-            let recent = Array(inspections.sorted { $0.startedAt > $1.startedAt }.prefix(6))
-            if recent.isEmpty {
-                EmptyLine()
-            } else {
-                MacCardRows(data: recent) { insp in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(insp.siteName)
-                                .font(.system(size: 13.5, weight: .medium))
-                                .foregroundStyle(Color.macInk)
-                                .lineLimit(1)
-                            Text(insp.areaName ?? LocalizationKey.inspectionNoArea.localized)
-                                .font(.system(size: 12))
-                                .foregroundStyle(Color.macMuted)
+            cardBody(footerLabel: LocalizationKey.macViewAllInspections.localized, section: .inspections) {
+                let recent = Array(inspections.sorted { $0.startedAt > $1.startedAt }.prefix(cardRowLimit))
+                if recent.isEmpty {
+                    EmptyLine()
+                } else {
+                    MacCardRows(data: recent) { insp in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(insp.siteName)
+                                    .font(.system(size: 13.5, weight: .medium))
+                                    .foregroundStyle(Color.macInk)
+                                    .lineLimit(1)
+                                Text(insp.areaName ?? LocalizationKey.inspectionNoArea.localized)
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color.macMuted)
+                            }
+                            Spacer(minLength: MacTheme.s2)
+                            Text(insp.startedAt.formatted(date: .abbreviated, time: .omitted))
+                                .font(.system(size: 12.5))
+                                .monospacedDigit()
+                                .foregroundStyle(Color.macInk2)
+                            StatusDot(status: insp.status)
                         }
-                        Spacer(minLength: MacTheme.s2)
-                        Text(insp.startedAt.formatted(date: .abbreviated, time: .omitted))
-                            .font(.system(size: 12.5))
-                            .monospacedDigit()
-                            .foregroundStyle(Color.macInk2)
-                        StatusDot(status: insp.status)
                     }
                 }
             }
         }
+    }
+
+    /// WO-11: rows top-aligned, footer pinned to the bottom of a fixed-height box —
+    /// so a short list leaves blank space above the footer instead of shrinking the
+    /// card, and the "전체 보기" footer is always visible.
+    private func cardBody<Rows: View>(
+        footerLabel: String,
+        section: MacSection,
+        @ViewBuilder rows: () -> Rows
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            rows()
+            Spacer(minLength: 0)
+            Rectangle().fill(Color.macBorder).frame(height: 1)
+            Button {
+                onSelectSection(section)
+            } label: {
+                HStack(spacing: 5) {
+                    Text(footerLabel)
+                    Image(systemName: "arrow.right")
+                }
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Color.macAccent)
+                .padding(.top, MacTheme.s2 + 2)
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(height: cardBodyHeight, alignment: .top)
     }
 
     // MARK: - Derived data (unchanged from WO-4)
