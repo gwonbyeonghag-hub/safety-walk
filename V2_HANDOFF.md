@@ -1063,3 +1063,35 @@ main에서 브랜치 `wo11-dashboard-uniform`. handoff + 스샷 → 플래너 �
 - 요약: `cardBody(footerLabel:section:rows:)` 헬퍼 신설 — 4카드 전부 prefix(5)·고정높이 300(상단정렬+Spacer+구분선+상시 footer)·onSelectSection 4타겟. 문자열 3키 ko/en parity. 데이터/정렬/스탯타일/위험색 무변경(4파일 surgical).
 - 플래너 검수: diff 정독 ✅ · macOS/iOS 빌드 직접 green ✅ · 시드 스샷 육안(5vs3vs1 불균등에서 4카드 동일높이·footer 동일 y축) ✅ · footer 내비는 컴파일 검증(enum 4케이스, 기검증 .sites와 동일 패턴)으로 수용 — 실행자의 좌표클릭 사고(오너 Chrome 녹화창 오클릭) 후 대체 검증 판단 승인. **재발 방지 규칙: 실행자 좌표 클릭 금지, 라이브 GUI 확인은 앱-허용목록 가드 있는 플래너/오너 몫.**
 - 증거 위치: scratchpad/wo11/ (dashboard light/dark ×2·empty·nav-check)
+
+---
+
+## WO-12 — iPad 위험성평가 작성 시트 미표시 버그 수정 🔴 OPEN — 출시 전 필수
+
+> **증상(플래너 재현·확정, 2026-07-10)**: iPad(NavigationSplitView 셸)에서 사이드바→위험성평가→툴바 + 또는 빈상태 "새 위험성평가" 탭 시 **아무것도 표시 안 됨**(작성 시트도 페이월도 X, 크래시도 X). Pro 고정(uitestPro=1)이어도 동일 → 게이팅 문제 아님. iPhone은 정상. **iPad 사용자(Pro 구독자 포함)가 위험성평가를 만들 수 없음 = 출시 블로커.**
+> **Red 테스트 제공됨**: `현장 안전 지킴이UITests/IPadRAProbeUITests.swift`(플래너 작성, 워킹트리 미추적) — iPad Pro 13(M4) destination에서 현재 **실패**함. 이걸 WO-12의 레드퍼스트 테스트로 채택(적절히 리네임/정리해 커밋). 증거 스샷: /tmp/wo6b-probe/shots/.
+> ⚠️ 검증 빌드는 반드시 **서명 유지**(CODE_SIGNING_ALLOWED=NO 금지 — iCloud 엔타이틀먼트 빠져 CloudKit SIGTRAP로 오진).
+
+### 목표 (verifiable)
+iPad에서 두 진입점(툴바+·빈상태 버튼) 모두 Pro=작성 시트 / 非Pro=페이월이 정상 표시. **프로브 테스트 green + iPhone 게이트 회귀 0**(ProPaywallUITests 3종 green 유지). 페이월 규칙(WO-10)·조회 무게이트 불변.
+
+### 조사 단서 (플래너)
+- 유력: `IPadRootView.detail(for:)`의 `case .riskAssessments: NavigationStack { RiskAssessmentListView() }` 조합에서 `.sheet(item:)` 표시 실패 — NavigationSplitView detail 내 시트 프레젠테이션 컨텍스트 문제 또는 뷰 아이덴티티 리셋 의심. 시트를 NavigationStack 바깥(IPadRootView 레벨)으로 올리거나, 프레젠테이션 앵커를 조정하는 방향 검토.
+- startCreate()가 실행되는지(액션 자체 미발화 vs activeSheet 설정 후 시트만 미표시) 먼저 분리 진단할 것.
+
+### 스코프/금지
+DashboardView(mac)·모델·CloudKit·페이월 규칙 변경 금지. iPhone 경로 무회귀. 수정은 최소(프레젠테이션 배선).
+
+### 완료 조건 (증거)
+- [ ] IPadRAProbeUITests(정리 버전) green — iPad Pro 13 destination
+- [ ] 非Pro iPad에서 페이월 표시 확인(스샷)
+- [ ] iPhone ProPaywallUITests 3종 green(회귀 0) · iOS 빌드 green
+- [ ] (보너스, 되면) iPad RA 작성 화면 스샷 1장 → docs/appstore/screenshots/ 추가
+
+### 진행 / 보고
+main에서 브랜치 `wo12-ipad-ra-sheet`. `/tdd`(red = 제공된 프로브) · handoff 보고 → 플래너 검수 후 머지.
+
+**WO-12 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
