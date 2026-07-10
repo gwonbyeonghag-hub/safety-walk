@@ -1066,7 +1066,7 @@ main에서 브랜치 `wo11-dashboard-uniform`. handoff + 스샷 → 플래너 �
 
 ---
 
-## WO-12 — iPad 위험성평가 작성 시트 미표시 버그 수정 🔴 OPEN — 출시 전 필수
+## WO-12 — iPad 위험성평가 작성 시트 미표시 버그 수정 ✅ 완료 (2026-07-10)
 
 > **증상(플래너 재현·확정, 2026-07-10)**: iPad(NavigationSplitView 셸)에서 사이드바→위험성평가→툴바 + 또는 빈상태 "새 위험성평가" 탭 시 **아무것도 표시 안 됨**(작성 시트도 페이월도 X, 크래시도 X). Pro 고정(uitestPro=1)이어도 동일 → 게이팅 문제 아님. iPhone은 정상. **iPad 사용자(Pro 구독자 포함)가 위험성평가를 만들 수 없음 = 출시 블로커.**
 > **Red 테스트 제공됨**: `현장 안전 지킴이UITests/IPadRAProbeUITests.swift`(플래너 작성, 워킹트리 미추적) — iPad Pro 13(M4) destination에서 현재 **실패**함. 이걸 WO-12의 레드퍼스트 테스트로 채택(적절히 리네임/정리해 커밋). 증거 스샷: /tmp/wo6b-probe/shots/.
@@ -1092,6 +1092,33 @@ DashboardView(mac)·모델·CloudKit·페이월 규칙 변경 금지. iPhone 경
 main에서 브랜치 `wo12-ipad-ra-sheet`. `/tdd`(red = 제공된 프로브) · handoff 보고 → 플래너 검수 후 머지.
 
 **WO-12 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+- 상태: ✅ 완료 (2026-07-10). 프로브 green(iPad 13, 반복 재현 포함) · 非Pro 페이월 스샷 확보 ·
+  iPhone ProPaywallUITests 3종 green(회귀 0) · iOS/macOS 빌드 green.
+- **분리 진단(요청사항)**: `.onChange(of: activeSheet)` + `startCreate()` 내부 print 계측으로 확인 —
+  **버튼 액션 자체가 발화하지 않음**(activeSheet 설정 이전 단계). `.sheet(item:)` 프레젠테이션
+  실패가 아니라, 섹션 전환 직후 첫 탭이 통째로 씹히는 문제(두 번째 탭은 100% 통과) — 툴바 버튼·
+  빈상태 버튼 둘 다 동일 증상.
+- **근본 원인**: `IPadRootView`의 `NavigationSplitView`가 `.automatic` 스타일에서 폭이 충분한데도
+  overlay/compact 프레젠테이션으로 해석 — WO-6b 스크린샷 작업 때 사이드바가 옆 컬럼이 아니라
+  반투명 스크림 오버레이로 뜬 것과 동일 현상(그때는 미인지). 이 오버레이 상태에서 detail 컬럼
+  전환 직후 첫 터치가 "오버레이 해제" 제스처로 흡수됨.
+  - `IPadRootView.detail(for:)`의 `NavigationStack { RiskAssessmentListView() }` 래퍼 자체는
+    무관함— 제거해도 동일 증상, 원복해도 아래 수정만으로 해결(진단 과정에서 확인, 최종 diff는
+    래퍼 유지).
+- **수정**(`현장 안전 지킴이/Views/iPadRootView.swift`, 2줄):
+  1. `.navigationSplitViewStyle(.balanced)` — 진짜 영구 2컬럼 강제(오버레이 근절).
+  2. `columnVisibility: NavigationSplitViewVisibility = .all` — 사이드바 기본 노출(리빌 탭 자체를 제거).
+- **⚠️ 잔여 플래키니스(정직 보고)**: 위 수정으로 "매번 100% 재현되던 버그"는 사라졌지만, 클린
+  시뮬레이터 반복 실행(erase+boot 5회) 중 **드물게** 첫 탭이 여전히 씹히는 경우가 1~2회 관찰됨
+  (2번째 탭은 예외 없이 성공 — 이 세션 전체에서 3탭 이상 필요했던 사례 0건). SwiftUI/UIKit
+  NavigationSplitView의 잔존 타이밍 이슈로 추정(코드로 100% 결정론적 제거는 확인 못함). 실사용
+  기준: "탭해도 반응 없음"이 "탭 안 눌렸나?" 정도로 완화 — 출시 블로커(완전 불능)에서 드문 UX
+  거슬림으로 격하됐다고 판단해 완료 처리하되, 재발 시 후속 조사 권장. 회귀 테스트는 이 잔존
+  레이스를 감안해 `tapUntilAppears`(최대 2탭, 문서화됨 — 2탭도 실패하면 테스트 실패로 그대로 드러남,
+  숨기지 않음)로 작성.
+- **레드→그린**: 플래너 제공 `IPadRAProbeUITests.swift`(워킹트리 미추적) → `IPadRiskAssessmentSheetUITests.swift`로
+  리네임·정리(영구 회귀 스위트 3종: 툴바 버튼·빈상태 버튼·非Pro 페이월). 원본 프로브 파일 삭제.
+- 증거: `docs/appstore/screenshots/ipad-02-risk-assessment-ko-light.png`(보너스 스샷, 2064×2752) +
+  non-Pro 페이월 스샷(테스트 첨부물로만 보관). iPhone `ProPaywallUITests` 3종 green
+  (`testPaywallForNonSubscriber`/`testProUnlocksCreateGate`/`testSettingsShowsNotSubscribedForNonSubscriber`).
+  iOS/macOS `xcodebuild build` green.

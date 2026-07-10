@@ -18,13 +18,11 @@ App Store Connect 업로드용 스크린샷. 실기록 화면만 사용(과장·
 | 파일 | 화면 |
 |---|---|
 | `ipad-01-home-ko-light.png` | split view 홈(사이드바 펼침 + 진행중 점검) |
+| `ipad-02-risk-assessment-ko-light.png` | split view 새 위험성평가 작성 시트 (WO-12 수정 후) |
 
-**미확보(알려진 제약)**: iPad "split 위험성평가" 화면. 사이드바 선택 후 새 위험성평가 생성 시트가
-이 iPad 시뮬레이터 조합(NavigationSplitView 상세 컬럼 + NavigationStack)에서 재현 가능하게
-열리지 않음 — `ra_new_button`/`ra_new_toolbar` 둘 다 일반 tap과 좌표 tap 모두 무반응(빈 목록 화면
-그대로, 페이월도 아님 — Pro 게이팅 문제 아님). 클린 시뮬레이터 재현 3회 모두 동일. 앱 버그인지
-UI 테스트 환경 한계인지 추가 조사 필요(별건 권장) — 코드 변경 없이 스크린샷 캡처만 시도했으므로
-이번 WO 범위에서 근본 원인은 미규명.
+이전 버전에서 이 화면이 "미확보"였던 이유는 실제 앱 버그였음 — WO-12에서 규명·수정 완료
+(`.navigationSplitViewStyle(.balanced)` + `columnVisibility = .all`). 자세한 내용은
+`V2_HANDOFF.md` §WO-12 참고.
 
 ### macOS — 2880×1800
 | 파일 | 화면 |

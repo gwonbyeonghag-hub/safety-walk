@@ -40,10 +40,14 @@ enum IPadSection: String, CaseIterable, Identifiable, Hashable {
 
 struct IPadRootView: View {
     @State private var section: IPadSection? = .home
+    // WO-12: default to `.all` (sidebar always visible) rather than letting
+    // NavigationSplitView decide — starting collapsed required a reveal tap before the
+    // detail column's own controls were reliably hittable (see WO-12 fix note below).
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @AppStorage("com.safetywalk.inspectorName") private var inspectorName = ""
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             List(IPadSection.allCases, selection: $section) { item in
                 Label(item.titleKey.localized, systemImage: item.systemImage)
                     .tag(item)
@@ -53,6 +57,12 @@ struct IPadRootView: View {
         } detail: {
             detail(for: section ?? .home)
         }
+        // WO-12 fix: `.automatic` was resolving to an overlay/compact-style presentation
+        // for the detail column despite ample width, which silently swallowed the first
+        // tap on any control right after switching sidebar sections (no crash, no sheet,
+        // no paywall — just nothing; a second tap always worked). `.balanced` forces a
+        // true persistent 2-column layout.
+        .navigationSplitViewStyle(.balanced)
     }
 
     // MARK: - Detail (existing views reused)
