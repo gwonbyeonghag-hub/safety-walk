@@ -45,7 +45,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 ```
 
 각 WO의 상세 지시는 플래너가 해당 단계 착수 시점에 이 문서에 추가한다.
-**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 · WO-8 macOS 디자인 폴리시 ✅ · WO-7 iPad 네이티브 레이아웃 ✅ · 앱 아이콘(안전모, iOS 라·다·틴티드+macOS) ✅ 완료 (2026-07-07).** 남은 것 = **WO-9 macOS 샌드박스+ModelContainer 폴백 🟡 실행 완료·검수 대기**(Release 크래시 수정·F-1 방어 — 브랜치 `wo9-mac-sandbox-fallback`) · **App Store 동시출시(WO-6)**. (F-1: iOS 실기기 첫 실행 정상 = 시뮬 전용 확정 → WO-9로 시뮬 온보딩도 정상화.)
+**WO-0~3 ✅ v2 기능 완성 + 실기기 동기화 확인 · WO-8 macOS 디자인 폴리시 ✅ · WO-7 iPad 네이티브 레이아웃 ✅ · 앱 아이콘(안전모, iOS 라·다·틴티드+macOS) ✅ 완료 (2026-07-07).** 남은 것 = **App Store 동시출시(WO-6)** — WO-9 샌드박스+폴백 ✅ 완료(Release 크래시 소멸·F-1 해소). (F-1: iOS 실기기 첫 실행 정상 = 시뮬 전용 확정 → WO-9로 시뮬 온보딩도 정상화.)
 > 📁 로컬 경로 변경: 프로젝트 폴더가 `02_개발/03_프로젝트/` → **`02_개발/02_프로젝트/`** 로 이동됨(2026-07-03, 손실 없음). GitHub 원격(`safety-walk`)이 안정 앵커.
 (번호는 로드맵 순서, 실제 진행은 계정 의존성 따라 조정.)
 
@@ -831,7 +831,7 @@ macOS 앱(대시보드·브라우즈·리포트허브)이 **세련된 네이티�
 
 ---
 
-## WO-9 — macOS 샌드박스 + ModelContainer 폴백 (Release 크래시 수정 + F-1 방어) 🟡 실행 완료 · 검수 대기 (2026-07-08)
+## WO-9 — macOS 샌드박스 + ModelContainer 폴백 (Release 크래시 수정 + F-1 방어) ✅ 완료·검수 통과·머지 (2026-07-08)
 
 > **증상**: macOS **Release** 앱이 실행 즉시 크래시 — `MacModelContainer.swift:41` `fatalError("Failed to create the macOS ModelContainer: SwiftDataError … migration with an unknown model version")`.
 > **근본원인**: 맥앱이 **비샌드박스**(엔타이틀먼트에 `app-sandbox` 없음)라 공용 `~/Library/Application Support/default.store`를 쓰는데, 그 저장소가 **예전 스키마**(플랜의 V1=1.0.0 / V2=2.0.0 어느 것도 아님)라 마이그레이션이 못 알아봄. iOS는 샌드박스(앱 전용 저장소)+clean install이라 안 겪음(실기기 iPhone 첫 실행 정상 확인 = **F-1 iOS는 시뮬 전용**).
@@ -869,7 +869,7 @@ macOS 앱(대시보드·브라우즈·리포트허브)이 **세련된 네이티�
 main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Release 실행 스샷(크래시 안 남)** + 테스트 결과 + 샌드박스 후 리포트 export 확인. push는 하되 main 머지는 플래너 검수 후.
 
 **WO-9 결과:**
-- 상태: ✅ 실행 완료 · 플래너 검수 대기 (2026-07-08). 브랜치 `wo9-mac-sandbox-fallback` (main 머지는 검수 후).
+- 상태: ✅ 완료 · 플래너 검수 통과 · main 머지 (2026-07-08, merge `a8f9f09`). 플래너 재검증(러버스탬프X): 52/52 직접 실행 · Release를 이 맥에서 직접 구동(크래시 0, 8초+ 생존, 관리 대시보드 렌더 육안) · default.store inode/mtime 불변 · 샌드박스 컨테이너에 새 store 생성 확인 · codesign 엔타이틀먼트 3키 확인 · DEBUG(샌드박스+시드) 대시보드 위험색 의미 유지 육안 · 스키마/모델/마이그레이션 diff 0.
 - 요약:
   - **① 샌드박스**: `SafetyWalkMac.entitlements`에 `com.apple.security.app-sandbox` + `network.client` + `files.user-selected.read-write`(NSSavePanel export 유지용 — 착수 전 게이트 보고 → 플래너 승인) 추가. 서명 바이너리에 3개 키 포함 확인(`codesign -d --entitlements`). 저장소가 앱 컨테이너(`~/Library/Containers/com.gwonbyeonghag.safetywalk.mac/…/default.store`)로 이동 → 공용 `~/Library/Application Support/default.store`(낡은 스키마) 미사용 → **Release 크래시 소멸**.
   - **② 폴백 팩토리**: `SafetyWalkCore/ModelContainerFactory.swift` 신설 — `SafetyWalkModelContainer.makeCloudKitContainer(containerID:)`. CloudKit+마이그레이션 생성 실패 시 store(`default.store`/`-shm`/`-wal`)를 `.<timestamp>.bak`로 **이동(보존, 삭제 아님)** → fresh 재시도 → 최후 in-memory. `fatalError` 제거. iOS `SafetyWalkApp.swift` + macOS `MacModelContainer.swift`(#else) 둘 다 이 팩토리로 교체. **iOS는 명시 url 미도입 = 저장소 위치 불변 → 기존 데이터 고아화 없음**(게이트 보고 → 승인). macOS `#if DEBUG` 시드 경로 무변경. 스키마/모델/마이그레이션 무변경.
@@ -882,5 +882,5 @@ main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Releas
   - 원본 `~/Library/Application Support/default.store` **미삭제**: inode 157337411 / mtime 2026-07-07 15:22 (Release 실행 전후 동일)
   - 복구 로직 테스트: `SafetyWalkCore/Tests/SafetyWalkCoreTests/ModelContainerFactoryTests.swift` (3), `swift test` 52 green
 - 잔여(플래너 확인 필요):
-  - 리포트 PDF export **NSSavePanel 저장 클릭스루**는 대화형이라 헤드리스 자동화 불가(터미널 Accessibility 권한 없음). 엔타이틀먼트 존재 + 임시디렉터리(컨테이너 내) PDF 생성 = 검증됨. 샌드박스 설계상 사용자 패널 선택으로만 완결 → **실제 저장 1회 수동 확인 권장**.
+  - 리포트 PDF export **NSSavePanel 저장 클릭스루**는 대화형이라 헤드리스 자동화 불가(터미널 Accessibility 권한 없음). 엔타이틀먼트 존재 + 임시디렉터리(컨테이너 내) PDF 생성 = 검증됨. 샌드박스 설계상 사용자 패널 선택으로만 완결 → **실제 저장 1회 수동 확인 권장** → 플래너 검수 시 GUI 자동화(Stage Manager)로 완결 못 함 — **오너 1클릭 확인으로 이관**(리포트→PDF 내보내기→저장).
   - `swift test` 종료 시 CoreData atexit `signal 6` 로그 = 결과 기록 후 발생, exit code 0, 다중 온디스크 컨테이너 하니스 아티팩트(테스트 실패 아님, 신규 테스트 단독 실행 시 미발생).
