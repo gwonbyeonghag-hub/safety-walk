@@ -987,7 +987,7 @@ main에서 브랜치 `wo10-pro-subscription`. handoff + 페이월/게이트 스�
 
 ---
 
-## WO-11 — macOS 대시보드 카드 균일화 (고정 높이 + 상시 "전체 보기") 🔴 OPEN — WO-6 macOS 스샷 전에
+## WO-11 — macOS 대시보드 카드 균일화 (고정 높이 + 상시 "전체 보기") ✅ 완료·검수 통과·머지 (2026-07-10)
 
 > 오너 관찰(2026-07-10, 스샷): 카드 높이가 내용량 따라 늘었다 줄었다 해서 그리드가 삐뚤빼뚤 — 분포 카드 주변 여백·기한 카드 잘림. **모든 콘텐츠 카드를 같은 높이로 고정하고, 넘치는 내용은 "전체 보기 →"로.**
 
@@ -1016,6 +1016,7 @@ main에서 브랜치 `wo10-pro-subscription`. handoff + 페이월/게이트 스�
 main에서 브랜치 `wo11-dashboard-uniform`. handoff + 스샷 → 플래너 검수 후 머지. **WO-6의 macOS 스크린샷은 이 머지 후에 촬영**(제출 스샷에 반영되게).
 
 **WO-11 결과:**
-- 상태: ☐ 미착수
-- 요약:
-- 증거 위치:
+- 상태: ✅ 완료 · 플래너 검수 통과 · main 머지 (2026-07-10, `af0b623`)
+- 요약: `cardBody(footerLabel:section:rows:)` 헬퍼 신설 — 4카드 전부 prefix(5)·고정높이 300(상단정렬+Spacer+구분선+상시 footer)·onSelectSection 4타겟. 문자열 3키 ko/en parity. 데이터/정렬/스탯타일/위험색 무변경(4파일 surgical).
+- 플래너 검수: diff 정독 ✅ · macOS/iOS 빌드 직접 green ✅ · 시드 스샷 육안(5vs3vs1 불균등에서 4카드 동일높이·footer 동일 y축) ✅ · footer 내비는 컴파일 검증(enum 4케이스, 기검증 .sites와 동일 패턴)으로 수용 — 실행자의 좌표클릭 사고(오너 Chrome 녹화창 오클릭) 후 대체 검증 판단 승인. **재발 방지 규칙: 실행자 좌표 클릭 금지, 라이브 GUI 확인은 앱-허용목록 가드 있는 플래너/오너 몫.**
+- 증거 위치: scratchpad/wo11/ (dashboard light/dark ×2·empty·nav-check)
