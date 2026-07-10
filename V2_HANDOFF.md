@@ -887,7 +887,7 @@ main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Releas
 
 ---
 
-## WO-6 — App Store 동시출시 준비 (제출 자료 일체) 🟡 실행 완료 · 검수 대기 (2026-07-10) — WO-10 머지 반영
+## WO-6 — App Store 동시출시 준비 (제출 자료 일체) 🟢 패키지 검수 통과·머지 (2026-07-10) — 잔여: 제출규격 스샷(WO-11 후) + 오너 Connect
 
 > v2 기능·디자인·크래시fix 전부 완료. 이 WO = **계정 없이 만들 수 있는 제출 자료 전부**를 실행자가 준비하고, App Store Connect 업로드·제출은 **오너 체크리스트**(§오너)로 분리. 코드 변경은 사실상 0(스샷용 데이터 입력·아카이브 검증만).
 
@@ -914,7 +914,10 @@ main에서 브랜치 `wo9-mac-sandbox-fallback`. handoff 형식 + **macOS Releas
 스샷 목록(규격 확인)·메타데이터 전문·아카이브 결과 → 플래너 검수(규격·문구·면책 톤) 후 오너 체크리스트 발동.
 
 **WO-6 결과:**
-- 상태: 🟡 실행 완료 · 검수 대기 — 브랜치 `wo6-appstore-prep`, main 머지는 검수 후 → 오너 Connect 단계.
+- 상태: 🟢 패키지 검수 통과 · main 머지 (2026-07-10). 플래너 검증: xcprivacy 주장 대조(NSPrivacyTracking=false·CA92.1) ✅ · support.md 존재 ✅ · 메타데이터 정확성 가드레일(판정아님·iCloud정정·구독) ✅ · App Privacy "수집 0" 논리+백업표 ✅.
+- **잔여 ①(실행자)**: 제출 규격 스크린샷 세트 — 현 자산은 iPhone 1178×2556·macOS 1040×732(창캡처)로 **Connect 규격 미달**(요구: iPhone 6.9" 1320×2868 · iPad 13" 2064×2752 · macOS 2880×1800). **WO-11 머지 후** populated 캡처 패스로 일괄 촬영(screenshots.md 계획대로).
+- **잔여 ②(오너)**: §오너 체크리스트(Connect 앱 2건·구독상품·URL 게시·업로드·동시제출) + Info.plist `ITSAppUsesNonExemptEncryption=NO`(선택).
+- **git 사고 기록**: 플래너의 WO-11 docs 커밋이 실행자 스테이징을 휩쓴 dca0145(오라벨) → 플래너가 be741ce(docs)+2cb2353(패키지)로 분리, force-with-lease 정정, 백업 태그 `backup/dca0145`. 재발 방지: 커밋 전 `git branch --show-current` + `git status` 스테이징 확인 의무화(§1).
 - 요약: `docs/appstore/` 제출 패키지 작성(코드/모델/버전 무변경, 1.0/build 1). 메타데이터 ko/en(위험성평가 4기법·iCloud 동기화·iPad/Mac·**SafetyWalk Pro 구독** 반영, 가격 비하드코딩) · 개인정보처리방침(게시용 ko/en) · App Privacy 설문 답 · 심사 메모(구독 테스트법 포함) · 스크린샷 계획+자산. **양 타깃 `xcodebuild archive` = ARCHIVE SUCCEEDED**(코드 무결성, 서명 제외 — 업로드는 오너).
   - **⚠️ 정확성 수정(중요)**: 기존 v1 자료(`APP_STORE_SUBMISSION.md`·`docs/privacy-policy.md`)가 **"완전 오프라인/네트워크 없음"** 이라 서술 → v2는 **CloudKit 비공개 DB 동기화**를 하므로 **허위**. `docs/appstore/`에서 정정: 앱은 오프라인 작동하되 **사용자 본인 iCloud(비공개)로 동기화**, 제공자는 접근 불가, 수집=0 유지. (기존 v1 자료는 폐기·미갱신 상태로 남겨둠 — 필요 시 정리 별건.)
   - 구독 반영: 설명에 무료/Pro 경계 + "구독 끝나도 조회 가능" 톤 · Connect 필수 고지(자동갱신·가격은 Connect 참조) · privacy 설문에 구매=Apple 처리·앱 수집 0.
