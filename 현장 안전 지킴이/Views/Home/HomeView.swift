@@ -213,7 +213,7 @@ struct HomeView: View {
             )
         }
         .padding(.vertical, 14)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
     }
 
     private func summaryStat(systemImage: String,
@@ -281,11 +281,7 @@ struct HomeView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(14)
-            .background(.background, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(.separator), lineWidth: 0.5)
-            )
+            .cardSurface()
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("ra_home_card")
@@ -351,8 +347,7 @@ struct HomeView: View {
             .buttonStyle(.bordered)
         }
         .padding(16)
-        .background(.background, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.separator), lineWidth: 0.5))
+        .cardSurface()
     }
 
     /// Assessments due (WO-7 mockup): 정기 assessments at/near their annual deadline, using
@@ -394,8 +389,7 @@ struct HomeView: View {
             }
         }
         .padding(16)
-        .background(.background, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.separator), lineWidth: 0.5))
+        .cardSurface()
     }
 
 }
@@ -475,11 +469,7 @@ private struct InspectionRowView: View {
                 )
         }
         .padding(12)
-        .background(.background, in: RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color(.separator), lineWidth: 0.5)
-        )
+        .cardSurface()
     }
 }
 

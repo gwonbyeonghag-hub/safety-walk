@@ -64,7 +64,7 @@ struct ChecklistView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
         }
@@ -148,7 +148,7 @@ private struct CategoryRow: View {
     private var fraction: Double  { total > 0 ? Double(checkedCount) / Double(total) : 0 }
 
     private var progressColor: Color {
-        if failedCount > 0 { return .orange }
+        if failedCount > 0 { return Color.warning }
         return checkedCount > 0 ? .green : Color(.systemGray4)
     }
 
@@ -194,7 +194,7 @@ private struct CategoryRow: View {
                 .foregroundStyle(.green)
         } else if allChecked {
             Image(systemName: "exclamationmark.circle.fill")
-                .foregroundStyle(.orange)
+                .foregroundStyle(Color.warning)
         } else if checkedCount > 0 {
             Image(systemName: "circle.bottomhalf.filled")
                 .foregroundStyle(Color.accentColor)
@@ -378,7 +378,7 @@ struct ChecklistItemRow: View {
                 Label(LocalizationKey.checklistHazardLinked.localized,
                       systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.warning)
             } else {
                 Button { showHazardSheet = true } label: {
                     Label(LocalizationKey.checklistAddHazard.localized,

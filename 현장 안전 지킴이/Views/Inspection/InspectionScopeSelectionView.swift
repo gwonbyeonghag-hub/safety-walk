@@ -97,7 +97,7 @@ struct InspectionScopeSelectionView: View {
         VStack(spacing: 6) {
             Text(summaryText)
                 .font(.caption)
-                .foregroundStyle(viewModel.effectiveSelectedCount == 0 ? Color.orange : .secondary)
+                .foregroundStyle(viewModel.effectiveSelectedCount == 0 ? Color.warning : .secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Button {

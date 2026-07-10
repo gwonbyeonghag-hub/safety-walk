@@ -99,7 +99,7 @@ struct OnboardingView: View {
             if !canStart {
                 Text(LocalizationKey.onboardingNameRequired.localized)
                     .font(.caption)
-                    .foregroundStyle(Color.orange)
+                    .foregroundStyle(Color.warning)
             }
             Button {
                 completeOnboarding()

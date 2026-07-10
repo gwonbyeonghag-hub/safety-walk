@@ -95,7 +95,7 @@ struct InspectionSummaryView: View {
             }
         }
         .padding()
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
     }
 
     // MARK: - Counts
@@ -114,7 +114,7 @@ struct InspectionSummaryView: View {
             }
         }
         .padding()
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
     }
 
     private func countCell(_ label: String, value: Int, color: Color) -> some View {
@@ -146,7 +146,7 @@ struct InspectionSummaryView: View {
             }
         }
         .padding()
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
     }
 
     private func riskCell(_ label: String, count: Int, color: Color) -> some View {
@@ -182,7 +182,7 @@ struct InspectionSummaryView: View {
             }
         }
         .padding()
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
     }
 
     // MARK: - Share

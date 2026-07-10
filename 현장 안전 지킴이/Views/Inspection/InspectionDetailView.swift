@@ -122,7 +122,7 @@ struct InspectionDetailView: View {
             }
         }
         .padding()
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
     }
 
     private var statusBadge: some View {
@@ -150,7 +150,7 @@ struct InspectionDetailView: View {
                       value: nil, color: .primary)
         }
         .padding(.vertical, 10)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
     }
 
     private func countCell(_ label: String, value: Int?, color: Color) -> some View {
@@ -207,7 +207,7 @@ struct InspectionDetailView: View {
             }
         }
         .padding()
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
     }
 
     // MARK: - Hazards section
@@ -239,7 +239,7 @@ struct InspectionDetailView: View {
             }
         }
         .padding()
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
     }
 
     // MARK: - Delete (task 5-9)

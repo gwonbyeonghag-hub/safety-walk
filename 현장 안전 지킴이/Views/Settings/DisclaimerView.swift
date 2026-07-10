@@ -18,7 +18,7 @@ struct DisclaimerView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(12)
-        .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 10))
+        .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: AppSurface.cornerRadius))
     }
 }
 
