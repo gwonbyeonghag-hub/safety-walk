@@ -19,6 +19,7 @@ final class WO5ScreensUITests: XCTestCase {
             "-com.safetywalk.appearanceMode", mode,
             "-com.safetywalk.hasCompletedOnboarding", onboarded ? "1" : "0",
             "-com.safetywalk.inspectorName", "평가자",
+            "-com.safetywalk.uitestPro", "1",   // WO-10: Pro so RA create opens
         ]
         app.launch()
         return app

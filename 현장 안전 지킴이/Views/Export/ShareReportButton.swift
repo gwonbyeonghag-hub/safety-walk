@@ -13,20 +13,41 @@ struct ShareReportButton: View {
 
     let inspection: Inspection
 
+    @Environment(ProStore.self) private var proStore
+
     @State private var isExporting = false
-    @State private var shareItem: ShareItem?
     @State private var showFailedAlert = false
+    // One sheet slot (stacked `.sheet` modifiers conflict in SwiftUI): the gate routes to
+    // the paywall (non-Pro) or the share sheet (Pro, after export succeeds).
+    @State private var activeSheet: ActiveSheet?
+
+    private enum ActiveSheet: Identifiable {
+        case paywall
+        case share(URL)
+        var id: String {
+            switch self {
+            case .paywall:        return "paywall"
+            case .share(let url): return url.absoluteString
+            }
+        }
+    }
 
     var body: some View {
         Button {
-            Task { await share() }
+            // Gate B (WO-10): exporting/sharing a report as PDF is Pro. Non-subscribers get
+            // the paywall; viewing the inspection and its report on-screen stays free.
+            if proStore.isPro { Task { await share() } } else { activeSheet = .paywall }
         } label: {
             buttonLabel
         }
         .buttonStyle(.bordered)
         .disabled(isExporting)
-        .sheet(item: $shareItem) { item in
-            ShareSheet(items: [item.url])
+        .accessibilityIdentifier("share_report_button")
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .paywall:        PaywallView()
+            case .share(let url): ShareSheet(items: [url])
+            }
         }
         .alert(LocalizationKey.shareFailed.localized,
                isPresented: $showFailedAlert) {
@@ -56,7 +77,7 @@ struct ShareReportButton: View {
         let url = await InspectionExportService().exportPDF(inspection: inspection)
         isExporting = false
         if let url {
-            shareItem = ShareItem(url: url)
+            activeSheet = .share(url)
         } else {
             showFailedAlert = true
         }

@@ -13,6 +13,7 @@ final class RiskAssessmentUITests: XCTestCase {
         app.launchArguments += [
             "-com.safetywalk.hasCompletedOnboarding", "1",
             "-com.safetywalk.inspectorName", "평가자",
+            "-com.safetywalk.uitestPro", "1",   // WO-10: Pro so the create gate opens
         ]
         app.launch()
         return app

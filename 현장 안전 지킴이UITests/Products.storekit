@@ -1,0 +1,71 @@
+{
+  "identifier" : "AA11BB22-CC33-DD44-EE55-FF6677889900",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21489153",
+      "localizations" : [],
+      "name" : "SafetyWalk Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "3.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "63212841",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "SafetyWalk Pro, billed monthly (local test price only)",
+              "displayName" : "SafetyWalk Pro — Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.gwonbyeonghag.safetywalk.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "SafetyWalk Pro Monthly",
+          "subscriptionGroupID" : "21489153",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "63212842",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "SafetyWalk Pro, billed yearly (local test price only)",
+              "displayName" : "SafetyWalk Pro — Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.gwonbyeonghag.safetywalk.pro.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "SafetyWalk Pro Yearly",
+          "subscriptionGroupID" : "21489153",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

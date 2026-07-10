@@ -1,11 +1,13 @@
 import SwiftUI
 import SafetyWalkCore
 import SwiftData
+import StoreKit
 
 struct SettingsView: View {
 
     @State private var viewModel = SettingsViewModel()
     @Environment(\.modelContext) private var modelContext
+    @Environment(ProStore.self) private var proStore
 
     // Local app-display preference. Same key bound by SafetyWalkApp so changes
     // re-render the whole app immediately. Not a SwiftData / account setting.
@@ -15,6 +17,8 @@ struct SettingsView: View {
     @State private var showReopenSetupConfirm = false
     @State private var showResetConfirm       = false
     @State private var showResetError         = false
+    @State private var showPaywall            = false
+    @State private var showManageSubscriptions = false
 
     // Setting this false causes ContentView's AppStorage gate to show OnboardingView.
     @AppStorage("com.safetywalk.hasCompletedOnboarding")
@@ -48,6 +52,7 @@ struct SettingsView: View {
                 }
 
                 appearanceSection
+                proSection
                 reopenSetupSection
                 managementSection
                 dataManagementSection
@@ -76,6 +81,40 @@ struct SettingsView: View {
             .alert(LocalizationKey.errorResetFailed.localized,
                    isPresented: $showResetError) {
                 Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
+            }
+            .sheet(isPresented: $showPaywall) { PaywallView() }
+            .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
+        }
+    }
+
+    // MARK: - SafetyWalk Pro (WO-10)
+
+    private var proSection: some View {
+        Section(LocalizationKey.settingsProSection.localized) {
+            HStack(spacing: 8) {
+                Image(systemName: proStore.isPro ? "checkmark.seal.fill" : "seal")
+                    .foregroundStyle(proStore.isPro ? .green : .secondary)
+                Text(proStore.isPro
+                     ? LocalizationKey.settingsProStatusActive.localized
+                     : LocalizationKey.settingsProStatusInactive.localized)
+                Spacer()
+            }
+            if !proStore.isPro {
+                Button {
+                    showPaywall = true
+                } label: {
+                    Label(LocalizationKey.settingsProSubscribe.localized, systemImage: "star")
+                }
+            }
+            Button {
+                Task { await proStore.restore() }
+            } label: {
+                Label(LocalizationKey.paywallRestore.localized, systemImage: "arrow.clockwise")
+            }
+            Button {
+                showManageSubscriptions = true
+            } label: {
+                Label(LocalizationKey.settingsProManage.localized, systemImage: "creditcard")
             }
         }
     }

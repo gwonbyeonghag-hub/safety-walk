@@ -9,7 +9,16 @@ struct RiskAssessmentListView: View {
     @Query(sort: \RiskAssessment.assessedAt, order: .reverse)
     private var assessments: [RiskAssessment]
 
-    @State private var showCreate = false
+    @Environment(ProStore.self) private var proStore
+
+    // One sheet slot (not two stacked `.sheet` modifiers, which conflict in SwiftUI):
+    // the gate routes to create or paywall.
+    @State private var activeSheet: ActiveSheet?
+
+    private enum ActiveSheet: Int, Identifiable {
+        case create, paywall
+        var id: Int { rawValue }
+    }
 
     var body: some View {
         Group {
@@ -32,15 +41,26 @@ struct RiskAssessmentListView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    showCreate = true
+                    startCreate()
                 } label: {
                     Label(LocalizationKey.raNew.localized, systemImage: "plus")
                 }
+                .accessibilityIdentifier("ra_new_toolbar")
             }
         }
-        .sheet(isPresented: $showCreate) {
-            RiskAssessmentCreateView()
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .create:  RiskAssessmentCreateView()
+            case .paywall: PaywallView()
+            }
         }
+    }
+
+    /// Gate A (WO-10): browsing/viewing stays free (the row `NavigationLink` → detail is
+    /// never gated); authoring a new assessment is Pro, so non-subscribers get the paywall
+    /// instead of the create sheet.
+    private func startCreate() {
+        activeSheet = proStore.isPro ? .create : .paywall
     }
 
     private var emptyState: some View {
@@ -55,12 +75,13 @@ struct RiskAssessmentListView: View {
                     .multilineTextAlignment(.center)
             }
             Button {
-                showCreate = true
+                startCreate()
             } label: {
                 Label(LocalizationKey.raNew.localized, systemImage: "plus.circle.fill")
                     .font(.headline)
             }
             .buttonStyle(.borderedProminent)
+            .accessibilityIdentifier("ra_new_button")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()

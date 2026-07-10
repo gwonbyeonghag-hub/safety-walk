@@ -493,3 +493,23 @@
 "mac.inspectionReports" = "Inspection Reports";
 "mac.exportPDF" = "Export PDF";
 "mac.print" = "Print";
+
+/* SafetyWalk Pro / paywall (WO-10) */
+"paywall.title" = "SafetyWalk Pro";
+"paywall.tagline" = "Pro tools for field records";
+"paywall.benefit.assessment" = "Create risk assessments (4 methods)";
+"paywall.benefit.export" = "Export inspection reports as PDF";
+"paywall.reassurance" = "Records you've already created stay viewable even after your subscription ends.";
+"paywall.monthly" = "Monthly";
+"paywall.yearly" = "Yearly";
+"paywall.restore" = "Restore Purchases";
+"paywall.terms" = "Terms of Use";
+"paywall.privacy" = "Privacy Policy";
+"paywall.unavailable" = "Subscriptions are unavailable right now.";
+"paywall.loading" = "Loading…";
+"paywall.close" = "Close";
+"settings.pro.section" = "SafetyWalk Pro";
+"settings.pro.statusActive" = "Subscribed";
+"settings.pro.statusInactive" = "Not subscribed";
+"settings.pro.subscribe" = "Subscribe to Pro";
+"settings.pro.manage" = "Manage Subscription";

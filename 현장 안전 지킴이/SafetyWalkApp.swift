@@ -16,6 +16,11 @@ struct SafetyWalkApp: App {
     // so every localized string re-renders in the new language without a restart.
     @State private var loc = LocalizationManager.shared
 
+    // Pro entitlement service (WO-10). Injected so the two gates (RA new-creation, report
+    // export) can read `isPro`; free features never touch it. `start()` loads products +
+    // resolves entitlements once the scene appears.
+    @State private var proStore = ProStore()
+
     // CloudKit-backed store (WO-3). Same container id + migration plan as
     // SafetyWalkMac/MacModelContainer.swift so both apps sync through one iCloud
     // container. VersionedSchema/SafetyWalkMigrationPlan lives in SafetyWalkCore so a
@@ -31,6 +36,8 @@ struct SafetyWalkApp: App {
                 .environment(\.locale, Locale(identifier: loc.language.rawValue))
                 .id(loc.language)
                 .preferredColorScheme(appearanceMode.colorScheme)
+                .environment(proStore)
+                .task { await proStore.start() }
         }
         .modelContainer(Self.modelContainer)
     }

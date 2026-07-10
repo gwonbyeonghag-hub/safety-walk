@@ -344,6 +344,26 @@ enum LocalizationKey: String {
     case macExportPDF                   = "mac.exportPDF"
     case macPrint                       = "mac.print"
 
+    // MARK: - SafetyWalk Pro / paywall (WO-10)
+    case paywallTitle                   = "paywall.title"
+    case paywallTagline                 = "paywall.tagline"
+    case paywallBenefitAssessment       = "paywall.benefit.assessment"
+    case paywallBenefitExport           = "paywall.benefit.export"
+    case paywallReassurance             = "paywall.reassurance"
+    case paywallMonthly                 = "paywall.monthly"
+    case paywallYearly                  = "paywall.yearly"
+    case paywallRestore                 = "paywall.restore"
+    case paywallTerms                   = "paywall.terms"
+    case paywallPrivacy                 = "paywall.privacy"
+    case paywallUnavailable             = "paywall.unavailable"
+    case paywallLoading                 = "paywall.loading"
+    case paywallClose                   = "paywall.close"
+    case settingsProSection             = "settings.pro.section"
+    case settingsProStatusActive        = "settings.pro.statusActive"
+    case settingsProStatusInactive      = "settings.pro.statusInactive"
+    case settingsProSubscribe           = "settings.pro.subscribe"
+    case settingsProManage              = "settings.pro.manage"
+
     var localized: String {
         // Resolve through the app's selected language bundle (LocalizationManager) so a
         // live language toggle re-renders every string without an app restart.
