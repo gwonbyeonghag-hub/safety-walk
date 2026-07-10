@@ -32,11 +32,14 @@ final class ProPaywallUITests: XCTestCase {
     }
 
     /// Home → RA list → tap "new assessment" (language-independent identifier).
+    /// Uses the toolbar + (`ra_new_toolbar`), which exists whether or not the list has
+    /// data — `ra_new_button` only renders in the empty state, so asserting on it made
+    /// the suite fail on any simulator with leftover assessments (planner review).
     private func tapNewAssessment(_ app: XCUIApplication) {
         let card = app.buttons["ra_home_card"]
         XCTAssertTrue(card.waitForExistence(timeout: 20), "home RA card not found")
         card.tap()
-        let newBtn = app.buttons["ra_new_button"]
+        let newBtn = app.buttons["ra_new_toolbar"]
         XCTAssertTrue(newBtn.waitForExistence(timeout: 10), "RA new button not found")
         newBtn.tap()
     }
