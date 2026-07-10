@@ -29,6 +29,9 @@ struct SafetyWalkMacApp: App {
                 .preferredColorScheme(appearanceMode.colorScheme)
                 .frame(minWidth: 1040, minHeight: 680)
                 .tint(Color.brandNavy)
+                #if DEBUG
+                .task { await MacScreenshotEvidence.dumpIfRequested() }   // no-op unless mac.debug.dumpScreenshots is set
+                #endif
         }
         .modelContainer(MacModelContainer.shared)
         .commands {

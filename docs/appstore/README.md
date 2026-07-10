@@ -1,7 +1,7 @@
-# App Store 제출 패키지 — SafetyWalk v2 (WO-6)
+# App Store 제출 패키지 — SafetyWalk v2 (WO-6 · WO-6b)
 
 계정 없이 준비 가능한 **제출 자료 풀세트**. App Store Connect 업로드·제출은 오너 단계(§오너 체크리스트).
-코드/모델/버전 무변경(1.0 / build 1). 소스 검증 2026-07-10.
+코드/모델/버전 무변경(1.0 / build 1). 소스 검증 2026-07-10(WO-6) · 스크린샷 갱신 2026-07-10(WO-6b).
 
 ## 구성
 | 파일 | 내용 |
@@ -10,7 +10,7 @@
 | `privacy_policy.md` | 게시용 개인정보처리방침(ko/en) — **v2: iCloud 동기화 반영, "완전 오프라인" 문구 폐기** |
 | `app_privacy_answers.md` | Connect "앱 개인정보 보호" 설문 답 + 근거(CloudKit 비공개 DB·구독) |
 | `review_notes.md` | 심사 메모(ko/en) — 계정 불필요·iCloud 선택·구독 테스트법·면책 위치 |
-| `screenshots.md` + `screenshots/` | 스크린샷 계획·자산(macOS 대시보드·iOS 페이월·RA) |
+| `screenshots.md` + `screenshots/` | **규격 그대로 업로드 가능**: iPhone 6.9"(1320×2868) 6장+다크 2장 · iPad 13"(2064×2752) 1장 · macOS(2880×1800) 대시보드+리포트 허브 각 라이트/다크. iPad "위험성평가" 화면은 미확보(알려진 제약, `screenshots.md` 참고) |
 
 ## 앱 사실(요약)
 - iOS `com.gwonbyeonghag.safetywalk` · macOS `com.gwonbyeonghag.safetywalk.mac`
