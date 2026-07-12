@@ -30,6 +30,19 @@ App Store Connect 업로드용 스크린샷. 실기록 화면만 사용(과장·
 | `macos-01-dashboard-ko-light.png` / `-ko-dark.png` | 관리 대시보드(WO-11 균일 카드 — 시드 데이터) |
 | `macos-02-reports-ko-light.png` / `-ko-dark.png` | 리포트 허브(사이드바 + PDF 미리보기, 위험성평가표) |
 
+## WO-13 검증 스샷 (제출용 아님) — `docs/appstore/screenshots/verification/`
+
+기록 탭 그룹핑 + SafetyWalk 내부 이름 병기(WO-13)의 검증 증거. **제출 세트가 아니라 검증용**이라
+별도 하위폴더에 둔다(위 제출 카탈로그와 구분). 규격 크기(iPhone 1320×2868 · iPad 2064×2752), ko, 라/다.
+- `wo13-iphone-history-bydate-ko-{light,dark}.png` — 날짜순(오늘/어제/이번 주/이번 달/그이전 "YYYY년 M월")
+- `wo13-iphone-history-bysite-ko-{light,dark}.png` — 현장순(현장명 오름차순, 그룹 내 최신순)
+- `wo13-iphone-onboarding-ko-{light,dark}.png` — 온보딩 타이틀 "SafetyWalk" + 국문 병기 "현장 안전 지킴이"
+- `wo13-ipad-history-bydate-ko-{light,dark}.png` / `wo13-ipad-history-bysite-ko-{light,dark}.png` — iPad split view(사이드바 헤더 "SafetyWalk" 포함)
+
+재현: `현장 안전 지킴이UITests/HistoryScreenshots{,IPad}UITests.swift` — DEBUG 런치인자
+`-com.safetywalk.uitestSeedHistory 1`로 인메모리 백데이트 시드(실 저장소/CloudKit 무접촉, Release 스트립됨)를 켜고
+캡처, `xcrun xcresulttool export attachments`로 추출. 좌표 클릭 없음(탭바/사이드바/세그먼트 접근성 라벨만).
+
 ## Apple 크기 요건 (참고)
 - **iPhone 6.9"** = 1320×2868 — Connect 권장. 6.7"(1290×2796)는 대개 허용.
 - **iPad 13"** = 2064×2752.

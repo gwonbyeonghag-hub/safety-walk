@@ -1127,7 +1127,7 @@ main에서 브랜치 `wo12-ipad-ra-sheet`. `/tdd`(red = 제공된 프로브) · 
 
 ---
 
-## WO-13 — 기록 탭 그룹핑 + 앱 내부 이름 통일(SafetyWalk 병기) 🟡 OPEN — 출시 전 폴리시(비블로커)
+## WO-13 — 기록 탭 그룹핑 + 앱 내부 이름 통일(SafetyWalk 병기) ✅ 완료 (2026-07-12) — 출시 전 폴리시(비블로커)
 
 > 오너 최종검수 관찰(2026-07-10): 기록(HistoryTabView) 탭이 startedAt 역순 **평평한 리스트**라, 점검이 쌓이면 "어느 현장·언제" 묶임이 없어 훑기 어렵다. → **표시 계층만** 그룹핑 추가. 데이터/모델/쿼리·상태필터·행 디자인·InspectionDetail 무변경. (기능은 이미 완전 — 이건 정리 편의)
 > **⚙️ 적용 범위**: 기록 탭 = **iOS 앱(iPhone·iPad 공통, 단일 HistoryTabView)**. **macOS는 제외**(별도 앱·읽기 대시보드, 후속). 
@@ -1152,11 +1152,11 @@ main에서 브랜치 `wo12-ipad-ra-sheet`. `/tdd`(red = 제공된 프로브) · 
 - 검색창·달력 피커·현장별 대시보드·통계 = 스코프 밖(스코프 크리프 금지). 모델/쿼리/상태필터 로직·상세화면·위험색 변경 금지. macOS·코어 무변경.
 
 ### 완료 조건 (증거)
-- [ ] 그룹핑 순수함수 테스트 green(레드퍼스트, 경계 포함) + 기존 회귀 0
-- [ ] 시드/입력 데이터로 날짜순·현장순 각 스샷(라/다), 상태필터와 공존 확인
-- [ ] 빈 상태·상세 이동 무회귀 · iOS 빌드 green · macOS/코어 diff 0
-- [ ] ko/en parity
-- [ ] **이름 통일**: 온보딩(타이틀 SafetyWalk+부제 국문)·iPad 사이드바 헤더 SafetyWalk 스샷 확인, `report.generatedBy` 불변 확인
+- [x] 그룹핑 순수함수 테스트 green(레드퍼스트, 경계 포함) + 기존 회귀 0 — `HistoryGroupingTests` 7종(오늘/어제/주/월 경계·빈 그룹 없음·그이전 월 정렬·현장명 동률 병합·데이터 0), iOS 유닛 전체 38종 green
+- [x] 시드/입력 데이터로 날짜순·현장순 각 스샷(라/다), 상태필터와 공존 확인 — `docs/appstore/screenshots/verification/wo13-*` (iPhone·iPad × 날짜순·현장순 × 라/다)
+- [x] 빈 상태·상세 이동 무회귀 · iOS 빌드 green · macOS/코어 diff 0
+- [x] ko/en parity (420=420)
+- [x] **이름 통일**: 온보딩(타이틀 SafetyWalk + 국문 병기 한 줄)·iPad 사이드바 헤더 SafetyWalk 스샷 확인, `report.generatedBy` 불변 확인
 
 ### Skills
 `/tdd`(그룹핑 로직) · `/design-visual-qa` · `/safetywalk-qa-guardrails`.
@@ -1165,6 +1165,10 @@ main에서 브랜치 `wo12-ipad-ra-sheet`. `/tdd`(red = 제공된 프로브) · 
 main에서 브랜치 `wo13-history-grouping`. ⚠️ 커밋 전 `git branch --show-current`+`git status` 확인(공유 워킹카피). ⚠️ 검증 빌드 서명 유지(무서명 = CloudKit SIGTRAP 오진). handoff + 스샷 → 플래너 검수 후 머지.
 
 **WO-13 결과:**
-- 상태: ☐ 미착수
+- 상태: ✅ 완료 (브랜치 `wo13-history-grouping`, 미push — 플래너 검수 후 머지)
 - 요약:
-- 증거 위치:
+  - **PART A (그룹핑, iPhone·iPad 공통)**: 순수 그룹핑 로직을 `HistoryGrouping.swift`로 분리(필터된 `[Inspection]` + 모드 + `now` → 정렬된 `[HistoryGroup]`; 로케일·SwiftUI 비의존 → 결정론적 테스트). 날짜순 버킷 오늘/어제/이번 주/이번 달/그이전(YYYY년 M월), 현장순은 `siteName`별(이름 오름차순), 섹션·행 모두 최신순, 빈 그룹 없음. `/tdd` 레드→그린. `HistoryView.swift`는 **표시 계층만** 변경: 상태필터 옆에 날짜순/현장순 세그먼트(기본 날짜순, 시스템 틴트 — navy·위험색 없음), 평평한 List → `Section` 그룹(기존 행/NavigationLink/insets 재사용). 필터 먼저 → 그룹핑. 데이터/모델/쿼리/상태필터/행/상세 무변경.
+  - **PART B (이름 통일, 문자열만)**: ko `onboarding.title` → "SafetyWalk"; 새 키 `onboarding.brandKo`("현장 안전 지킴이", en은 빈 문자열) = 타이틀 아래 작은 회색 병기 한 줄, 기존 `onboarding.subtitle`은 그 아래 유지(부제 안 덮음 — 상세 지시대로). ko `mac.app.name` → "SafetyWalk"(iPad 사이드바 헤더 + macOS 사이드바; en은 이미 SafetyWalk). `report.generatedBy` 불변.
+  - **검증 시드(승인 옵션 1)**: 날짜순 다중 버킷 스샷을 위해 **DEBUG + 런치인자(`-com.safetywalk.uitestSeedHistory`) 전용** 시드 훅 추가(`HistorySeed.swift`, 전체 `#if DEBUG`). 실 저장소/CloudKit 무접촉 — **인메모리 컨테이너**만 사용. `HistoryClock`(DEBUG에서만 고정일 pin, Release=`Date()`)로 요일 무관 결정론적 버킷(오늘=수 2026-07-08 기준). **Release 스트립 확인**: Release 바이너리 `strings` grep에서 `uitestSeedHistory`/`uitestNow`/`HistorySeed`/`makeSeededInMemoryContainer`/시드 한글 문자열 모두 **0 hit**(프로덕션 문자열은 존재; 서명 유지됨).
+- 커밋: `eff5d89`(기능+테스트+문자열), 스샷/시드 인프라 커밋(아래) — 둘 다 `wo13-history-grouping`, 미push.
+- 증거 위치: 테스트 `현장 안전 지킴이Tests/HistoryGroupingTests.swift`; 스샷 UI테스트 `현장 안전 지킴이UITests/HistoryScreenshots{,IPad}UITests.swift`; 스샷 PNG `docs/appstore/screenshots/verification/wo13-*`(iPhone 1320×2868, iPad 2064×2752, 라/다).

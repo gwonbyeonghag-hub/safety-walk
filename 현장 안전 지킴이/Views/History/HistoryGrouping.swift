@@ -138,3 +138,23 @@ extension HistorySection {
         return formatter.string(from: date)
     }
 }
+
+// MARK: - Clock seam ("now" for grouping)
+
+/// The reference "now" the History tab groups against. Production — and every launch that
+/// isn't a seeded screenshot run — returns the real `Date()`. Only a DEBUG launch that
+/// passes `-com.safetywalk.uitestSeedHistory` (see `HistorySeed`) may pin it to a fixed
+/// date so the date buckets render deterministically regardless of the real weekday. The
+/// override compiles out of Release entirely — `HistoryClock.now` is then simply `Date()`.
+enum HistoryClock {
+    static var now: Date {
+        #if DEBUG
+        let defaults = UserDefaults.standard
+        if defaults.bool(forKey: "com.safetywalk.uitestSeedHistory"),
+           defaults.object(forKey: "com.safetywalk.uitestNow") != nil {
+            return Date(timeIntervalSince1970: defaults.double(forKey: "com.safetywalk.uitestNow"))
+        }
+        #endif
+        return Date()
+    }
+}

@@ -16,8 +16,9 @@ struct HistoryTabView: View {
     }
 
     // WO-13: display-layer grouping only — filter first, then group. Data/query unchanged.
+    // `HistoryClock.now` is `Date()` in production; only a DEBUG seeded screenshot run pins it.
     private var groups: [HistoryGroup] {
-        HistoryGrouping.groups(for: filteredInspections, mode: sortMode, now: Date())
+        HistoryGrouping.groups(for: filteredInspections, mode: sortMode, now: HistoryClock.now)
     }
 
     var body: some View {

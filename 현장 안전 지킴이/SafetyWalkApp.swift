@@ -27,8 +27,19 @@ struct SafetyWalkApp: App {
     // schema change only has to be made once for both targets (SWIFTDATA_MIGRATION.md).
     // The shared factory recovers instead of trapping if the store can't be opened
     // (WO-9 / F-1 defense) — see SafetyWalkCore/ModelContainerFactory.swift.
-    static let modelContainer: ModelContainer =
-        SafetyWalkModelContainer.makeCloudKitContainer(containerID: "iCloud.com.gwonbyeonghag.safetywalk")
+    static let modelContainer: ModelContainer = makeModelContainer()
+
+    private static func makeModelContainer() -> ModelContainer {
+        #if DEBUG
+        // Verification / screenshot runs only (WO-13): a throwaway in-memory store seeded
+        // with backdated inspections. Gated on an explicit launch argument; never touches
+        // the real CloudKit store. Compiled out of Release.
+        if HistorySeed.isRequested {
+            return HistorySeed.makeSeededInMemoryContainer()
+        }
+        #endif
+        return SafetyWalkModelContainer.makeCloudKitContainer(containerID: "iCloud.com.gwonbyeonghag.safetywalk")
+    }
 
     var body: some Scene {
         WindowGroup {
