@@ -1124,3 +1124,40 @@ main에서 브랜치 `wo12-ipad-ra-sheet`. `/tdd`(red = 제공된 프로브) · 
   non-Pro 페이월 스샷(테스트 첨부물로만 보관). iPhone `ProPaywallUITests` 3종 green
   (`testPaywallForNonSubscriber`/`testProUnlocksCreateGate`/`testSettingsShowsNotSubscribedForNonSubscriber`).
   iOS/macOS `xcodebuild build` green.
+
+---
+
+## WO-13 — 기록 탭 그룹핑 (날짜 섹션 + 날짜순/현장순 토글) 🟡 OPEN — 출시 전 폴리시(비블로커)
+
+> 오너 최종검수 관찰(2026-07-10): 기록(HistoryTabView) 탭이 startedAt 역순 **평평한 리스트**라, 점검이 쌓이면 "어느 현장·언제" 묶임이 없어 훑기 어렵다. → **표시 계층만** 그룹핑 추가. 데이터/모델/쿼리·상태필터·행 디자인·InspectionDetail 무변경. (기능은 이미 완전 — 이건 정리 편의)
+
+### 목표 (verifiable)
+기록 탭에 **그룹 모드 토글(날짜순 / 현장순)** + 그룹 헤더. 날짜순=날짜 구간별 Section, 현장순=현장명별 Section. 기존 상태필터(전체/진행중/완료)와 **공존**(필터 먼저 적용 후 그룹핑). 빈 상태·상세 이동·행 뷰 불변. iPhone·iPad 공통(HistoryTabView 단일).
+
+### 스코프
+**✅ 포함** (`Views/History/HistoryView.swift` + 그룹핑 순수 로직)
+- **토글**: 상태 Picker 옆/아래에 작은 segmented "날짜순 / 현장순"(@State, 기본 날짜순). 위험색 금지·navy 톤.
+- **날짜순 그룹**: 오늘 / 어제 / 이번 주 / 이번 달 / 그 이전은 "YYYY년 M월" 월별. 각 그룹 최신순, 그룹 자체도 최신순. 헤더 문구는 LocalizationKey ko/en.
+- **현장순 그룹**: `siteName`별 Section(가나다/이름 정렬), 그룹 내 최신순. 현장명 헤더.
+- **그룹핑은 순수 함수로 분리**(입력: 필터된 [Inspection] + 모드 + 기준 now → [(헤더, [Inspection])]) → **/tdd 레드퍼스트**(경계: 오늘/어제/주/월 경계, 빈 그룹 없음, 현장명 동률 정렬, 데이터 0).
+- List를 `ForEach(groups) { Section(header:) { ForEach rows } }`로. 행(InspectionHistoryRowView)·NavigationLink·listRowInsets 그대로 재사용.
+
+**⛔ 제외 / 🚫 금지**
+- 검색창·달력 피커·현장별 대시보드·통계 = 스코프 밖(스코프 크리프 금지). 모델/쿼리/상태필터 로직·상세화면·위험색 변경 금지. macOS·코어 무변경.
+
+### 완료 조건 (증거)
+- [ ] 그룹핑 순수함수 테스트 green(레드퍼스트, 경계 포함) + 기존 회귀 0
+- [ ] 시드/입력 데이터로 날짜순·현장순 각 스샷(라/다), 상태필터와 공존 확인
+- [ ] 빈 상태·상세 이동 무회귀 · iOS 빌드 green · macOS/코어 diff 0
+- [ ] ko/en parity
+
+### Skills
+`/tdd`(그룹핑 로직) · `/design-visual-qa` · `/safetywalk-qa-guardrails`.
+
+### 진행 / 보고
+main에서 브랜치 `wo13-history-grouping`. ⚠️ 커밋 전 `git branch --show-current`+`git status` 확인(공유 워킹카피). ⚠️ 검증 빌드 서명 유지(무서명 = CloudKit SIGTRAP 오진). handoff + 스샷 → 플래너 검수 후 머지.
+
+**WO-13 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
