@@ -1127,9 +1127,15 @@ main에서 브랜치 `wo12-ipad-ra-sheet`. `/tdd`(red = 제공된 프로브) · 
 
 ---
 
-## WO-13 — 기록 탭 그룹핑 (날짜 섹션 + 날짜순/현장순 토글) 🟡 OPEN — 출시 전 폴리시(비블로커)
+## WO-13 — 기록 탭 그룹핑 + 앱 내부 이름 통일(SafetyWalk 병기) 🟡 OPEN — 출시 전 폴리시(비블로커)
 
 > 오너 최종검수 관찰(2026-07-10): 기록(HistoryTabView) 탭이 startedAt 역순 **평평한 리스트**라, 점검이 쌓이면 "어느 현장·언제" 묶임이 없어 훑기 어렵다. → **표시 계층만** 그룹핑 추가. 데이터/모델/쿼리·상태필터·행 디자인·InspectionDetail 무변경. (기능은 이미 완전 — 이건 정리 편의)
+> **⚙️ 적용 범위**: 기록 탭 = **iOS 앱(iPhone·iPad 공통, 단일 HistoryTabView)**. **macOS는 제외**(별도 앱·읽기 대시보드, 후속). 
+> **+ 오너 결정(2026-07-10): 앱 내부 표시명 = 'SafetyWalk' 주임 + 국문 병기.** 아이콘 밑 이름은 이미 SafetyWalk로 통일됨. 앱 내부 국문명 3곳 중 2곳만 교체:
+> - `onboarding.title` "현장 안전 지킴이" → **"SafetyWalk"**, `onboarding.subtitle`에 국문명 병기(예 ko "현장 안전 점검·기록", en 기존 유지 or "Field safety inspections") — 부제로 국문 신뢰 유지.
+> - `mac.app.name`(iPad 사이드바 헤더가 씀) "현장 안전 지킴이" → **"SafetyWalk"** (ko/en 공통). ⚠️ 키 이름은 mac.* 지만 iPad 사이드바가 참조 — macOS 앱 표시에도 영향 가니 **macOS 사이드바 헤더도 SafetyWalk로 바뀜 = 브랜드 통일상 OK**(의도됨).
+> - 🚫 `report.generatedBy`("현장 안전 지킴이로 생성")는 **변경 금지**(리포트 출력 무변경 규칙 + 국문 PDF엔 국문명이 적절).
+> - App Store 등록명(Connect)은 메타데이터 문서대로 "현장안전 지킴이 · SafetyWalk" 유지(별건).
 
 ### 목표 (verifiable)
 기록 탭에 **그룹 모드 토글(날짜순 / 현장순)** + 그룹 헤더. 날짜순=날짜 구간별 Section, 현장순=현장명별 Section. 기존 상태필터(전체/진행중/완료)와 **공존**(필터 먼저 적용 후 그룹핑). 빈 상태·상세 이동·행 뷰 불변. iPhone·iPad 공통(HistoryTabView 단일).
@@ -1150,6 +1156,7 @@ main에서 브랜치 `wo12-ipad-ra-sheet`. `/tdd`(red = 제공된 프로브) · 
 - [ ] 시드/입력 데이터로 날짜순·현장순 각 스샷(라/다), 상태필터와 공존 확인
 - [ ] 빈 상태·상세 이동 무회귀 · iOS 빌드 green · macOS/코어 diff 0
 - [ ] ko/en parity
+- [ ] **이름 통일**: 온보딩(타이틀 SafetyWalk+부제 국문)·iPad 사이드바 헤더 SafetyWalk 스샷 확인, `report.generatedBy` 불변 확인
 
 ### Skills
 `/tdd`(그룹핑 로직) · `/design-visual-qa` · `/safetywalk-qa-guardrails`.
