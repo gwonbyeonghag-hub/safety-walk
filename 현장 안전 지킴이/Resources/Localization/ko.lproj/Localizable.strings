@@ -118,6 +118,12 @@
 "history.noRecords"         = "점검 기록이 없습니다.";
 "history.title"             = "기록";
 "history.noFilterResults"   = "선택한 필터에 해당하는 점검이 없습니다.";
+"history.sortByDate"        = "날짜순";
+"history.sortBySite"        = "현장순";
+"history.groupToday"        = "오늘";
+"history.groupYesterday"    = "어제";
+"history.groupThisWeek"     = "이번 주";
+"history.groupThisMonth"    = "이번 달";
 
 // MARK: - Inspection summary
 "summary.title"         = "점검 완료";
@@ -175,7 +181,8 @@
 "site.areaCountAccessibility" = "구역 %d개";
 
 // MARK: - Onboarding (task 5-1)
-"onboarding.title"          = "현장 안전 지킴이";
+"onboarding.title"          = "SafetyWalk";
+"onboarding.brandKo"        = "현장 안전 지킴이";
 "onboarding.subtitle"       = "점검자 프로필을 설정해 시작하세요. 설정 탭에서 언제든 변경할 수 있습니다.";
 "onboarding.inspectorName"  = "점검자 이름";
 "onboarding.region"         = "지역";
@@ -463,7 +470,7 @@
 "mac.language" = "언어";
 "mac.sidebar.overview" = "개요";
 "mac.sidebar.role" = "관리자";
-"mac.app.name" = "현장 안전 지킴이";
+"mac.app.name" = "SafetyWalk";
 "mac.section.dashboard" = "대시보드";
 "mac.section.sites" = "현장";
 "mac.section.inspections" = "점검";

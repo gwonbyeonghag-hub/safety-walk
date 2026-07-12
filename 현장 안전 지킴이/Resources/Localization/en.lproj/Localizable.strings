@@ -118,6 +118,12 @@
 "history.noRecords"         = "No inspection records yet.";
 "history.title"             = "History";
 "history.noFilterResults"   = "No inspections match the selected filter.";
+"history.sortByDate"        = "By date";
+"history.sortBySite"        = "By site";
+"history.groupToday"        = "Today";
+"history.groupYesterday"    = "Yesterday";
+"history.groupThisWeek"     = "This week";
+"history.groupThisMonth"    = "This month";
 
 // MARK: - Inspection summary
 "summary.title"         = "Inspection Complete";
@@ -176,6 +182,7 @@
 
 // MARK: - Onboarding (task 5-1)
 "onboarding.title"          = "Welcome to SafetyWalk";
+"onboarding.brandKo"        = "";
 "onboarding.subtitle"       = "Set up your inspector profile to get started. You can change these anytime in Settings.";
 "onboarding.inspectorName"  = "Inspector Name";
 "onboarding.region"         = "Region";

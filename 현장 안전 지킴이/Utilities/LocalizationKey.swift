@@ -125,6 +125,12 @@ enum LocalizationKey: String {
     case historyNoRecords       = "history.noRecords"
     case historyTitle           = "history.title"
     case historyNoFilterResults = "history.noFilterResults"
+    case historySortByDate      = "history.sortByDate"
+    case historySortBySite      = "history.sortBySite"
+    case historyGroupToday      = "history.groupToday"
+    case historyGroupYesterday  = "history.groupYesterday"
+    case historyGroupThisWeek   = "history.groupThisWeek"
+    case historyGroupThisMonth  = "history.groupThisMonth"
 
     // MARK: - Inspection summary
     case summaryTitle           = "summary.title"
@@ -183,6 +189,7 @@ enum LocalizationKey: String {
 
     // MARK: - Onboarding (task 5-1)
     case onboardingTitle           = "onboarding.title"
+    case onboardingBrandKo         = "onboarding.brandKo"
     case onboardingSubtitle        = "onboarding.subtitle"
     case onboardingInspectorName   = "onboarding.inspectorName"
     case onboardingRegion          = "onboarding.region"

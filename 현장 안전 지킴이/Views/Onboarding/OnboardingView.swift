@@ -56,6 +56,14 @@ struct OnboardingView: View {
                 .padding(.bottom, 4)
             Text(LocalizationKey.onboardingTitle.localized)
                 .font(.largeTitle.weight(.bold))
+            // WO-13: Korean brand name shown beneath the "SafetyWalk" title. Empty in en
+            // (ko-only 병기) — hidden when blank so English keeps just the title/subtitle.
+            let brandKo = LocalizationKey.onboardingBrandKo.localized
+            if !brandKo.isEmpty {
+                Text(brandKo)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
             Text(LocalizationKey.onboardingSubtitle.localized)
                 .font(.body)
                 .foregroundStyle(.secondary)

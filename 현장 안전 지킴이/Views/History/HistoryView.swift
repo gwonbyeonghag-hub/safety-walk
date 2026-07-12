@@ -7,11 +7,17 @@ struct HistoryTabView: View {
 
     @Query(sort: \Inspection.startedAt, order: .reverse) private var inspections: [Inspection]
     @State private var selectedStatus: InspectionStatus? = nil
+    @State private var sortMode: HistoryGroupMode = .date
     @State private var viewModel = HomeViewModel()
 
     private var filteredInspections: [Inspection] {
         guard let status = selectedStatus else { return inspections }
         return inspections.filter { $0.status == status }
+    }
+
+    // WO-13: display-layer grouping only — filter first, then group. Data/query unchanged.
+    private var groups: [HistoryGroup] {
+        HistoryGrouping.groups(for: filteredInspections, mode: sortMode, now: Date())
     }
 
     var body: some View {
@@ -22,21 +28,12 @@ struct HistoryTabView: View {
             } else {
                 VStack(spacing: 0) {
                     filterPicker
+                    sortModePicker
                     Divider()
                     if filteredInspections.isEmpty {
                         filteredEmptyState
                     } else {
-                        List {
-                            ForEach(filteredInspections) { inspection in
-                                NavigationLink(value: inspection) {
-                                    InspectionHistoryRowView(inspection: inspection,
-                                                             viewModel: viewModel)
-                                }
-                                .listRowInsets(EdgeInsets(top: 8, leading: 16,
-                                                          bottom: 8, trailing: 16))
-                            }
-                        }
-                        .listStyle(.plain)
+                        groupedList
                     }
                 }
                 .navigationTitle(LocalizationKey.historyTitle.localized)
@@ -61,6 +58,42 @@ struct HistoryTabView: View {
         .pickerStyle(.segmented)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+    }
+
+    // WO-13: date/site grouping toggle. Coexists with the status filter above; default
+    // system tint only (no navy / risk colors).
+    private var sortModePicker: some View {
+        Picker("", selection: $sortMode) {
+            Text(LocalizationKey.historySortByDate.localized)
+                .tag(HistoryGroupMode.date)
+            Text(LocalizationKey.historySortBySite.localized)
+                .tag(HistoryGroupMode.site)
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+    }
+
+    // MARK: - Grouped list
+
+    private var groupedList: some View {
+        List {
+            ForEach(groups) { group in
+                Section {
+                    ForEach(group.inspections) { inspection in
+                        NavigationLink(value: inspection) {
+                            InspectionHistoryRowView(inspection: inspection,
+                                                     viewModel: viewModel)
+                        }
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16,
+                                                  bottom: 8, trailing: 16))
+                    }
+                } header: {
+                    Text(group.section.displayTitle)
+                }
+            }
+        }
+        .listStyle(.plain)
     }
 
     // MARK: - Empty states
