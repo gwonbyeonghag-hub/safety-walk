@@ -1,13 +1,14 @@
 import SwiftUI
+import SafetyWalkCore
 
 /// First-launch initial setup screen.
 ///
 /// This is **not** a login or account flow — SafetyWalk is a local-first,
 /// offline-only app with no server, no accounts, no roles, and no cloud sync.
-/// All this screen does is collect two values needed by the rest of the app:
-/// the inspector's display name (stored in `UserDefaults`) and the UI language
-/// (stored via `LocalizationManager`, which also selects the matching region
-/// profile). Both are editable later from the Settings tab. Setting
+/// All this screen collects is the inspector's display name (stored in
+/// `UserDefaults`), the UI language (stored via `LocalizationManager`), and the
+/// region/jurisdiction (stored via `RegionProfileStore`). Language and region are
+/// independent axes (LEGAL-1). All are editable later from the Settings tab. Setting
 /// `hasCompletedOnboarding = true` makes `ContentView` swap this screen out for
 /// the main TabView.
 struct OnboardingView: View {
@@ -33,6 +34,7 @@ struct OnboardingView: View {
                 headerSection
                 nameSection
                 languageSection
+                regionSection
                 DisclaimerView()
                 startSection
             }
@@ -102,6 +104,27 @@ struct OnboardingView: View {
         }
     }
 
+    // Region (법적 관할) — independent of the language axis (LEGAL-1). Persisted via
+    // RegionProfileStore; changing it doesn't rebuild the tree (no UI-language change).
+    private var regionSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(LocalizationKey.settingsRegionProfile.localized)
+                .font(.subheadline.weight(.semibold))
+            Picker(LocalizationKey.settingsRegionProfile.localized,
+                   selection: Binding(
+                        get: { RegionProfileStore.get() },
+                        set: { RegionProfileStore.set($0) })) {
+                Text(LocalizationKey.settingsRegionKorea.localized)
+                    .tag(RegionProfile.korea)
+                Text(LocalizationKey.settingsRegionGlobal.localized)
+                    .tag(RegionProfile.global)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .accessibilityIdentifier("onboarding_region_picker")
+        }
+    }
+
     private var startSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             if !canStart {
@@ -140,8 +163,9 @@ struct OnboardingView: View {
         // so the saved name appears in Settings on next render.
         UserDefaults.standard.set(trimmedName,
                                   forKey: "com.safetywalk.inspectorName")
-        // Ensure the region profile matches the selected (or system-default) language,
-        // even if the user never touched the toggle.
+        // Persist the selected (or system-default) language so it's fixed for later
+        // launches even if the user never touched the toggle. Region is persisted
+        // independently via the region picker / RegionProfileStore default (LEGAL-1).
         LocalizationManager.shared.set(LocalizationManager.shared.language)
         hasCompletedOnboarding = true
     }

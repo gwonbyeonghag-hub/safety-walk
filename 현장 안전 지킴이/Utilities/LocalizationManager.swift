@@ -1,18 +1,16 @@
 import Foundation
-import SafetyWalkCore
 import Observation
 
-/// The app's UI language. Stored independently of `RegionProfile` so the two can be
-/// split apart later, but the single Settings/Onboarding toggle keeps them coupled:
-/// choosing a language also selects the matching content/region profile.
+/// The app's UI language — an axis fully independent of `RegionProfile` (the legal
+/// jurisdiction). Changing the language never changes the region: a Korean-reading
+/// manager on a US site and an English-reading manager on a Korean site are both
+/// supported (LEGAL-1). Region is chosen separately via `RegionProfileStore`.
 ///
-/// - `English`  ⇒ locale `en`, `RegionProfile.global`
-/// - `한국어`   ⇒ locale `ko`, `RegionProfile.korea`
+/// - `English` ⇒ locale `en`
+/// - `한국어`  ⇒ locale `ko`
 enum AppLanguage: String, CaseIterable, Hashable {
     case korean  = "ko"
     case english = "en"
-
-    var regionProfile: RegionProfile { self == .korean ? .korea : .global }
 }
 
 /// Single source of truth for the in-app language. Swapping `language` also swaps the
@@ -38,13 +36,13 @@ final class LocalizationManager {
         bundle = Self.bundle(for: lang)
     }
 
-    /// Switches the active language. Also keeps the content/region profile in step so the
-    /// correct checklist template loads. Persists the choice for the next launch.
+    /// Switches the active language and swaps the `.lproj` bundle. Persists the choice for
+    /// the next launch. Region (`RegionProfile`) is a separate axis and is deliberately
+    /// NOT touched here — the two were decoupled in LEGAL-1.
     func set(_ lang: AppLanguage) {
         language = lang
         bundle = Self.bundle(for: lang)
         UserDefaults.standard.set(lang.rawValue, forKey: Self.key)
-        RegionProfileStore.set(lang.regionProfile)
     }
 
     /// Resolves a raw `Localizable.strings` key through the active language bundle.

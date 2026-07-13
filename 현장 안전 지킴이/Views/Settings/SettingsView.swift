@@ -35,8 +35,8 @@ struct SettingsView: View {
                         .autocorrectionDisabled()
                 }
 
-                // Language — a single toggle that also selects the matching content
-                // (region) profile. The region picker has been folded into this control.
+                // Language — display language only. Region is an independent axis (below),
+                // decoupled in LEGAL-1: changing the language never changes the region.
                 Section(LocalizationKey.settingsLanguage.localized) {
                     Picker(LocalizationKey.settingsLanguage.localized,
                            selection: Binding(
@@ -49,6 +49,23 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
+                }
+
+                // Region (법적 관할) — independent of language. Persisted via RegionProfileStore;
+                // the inspection template picker re-reads it on appear, so no tree rebuild.
+                Section(LocalizationKey.settingsRegionProfile.localized) {
+                    Picker(LocalizationKey.settingsRegionProfile.localized,
+                           selection: Binding(
+                                get: { RegionProfileStore.get() },
+                                set: { RegionProfileStore.set($0) })) {
+                        Text(LocalizationKey.settingsRegionKorea.localized)
+                            .tag(RegionProfile.korea)
+                        Text(LocalizationKey.settingsRegionGlobal.localized)
+                            .tag(RegionProfile.global)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .accessibilityIdentifier("settings_region_picker")
                 }
 
                 appearanceSection
