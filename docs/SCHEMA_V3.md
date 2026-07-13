@@ -27,7 +27,13 @@ OperatingMode: regular · continuous           ProgramStatus: active · archived
 CriteriaDecision: withinThreshold · exceedsThreshold   // nil=미평가 (교정 #3)
 WorkerRepStatus : notRequested · requestedNotParticipated · participated   // nil=미기록
 SharingPhase    : pre · post                  // nil=미설정
-// 기존 유지: RiskAssessmentKind · RiskAssessmentMethod · RiskLevel · CorrectiveActionStatus · RegionProfile · HazardType · ChecklistItemResult · InspectionStatus
+EffectivenessResult: effective · partiallyEffective · ineffective   // 조치 효과확인 결과(교정 #2 — Bool 아님)
+// 법규 프로필 = 안정 raw-code enum (표시는 로컬라이즈에서 생성, 교정 #6)
+JurisdictionCode  : kr · us                   // ★법적 관할 — RegionProfile(언어-지역)과 별개, 혼용 금지
+IndustryProfileCode: general · construction · electric
+BriefingProfileCode: krTBM · usCAConstruction · usElectric · usGeneral
+// 기존 유지: RiskAssessmentKind · RiskAssessmentMethod · RiskLevel · CorrectiveActionStatus · HazardType · ChecklistItemResult · InspectionStatus
+// RegionProfile(korea/global)은 언어-지역 전용으로 유지 — 법적 관할엔 JurisdictionCode 사용
 ```
 
 ## 4. 모델 스펙 (CloudKit: 관계 optional + **inverse 필수**(교정 #2) · 저장속성 기본값 · unique 금지 · 바이너리 externalStorage(교정 #6))
@@ -35,15 +41,24 @@ SharingPhase    : pre · post                  // nil=미설정
 **기존 5 불변**: Site·Area·Inspection·ChecklistItem·Hazard — 현행 그대로(이미 inverse·externalStorage 준수).
 
 ```swift
+@Model RiskAssessmentProgram {                 // N: 현장별 프로그램. 물리삭제 대신 archived (교정 #1)
+  id=UUID(); siteId:UUID?; siteName=""                         // 참조+값 스냅샷
+  jurisdiction:JurisdictionCode?; industryProfile:IndustryProfileCode?; profileVersion=1   // 법규 프로필 코드(교정 #6)
+  effectiveFrom:Date?; effectiveTo:Date?
+  operatingMode:OperatingMode = .regular
+  status:ProgramStatus = .active
+  createdAt=Date(); updatedAt=Date(); archivedAt:Date?         // archived 시각(교정 #5)
+}
 @Model RiskAssessment {                        // E: 독립 루트. 기존 필드 전부 보존(교정 #4)
   id=UUID(); kind; method; siteId:UUID?; siteName=""
   assessorName=""                              // ★보존 — 법정 담당자·PDF·Mac·상세
   linkedInspectionId:UUID?                     // ★보존 — 체크리스트법 진입
   note:String?
   // 신규
-  programId:UUID?; jurisdictionSnapshot=""; industryProfileSnapshot=""; programVersionSnapshot=0   // 참조+값(관계 아님→cascade 없음)
+  programId:UUID?; jurisdictionSnapshot:JurisdictionCode?; industryProfileSnapshot:IndustryProfileCode?; programVersionSnapshot=0   // 참조+값 코드(관계 아님→cascade 없음)
   status:AssessmentStatus = .planned
-  scheduledAt:Date?; assessedAt:Date?; finalizedAt:Date?; createdAt=Date(); updatedAt=Date()   // 감사 시각(교정 #6)
+  scheduledAt:Date?; assessedAt:Date?; finalizedAt:Date?; cancelledAt:Date?; cancellationReason:String?   // 감사·취소 시각(교정 #5·#6)
+  createdAt=Date(); updatedAt=Date()
   workerRepStatus:WorkerRepStatus?             // nil=미기록(교정 #3)
   @Relationship(.cascade, inverse:\AssessmentCriteria.riskAssessment) criteria:AssessmentCriteria?
   @Relationship(.cascade, inverse:\RiskAssessmentItem.riskAssessment) items:[RiskAssessmentItem]?
@@ -69,9 +84,11 @@ SharingPhase    : pre · post                  // nil=미설정
   id=UUID(); measure:String?; responsibleName:String?; dueDate:Date?
   status:CorrectiveActionStatus = .notStarted
   implementedAt:Date?; confirmedBy:String?; effectivenessConfirmedAt:Date?   // 감사 시각(교정 #6)
+  effectivenessResult:EffectivenessResult?     // nil=미확인. "효과확인됨"은 result≠nil로 파생 (Bool 제거, 교정 #2)
   @Attribute(.externalStorage) evidencePhotoData:Data?
-  postRiskLevel:RiskLevel?; effectivenessConfirmed=false; isRequired=false
+  postRiskLevel:RiskLevel?
   item:RiskAssessmentItem?                     // inverse
+  // isRequired = 저장 안 함 → 부모 item.criteriaDecision==exceedsThreshold에서 **파생**(computed). 저장 필요 시 생성자 필수 인자로만(기본값 금지, 교정 #2)
 }
 @Model RiskAssessmentParticipant {              // N: 소유·불변(finalized)
   id=UUID(); name=""; employeeId:String?; affiliation:String?; jobTitle:String?   // 이름 필수(검증)
@@ -89,9 +106,9 @@ SharingPhase    : pre · post                  // nil=미설정
 }
 @Model SafetyBriefing {                          // N: = TBM 공유 증명. Site 참조 UUID(관계 아님→생존)
   id=UUID(); siteId:UUID?; siteName=""; programId:UUID?; assessmentId:UUID?; areaId:UUID?
-  jurisdictionProfile=""; taskDescription=""; occurredAt:Date?; location=""
+  briefingProfile:BriefingProfileCode?; taskDescription=""; occurredAt:Date?; location=""   // 프로필 코드(교정 #6)
   status:BriefingStatus = .draft; briefingContent=""; ownerName:String?
-  createdAt=Date(); updatedAt=Date(); conductedAt:Date?; finalizedAt:Date?   // 감사 시각
+  createdAt=Date(); updatedAt=Date(); conductedAt:Date?; finalizedAt:Date?; cancelledAt:Date?; cancellationReason:String?   // 감사·취소(교정 #5)
   retainUntil:Date?                            // 정책 기반, 자동 판정 안 함(교정)
   supersedesBriefingId:UUID?; correctionReason:String?; correctedAt:Date?; correctedBy:String?
   @Relationship(.cascade, inverse:\BriefingParticipant.briefing) participants:[BriefingParticipant]?
@@ -104,14 +121,25 @@ SharingPhase    : pre · post                  // nil=미설정
   @Attribute(.externalStorage) signatureData:Data?; signedAt:Date?
   briefing:SafetyBriefing?                     // inverse
 }
-@Model BriefingRiskItemSnapshot {                // N: 값 복사(교정 #5 — 문자열만 저장 금지)
+@Model BriefingRiskItemSnapshot {                // N: 값 복사(교정 #3·#5 — 1:N 조치 보존, 문자열 축약 금지)
   id=UUID(); sourceAssessmentId:UUID?; sourceItemId:UUID?   // 출처 추적용
-  taskDescription=""; hazardDescription=""; currentControls=""; reductionMeasure=""
+  taskDescription=""; hazardDescription=""; currentControls=""
   riskLevel:RiskLevel?; likelihood:Int?; severity:Int?      // ★정규 값
+  controlMeasuresSnapshot=Data(); controlMeasuresFormatVersion=1   // ★1:N 조치 버전형 스냅샷(각 조치 measure·담당·기한·status·postRiskLevel 값 복사; 디코딩 실패 fail-closed)
   displayTextAtBriefing:String?                // 당시 표시 문구(선택 보존)
   briefing:SafetyBriefing?                     // inverse
 }
 ```
+
+## 4.1 생성자 계약 (교정 #4 — CloudKit 기본값 ≠ 업무 필수값)
+- CloudKit은 저장속성 기본값을 요구 → **저장속성엔 기본값 유지**. 그러나 **생성자는 업무 필수값을 인자로 강제**(생성자 기본값 금지):
+  - `RiskAssessmentProgram`: siteId·siteName·jurisdiction 필수
+  - `RiskAssessment`(생성 시): siteId·siteName·kind·method 필수
+  - `RiskAssessmentParticipant`·`BriefingParticipant`: **name·role 필수**
+  - `SharingEvent`: **phase·method·sharedAt 필수**
+  - `SafetyBriefing`: **siteId·siteName 필수**
+  - `CorrectiveAction`: item 연결 + isRequired(부모 criteria 파생) 필수
+- **insert/finalize 전 검증 실패 시 저장 금지**(빈 모델 영속 차단). LEGAL-0의 `save() throws` 방어 패턴 확장.
 
 ## 5. 삭제규칙 (inverse 명시)
 - **cascade+inverse**: RiskAssessment→(criteria·items·participants·sharingEvents), Item→correctiveActions, Briefing→(participants·riskSnapshots). 기존 Site→areas, Inspection→items·hazards 유지.
@@ -135,6 +163,6 @@ V3 15모델 정의·양플랫폼 빌드/테스트 → [리셋 실행] → 2a 계
 ```
 
 ---
-## ✅ 오너 재승인 요청 (수정 후)
-1. **15모델·inverse·nil-미기록·기존필드 보존·정규 스냅샷·감사시각/externalStorage** 계약 동결 OK?
-2. **리셋 범위**(시뮬+Mac 샌드박스만·백업이동·공용 store 제외·빌드테스트 후 CloudKit) 승인?
+## ✅ 오너 최종 동결 승인 요청 (v2 + 6건 봉합)
+- **리셋 범위·방식 = 승인됨**(오너). 실제 실행은 V3가 iOS·Mac 빌드·테스트 통과 후에만 — 공용 store 제외·앱 샌드박스 store 백업이동 유지.
+- **동결 요청**: 15모델(Program 스펙 포함)·모든 inverse·**nil=미기록**(effectivenessResult·isRequired 파생·profile 코드 enum)·1:N 조치 버전형 스냅샷·**생성자 계약**·cancelledAt/이유·감사시각/externalStorage. → **이 계약 동결 OK?**
