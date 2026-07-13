@@ -1282,35 +1282,31 @@ main에서 브랜치 `wo15-mac-hazards-table`. handoff+스샷 → **플래너 �
 
 토론 결론: 검색·통계·달력 풀기능 넣되, **결제 구조를 먼저 못 박아야** Mac Pro 구현 후 결제 때문에 다 뜯는 참사를 막는다. **App Store = 단일 레코드 + Universal Purchase 확정**(서버 0 — `Transaction.currentEntitlements`가 같은 Apple ID 기기 간 자동 공유, v3 계정/서버 정책 불변). **"앱 2건 등록" 지시 철회 → 단일 레코드.**
 
-## WO-A — 번들 ID 통일 + Universal Purchase 구성 🔴 BLOCKER (Connect 등록 전 필수)
-> Universal Purchase = 동일 번들 ID + 단일 앱 레코드. 현재 Mac은 `.mac` 접미사라 불가.
-- macOS 타깃 `PRODUCT_BUNDLE_IDENTIFIER`를 `com.gwonbyeonghag.safetywalk.mac` → **`com.gwonbyeonghag.safetywalk`** 로 통일(Apple은 iOS/macOS 플랫폼으로 구분하니 충돌 없음). Debug/Release 양 config.
-- Mac 서명/프로비저닝 재확인(-allowProvisioningUpdates), 엔타이틀먼트·CloudKit 컨테이너(이미 공유)·앱 아이콘 영향 확인.
-- 🚫 iOS 번들·CloudKit 컨테이너 ID·모델 변경 금지. 완료: 양 타깃 서명빌드 green + 번들ID 동일 확인.
-- ⚠️ 결제 구조라 실수 치명적 — /grill-with-docs로 Universal Purchase 요건 재확인 후 착수. 브랜치 `woA-universal-bundle`.
+## WO-A — 단일 앱 식별자·Universal Purchase 기반 전환 🔴 BLOCKER (Connect 등록 전 필수)
+> 표현 교정(검토자): "같은 Apple ID라 자동 공유"가 **아님**. **같은 App Store 앱의 iOS/macOS 플랫폼 버전 + 동일 IAP 상품**이라 각 플랫폼 `currentEntitlements`에서 권리 확인 가능. 그래서 번들ID 통일이 필수. 이건 문자열 교체가 아니라 **Distribution Identity 전환**.
+> 착수 전: /grill-with-docs로 Universal Purchase 요건 정독. ⚠️ **먼저 `git branch --show-current`로 실브랜치 확인 후 main에서 새 브랜치 `woA-universal-bundle`을 판다**(공유 워킹카피라 참조 커밋이 같아도 브랜치가 다를 수 있음).
+완료 조건(증거):
+- [ ] macOS 타깃 `PRODUCT_BUNDLE_IDENTIFIER` `.mac` 제거 → `com.gwonbyeonghag.safetywalk`(Debug/Release 둘 다). iOS와 **동일 App ID**.
+- [ ] iOS·macOS가 동일 App ID·동일 CloudKit 컨테이너(`iCloud.com.gwonbyeonghag.safetywalk`, 이미 공유) 사용 확인
+- [ ] Debug/Release **서명·Entitlements·Capabilities** 검증(-allowProvisioningUpdates), 양 타깃 서명빌드 green
+- [ ] **두 타깃 빌드 산출물의 실제 번들ID**를 codesign/plist로 확인(설정값 아닌 산출물 기준)
+- [ ] **Mac 샌드박스·UserDefaults 저장영역 변경 영향** 확인(번들ID 변경 시 컨테이너 경로 이동 → 기존 개발 데이터 미표시 가능). 출시 전 앱이라 **개발 데이터 초기화 허용 여부 기록**.
+- [ ] App Store Connect엔 **레코드 1개만** 만들고 macOS 플랫폼 추가(별도 Mac 레코드 금지)
+- 🚫 iOS 번들·CloudKit 컨테이너·모델 변경 금지. 결제 구조라 실수 치명적.
 **WO-A 결과:** ☐ 미착수
 
-## WO-B — Mac에 ProStore 이식 (구독 상태 공유) 🔴 BLOCKER
-> Mac엔 ProStore 없음. 통계·달력 Pro 게이트를 Mac에 걸려면 Mac이 구독 상태를 읽어야 함.
-- `ProEntitlement`(순수함수, 이미 있음)를 SafetyWalkCore로 올리거나 Mac 타깃에 ProStore 이식 — `Transaction.currentEntitlements`(Universal Purchase면 자동 공유) 매핑. 복원 버튼(설정).
-- 완료: Mac에서 구독 활성/비활성 판정 동작(SKTestSession) + iOS 회귀 0. 브랜치 `woB-mac-prostore`. WO-A 후.
+## WO-B — 공통 StoreKit entitlement + Mac 네이티브 결제 UI 🔴 BLOCKER (WO-A 후)
+> "iOS ProStore 복붙" 금지. **플랫폼 중립 코어 + 플랫폼별 UI**.
+- 상품 조회·구매권 판정(`ProEntitlement` 순수함수)·복원 = **SafetyWalkCore 공유 코드**로. 페이월 화면만 iPhone/iPad/Mac 각 플랫폼 UI.
+- 검증: 월간·연간 동일 product ID가 양쪽 로드 · **iOS 구매→Mac 인식, Mac 구매→iOS 인식** · 만료·취소·미구매·복원 상태.
+- 순서: **StoreKit Test 먼저 → Connect 상품 생성 후 Sandbox 종단 검증**(2단계).
+- 완료: 위 양방향+상태 검증 통과, iOS 회귀 0. 브랜치 `woB-mac-prostore`(착수 전 실브랜치 확인).
 **WO-B 결과:** ☐ 미착수
 
-## WO-C — 수익화/제출 문서 정합화 📄
-> `MONETIZATION_STRATEGY.md`(무료후 일회성)·`SUBMISSION_RUNBOOK.md`(IAP 없음)가 실제 코드(월/연 구독)와 충돌 → Connect 입력 혼란.
-- 두 문서를 현행(월/연 자동갱신 구독, 검색무료/통계·달력 Pro, 단일레코드+Universal)으로 갱신 or deprecated 표기. docs/appstore/ 패키지와 정합.
-- 🚫 앱 코드 무변경(문서만). 브랜치 `woC-doc-sync`.
+## WO-C — 수익화·제출·로드맵 문서 정합화 📄 (WO-A/B 후)
+> `MONETIZATION_STRATEGY.md`(무료후 일회성)·`SUBMISSION_RUNBOOK.md`(IAP 없음)가 실제(월/연 구독·검색무료/통계달력 Pro·단일레코드+Universal)와 충돌. Connect 입력 전 동기화.
+- 두 문서 현행화 or deprecated 표기 + docs/appstore/ 패키지 정합. 🚫 앱 코드 무변경. 브랜치 `woC-doc-sync`.
 **WO-C 결과:** ☐ 미착수
-
-## 플랫폼별 UI 밀도 규칙 (Mac 복제 금지 — 각 WO에 적용)
-| 기능 | iPhone | iPad | Mac |
-|---|---|---|---|
-| Table/Inspector | 미적용(기존 유지) | 터치용 목록+상세 유지 | 전체 적용 |
-| 통합검색(무료) | 기록 화면서 전체 검색 | 툴바검색+분할결과 | 툴바검색+Table결과 |
-| 통계(Pro) | 세로 핵심지표+간단차트 | 2열 분석 | 전체 분석 워크스페이스 |
-| 달력(Pro) | 월달력+선택일 목록 | 달력+상세 2열 | 달력+Inspector |
-- iPhone 탭 추가 금지(5탭 유지): 검색=기록 진입, 통계·달력=관리도구 진입. iPad/Mac은 사이드바 독립 섹션.
-- 달력 = Swift Charts 아님, `Calendar+LazyVGrid` 직접 → WO-21은 **中규모**.
 
 ## 순서 (갱신)
 WO-A → WO-B → WO-C → (Connect 등록 재개 가능) → WO-15(위험요인 Table, **상태변경 제외·조회+리포트만**) → 오너 승인 → WO-16~18 → WO-19(검색) → WO-20(통계,분석섹션=WO-18 대시보드와 분리) → WO-21(달력) → 마감.
