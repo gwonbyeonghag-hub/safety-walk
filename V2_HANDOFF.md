@@ -1439,6 +1439,8 @@ optional만으로 불완전. 다음 전부 포함:
 
 ---
 # 🎫 WO LEGAL-1 — 언어↔지역 디커플링 (도메인 모델 안정화)
+> ✅ **완료·검증·병합 2026-07-13 (main ba65b12, 7파일 +188/−19)** — 리뷰어 독립검증: 1a 커플 제거(set 디커플·dead regionProfile+import 삭제)·잔존 커플링 grep 깨끗(region은 피커 2곳만 set), 1b 독립 피커(Settings·Onboarding), 1d 3테스트(①양방향 디커플링) 그린, 스샷 2장(한국어 UI+지역 글로벌 독립 → 글로벌 템플릿 선택), Core --no-parallel 52/52, iOS/Mac 컴파일. 판단 2건(orphan import 삭제·completeOnboarding set은 언어 지속용·region 무관) 검증 통과.
+
 **출처**: 검토자 #4, 로드맵. **원칙**: 표시 언어와 법적 관할(RegionProfile)은 **독립 축**(한국어 읽는 미국현장 관리자·영어 읽는 한국현장 관리자 모두 지원). LEGAL-2(한국)/LEGAL-3(미국) 콘텐츠가 언어와 무관하게 region에 걸리려면 이게 선행.
 **⚠️ 착수 전**: `git branch --show-current` 확인 → **main(c860d5a 이상)** 에서 `legal1-lang-region-decouple` 전용 브랜치. main 직커밋 금지(공유 워킹카피).
 **토대 이미 있음**: `RegionProfileStore`(get/set·기본 `.korea`·KR/GLOBAL 코드) + 지역 키·값 ko/en 완비(`settings.regionProfile`="지역/Region", `settings.region.korea`="한국/Korea", `settings.region.global`="글로벌/Global") + LocalizationKey 케이스(212–214). **커플링만 끊고 피커만 붙이면 됨.**
