@@ -36,7 +36,7 @@ LLM 코딩 실수를 줄이는 행동지침. 사소한 작업엔 판단껏. 출�
 ## What Not to Do
 
 - No features outside PRD.md / V2_ROADMAP.md without asking
-- No iPad-specific layouts (iPhone + macOS가 타깃; iPad는 범위 밖)
+- **iPad는 지원됨** (v2 WO-7, 2026-07 방향 전환 — 오너 요청). 앱은 유니버설(`TARGETED_DEVICE_FAMILY = 1,2`). iPad regular width는 `NavigationSplitView`(사이드바+디테일)로 iPad-네이티브하게, iPhone/compact는 기존 탭바+스택 그대로. **iPhone 레이아웃을 늘린 모양 금지 — 기존 iOS 콘텐츠 뷰를 재사용**해 iPad 셸만 얹는다. (구 규칙 "No iPad-specific layouts"는 폐기.)
 - **Checklists stay Pass/Fail/NA** — 점수/가중치는 점검표가 아니라 **위험성평가 모듈(빈도×강도)에서만** 존재
 - No hard-coded strings or legal text in Swift/SwiftUI source
 - **iOS 홈은 대시보드 금지** — glanceable 현장 도구(위험요인 risk rail·빠른 액션·최근 점검). dense-but-calm, action-oriented. (대시보드는 **macOS**에서.)

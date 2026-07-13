@@ -62,8 +62,10 @@ Cloud sync is out of scope for MVP but the data model must not block it later.
 
 ## MVP Constraints
 
-- iPhone only (SwiftUI, iOS 17+)
-- No iPad dashboard layout
+> ⚠️ **이 섹션은 v1 MVP 시점 제약이다.** v2에서 일부 바뀜: **iPad 지원 추가**(WO-7, 유니버설 앱·NavigationSplitView) · **macOS 앱 추가**(WO-4) · **CloudKit 동기화**(WO-3) · **SafetyWalk Pro 유료 구독**(WO-10). 아래는 v1 기록으로 보존.
+
+- iPhone first (SwiftUI, iOS 17+) — v2에서 iPad·macOS로 확장됨
+- ~~No iPad dashboard layout~~ → iPad는 지원하되 **대시보드는 여전히 macOS 담당**(iPad 홈도 현장 도구 톤 유지, 조망형 대시보드 아님)
 - One-handed use, large tap targets, vertical flow
 - Local persistence (SwiftData)
 - Camera-first hazard recording
