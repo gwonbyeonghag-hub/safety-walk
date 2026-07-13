@@ -138,7 +138,8 @@ BriefingProfileCode: krTBM · usCAConstruction · usElectric · usGeneral
   - `RiskAssessmentParticipant`·`BriefingParticipant`: **name·role 필수**
   - `SharingEvent`: **phase·method·sharedAt 필수**
   - `SafetyBriefing`: **siteId·siteName 필수**
-  - `CorrectiveAction`: item 연결 + isRequired(부모 criteria 파생) 필수
+  - `CorrectiveAction`: **item 연결 필수**. `isRequired`는 **저장 필드도 생성자 인자도 아님** — `item.criteriaDecision == exceedsThreshold`에서 파생(computed).
+  - `CorrectiveAction` 효과확인 불변조건: `effectivenessResult`·`effectivenessConfirmedAt`·`confirmedBy`는 **하나의 도메인 동작으로 함께 갱신**(부분 갱신 금지).
 - **insert/finalize 전 검증 실패 시 저장 금지**(빈 모델 영속 차단). LEGAL-0의 `save() throws` 방어 패턴 확장.
 
 ## 5. 삭제규칙 (inverse 명시)
