@@ -64,7 +64,7 @@ Results require review by a qualified safety manager.
 
 ## Keywords (100 chars, comma-separated, do not repeat the app name)
 ```
-safety inspection,risk assessment,JSA,jobsite,hazard,EHS,field safety,corrective action,site audit,TBM
+safety inspection,risk assessment,JSA,jobsite,hazard,EHS,field safety,corrective action,site audit
 ```
 
 ## Category

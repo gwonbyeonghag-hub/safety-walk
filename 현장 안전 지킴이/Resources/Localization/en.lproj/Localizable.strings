@@ -410,7 +410,7 @@
 
 /* Risk Assessment (위험성평가) — WO-2 */
 "ra.title" = "Risk Assessment";
-"ra.home.cardSubtitle" = "Formal risk assessment records";
+"ra.home.cardSubtitle" = "Risk assessment records";
 "ra.empty" = "No risk assessments yet";
 "ra.new" = "New Risk Assessment";
 "ra.kind" = "Type";

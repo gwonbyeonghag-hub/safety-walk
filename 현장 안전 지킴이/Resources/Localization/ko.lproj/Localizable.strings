@@ -410,7 +410,7 @@
 
 /* Risk Assessment (위험성평가) — WO-2 */
 "ra.title" = "위험성평가";
-"ra.home.cardSubtitle" = "정식 위험성평가 기록";
+"ra.home.cardSubtitle" = "위험성평가 기록";
 "ra.empty" = "아직 위험성평가가 없습니다";
 "ra.new" = "새 위험성평가";
 "ra.kind" = "평가종류";
