@@ -1,55 +1,62 @@
-# LEGAL-2-ARCH — 위험성평가 도메인 설계 (코드 없음 · SCHEMA-V3 승인용 DRAFT)
+# LEGAL-2-ARCH v2 — 위험성평가 도메인 설계 (코드 없음 · ARCH 방향 승인 / SCHEMA-V3 동결 보류)
 
-> 목적: 참여자만 먼저 붙여 V3/V4/V5 연쇄 마이그레이션을 만드는 대신, **평가 수명주기·기준·참여·공유·이행·보존을 하나의 스키마 계약으로** 먼저 확정. 근거 = [LEGAL_SOURCE_TABLE_KR_US.md](LEGAL_SOURCE_TABLE_KR_US.md) (게이트 통과 v3).
-> 원칙: 기록 도구(판정 아님) · 누락은 "예정/기록 없음/완료" 사실만 · 서명=참여·전달 확인(책임포기 아님) · 스냅샷 보존(원본 수정돼도 과거 불변).
-> **이 문서는 설계만. 승인 후 SCHEMA-V3(모델·관계·삭제규칙·마이그레이션) → 슬라이스 구현.**
+> 상태: **ARCH 방향 승인**(오너). SCHEMA-V3 동결·2a 구현은 보류. v2 = 오너 8개 교정 반영. 근거 = [LEGAL_SOURCE_TABLE_KR_US.md](LEGAL_SOURCE_TABLE_KR_US.md)(게이트 통과).
+> 관통 원칙: **기록 소유권·불변성 > 마이그레이션 편의** (v1에서 이걸 희생하려다 오너가 차단). 참여·서명·기준은 그 이벤트가 소유하는 **불변 스냅샷**.
+> 순서: 개인정보 재판정 → **이 v2** → TBM-0 → SCHEMA-V3 동결 → 구현.
 
-## 1. 평가 수명주기 (신규 status 축)
-```
-예정(planned) → 진행(inProgress) → 평가완료(assessed) → 개선조치(remediation) → 종결(closed)
-```
-- **예정**: 실시 전 일정 통지(제37조의3 사전 공유)를 이 상태에서. 현재 "완료 시 1회 저장" 구조로는 불가 → 수명주기 필수.
-- 각 전이 시각 기록. 종결 = 모든 개선조치 이행·확인 완료.
+## 1. 두 개의 독립 수명주기 (교정 #2)
+- **평가 상태**: `planned · inProgress · finalized · cancelled` (선형 아님)
+- **개선조치 상태**: 각 `CorrectiveAction`이 개별 관리
+- **`closed`는 저장 상태가 아니라 파생** — 모든 **필수** 조치의 이행·효과확인 완료 시 계산
+- 화면 표시 예: `평가완료 · 개선조치 3건 진행 중`
+- `planned` 상태에서 제37조의3 **사전 일정 공유** 지원
 
-## 2. 엔티티 지도 (신규 N / 확장 E / 기존 K)
+## 2. 엔티티 지도 (N 신규 / E 확장 / K 기존)
 
-| 엔티티 | 상태 | 소유/관계 | 핵심 필드 |
+| 엔티티 | 상태 | 소유·관계 | 핵심 | 교정 |
+|---|---|---|---|---|
+| `RiskAssessmentProgram` | N | Site 1—N | 운영방식(정기/상시) + **jurisdiction + industry/profile + effective period** | #4 |
+| `RiskAssessment` | E | Program 1—N | + 평가상태(§1) + scheduledAt + **소유 기준 스냅샷** + 근로자대표 필드(§흡수) | #2 #8 |
+| `AssessmentCriteria` | N | 평가 **1:1 소유·불변(값 복사)** | 위험성 기준·허용 임계값·매트릭스 = 평가 시점 스냅샷. 공통 가변 엔티티 참조 금지 | #3 |
+| `RiskAssessmentItem` | E | 평가 1—N | + 허용/불허용 결정 (기존 위험도 필드 유지) | — |
+| `CorrectiveAction` | N | 항목 1—N | 실제 조치·이행일·확인자·증거·개선후위험도·효과확인 (기존 status·dueDate·responsibleName·감소대책 **흡수**) | #5 |
+| `RiskAssessmentParticipant` | N | **평가가 소유·불변** | 이름(필수)·사번/소속/직무(선택)·근로자|대표·참여방법·시각·확인방식·서명(선택) | #1 |
+| `BriefingParticipant` | N | **TBM이 소유·불변**(TBM-0) | 위와 동형. 공통 **enum·검증 로직만** 공유 | #1 |
+
+- **직원명부/`Person` 엔티티 없음** — 법인 기능 전까지. 나중에 선택적 `personId`로 두 참여기록을 연결(교정 #1).
+- **근로자대표**(교정 #8): 독립 수명 없음 → 별도 @Model ❌. `RiskAssessment` 필드(대표 참여 요청 여부·참여 여부) + 해당 `RiskAssessmentParticipant`(근로자|대표 구분·식별·참여방법)로 **흡수**.
+
+## 3. 공유 이벤트
+| 엔티티 | 상태 | 소유 | 핵심 |
 |---|---|---|---|
-| `RiskAssessmentProgram` | **N** | Site 1—N Program | 운영방식(정기/**상시**), 주기, 월간평가·주간공유·TBM연동 설정 |
-| `RiskAssessment` | **E** | Program 1—N 평가 | + status(수명주기) + scheduledAt(예정) + 기준스냅샷 ref |
-| `AssessmentCriteria` | **N**(스냅샷) | 평가에 임베드/참조 | 위험성 기준·**허용 임계값**·매트릭스를 **평가 시점 스냅샷** |
-| `RiskAssessmentItem` | **E** | 평가 1—N 항목 | + **허용/불허용 결정** (기존 likelihood·severity·riskLevel·reductionMeasure·postRiskLevel 유지) |
-| `CorrectiveAction` | **N** | 항목 1—N 조치 | 실제 이행 조치·**이행일·확인자·증거(사진)**·개선후위험도·**효과확인** (기존 correctiveActionStatus·dueDate·responsibleName **흡수**, 병렬 중복 금지) |
-| `Participant` | **N** | 평가 N—M / TBM 재사용 | 이름(필수)·사번/소속/직무(선택)·근로자·대표 구분·참여방법(순회/면담/설문)·참여시각·확인방식·서명(선택) |
-| `WorkerRepStatus` | **N** | 평가 1—1 | 대표 참여 **요청 여부**·참여 여부·대표 식별·참여방법 |
-| `SharingEvent` | **N** | 평가 1—N 공유 | 사전/사후 구분·시각·방법(교육·게시·서면·전자·TBM)·대상·담당자·**내용 스냅샷** |
+| `SharingEvent` | N | 평가 1—N | 사전/사후 구분·시각·방법(교육·게시·서면·전자·TBM)·대상·담당자·**내용 스냅샷**. PDF≠공유증명 |
+공유 범위(사후) = 유해위험요인 + 위험성 결정 결과 + 개선대책 + **개선대책 이행 결과**.
 
-## 3. 기존 필드 매핑 (중복 금지 — 오너 지적)
-- `RiskAssessmentItem.postRiskLevel` → `CorrectiveAction.개선후위험도`로 이관/연결(신설 병렬 필드 금지)
-- `RiskAssessmentItem.correctiveActionStatus·dueDate·responsibleName` → `CorrectiveAction` 흡수
-- `RiskAssessment.assessorName`(단일 문자열) → `Participant`(담당자/평가자 역할)로 승격 검토
+## 4. 기존 필드 매핑 + legacy 이관 조건 (교정 #5)
+- 흡수: `postRiskLevel`·`correctiveActionStatus`·`dueDate`·`responsibleName`·`reductionMeasure` → `CorrectiveAction`. **병렬 중복 필드 금지.**
+- **legacy 이관 조건**: 항목당 최대 1건 `CorrectiveAction` 생성, **오직** 담당자·기한·감소대책·개선후위험도·상태 중 **하나라도 의미 있을 때만**. 기본값 `.notStarted`만인 항목은 조치 생성 안 함(빈 조치 양산 금지). 기준 = [RiskAssessmentItem.swift](SafetyWalkCore/Sources/SafetyWalkCore/RiskAssessmentItem.swift).
 
-## 4. TBM-0 개념 (SCHEMA-V3 공유 — 별도 문서에서 상세)
-- TBM 참석자 = **`Participant` 재사용**(평가와 스키마 공유 → 별도 마이그레이션 방지)
-- TBM은 **당시 위험성평가 스냅샷** 참조(원본 수정돼도 회의록 불변)
-- 참석 확인 = 전달받음 기록(책임포기 아님) · 서명 = 선택 증빙
+## 5. 개인정보 재판정 (교정 #7 — 결론 열어둠, 지금 진행)
+- Apple: collect = 기기 밖 전송으로 **개발자/파트너가 지속 접근** 가능. **private CloudKit은 사용자 전용 접근·개발자 포털 미표시** → **미수집 해석도 방어 가능**.
+- ⇒ "Data Not Collected가 깨졌다"고 **선결론 금지**. 항목별(이름·주소·사진·사용자콘텐츠·참여자 제3자정보) 공식 정의로 판정, **불확실 항목은 "Apple 공식 문의 필요"로 분리**.
+- 산출물: 별도 `PRIVACY_AUDIT.md`(항목별 판정) → `app_privacy_answers`·`privacy_policy` 갱신 여부 결정. 참여자=제3자 정보라 한국 PIPA(앱=도구/수탁) 병기. **Connect 단일레코드 등록 게이트.**
 
-## 5. 개인정보 (지금 시작 — 오너 지적)
-- Apple "collect" = 기기 밖 전송+접근가능. **면제는 on-device only.** CloudKit private DB는 기기 밖 → **"Data Not Collected" 재검증 필요**(개발자 조회 불가만으로 면제 아님).
-- 앱은 **이미** 점검자·평가자 이름·현장 주소·사진·자유기록 동기화 → 참여자 추가 이전에 **기존 선언부터** 공식 정의로 재판정.
-- 참여자·서명 = **제3자 개인정보** + 한국 PIPA(앱=도구/수탁, 사업주=처리자) → 개인정보처리방침·App Privacy·수집 유형 재작성.
-- 산출물: `app_privacy_answers` 재판정 + `privacy_policy` 갱신 + Connect 단일레코드 등록 **전** 반영(결제 트랙 게이트).
+## 6. 마이그레이션 필요성부터 판단 (교정 #6 — SCHEMA-V3 전제)
+- **먼저 확인**: 외부 TestFlight/보존 대상 사용자 데이터 존재 여부.
+- **없으면**: 개발 저장소·CloudKit 개발 스키마 **초기화 + V3를 첫 출시 스키마**로 (복잡한 V2→V3 이관 회피 — 선재 SchemaMigration 플레이크 task_fb1e657c도 감안).
+- **있으면만**: 실제 V2→V3 마이그레이션 작성.
+- ⚠️ 리셋 선택 시 기존 "손대지 말 것" 개발 스토어(`~/Library/Application Support/default.store`) 처리를 오너와 확인 후 진행.
 
-## 6. SCHEMA-V3 승인 항목 (다음 게이트)
-- [ ] 위 엔티티·관계·**삭제규칙**(cascade vs nullify — 3년 보존과 충돌 주의) 확정
-- [ ] V2→V3 마이그레이션 계획(신규 @Model 다수 + 기존 필드 이관) — **선재 SchemaMigration 병렬 플레이크(task_fb1e657c) 감안**
-- [ ] `Participant`를 평가·TBM 공유로 둘지, 분리할지
-- [ ] `AssessmentCriteria`를 임베드 스냅샷 vs 별도 엔티티
+## 7. SCHEMA-V3 동결 항목 (다음 게이트 — 아직 동결 안 함)
+- [ ] §2 엔티티·관계·**삭제규칙**(cascade vs nullify — 3년 보존은 앱 레벨 가드로) 확정
+- [ ] 마이그레이션 vs 리셋 결정(§6)
+- [ ] `AssessmentCriteria` 값 복사 방식 확정
+- [ ] TBM-0(BriefingParticipant·서명·스냅샷) 반영
 
-## 7. 구현 슬라이스 (스키마 확정 **후**)
+## 8. 구현 슬라이스 (SCHEMA-V3 동결 **후**)
 ```
-2a 평가 계획(수명주기·예정)·참여자    2b 기준·허용가능성 결정
-2c 개선조치 이행·개선후위험도          2d 사전/사후 공유 이벤트
+2a 평가계획(수명주기·예정)·참여자   2b 기준·허용가능성 결정
+2c 개선조치 이행·개선후위험도         2d 사전/사후 공유 이벤트
 2e 3년 보존 경고·삭제·내보내기
-TBM-1~4 TBM 구현                      CONTINUOUS 월간·주간·매작업일 TBM 연동(Program 소유)
+TBM-1~4 TBM 구현                     CONTINUOUS 월간·주간·매작업일 TBM 연동(Program 소유)
 ```
