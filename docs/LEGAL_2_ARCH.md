@@ -29,7 +29,7 @@
 | `RiskAssessmentItem` | E | 평가 1—N | + **기준 초과 여부**(자동계산+사용자 확인, §1.1) · **`riskLevel: RiskLevel?`(nil=미평가, §2.1)** | §2.1 |
 | `CorrectiveAction` | N | 항목 1—N | 실제 조치·이행일·확인자·증거·개선후위험도·효과확인 (기존 status·dueDate·responsibleName·감소대책 **흡수**) | #5 |
 | `RiskAssessmentParticipant` | N | **평가가 소유·불변** | 이름(필수)·사번/소속/직무(선택)·근로자|대표·참여방법·시각·확인방식·서명(선택) | #1 |
-| `BriefingParticipant` | N | **TBM이 소유·불변**(TBM-0) | 위와 동형. 공통 **enum·검증 로직만** 공유 | #1 |
+| `BriefingParticipant` | N | **TBM이 소유·불변**(TBM-0) | 위와 동형. 공통 **`ParticipantRole`·`ConfirmationMethod`만** 공유(순회/면담/설문 참여방법 제외) | #1·#4 |
 
 - **직원명부/`Person` 엔티티 없음** — 법인 기능 전까지. 나중에 선택적 `personId`로 두 참여기록을 연결(교정 #1).
 - **근로자대표**(교정 #8): 독립 수명 없음 → 별도 @Model ❌. `RiskAssessment` 필드(대표 참여 요청 여부·참여 여부) + 해당 `RiskAssessmentParticipant`(근로자|대표 구분·식별·참여방법)로 **흡수**.
@@ -46,6 +46,7 @@
 |---|---|---|---|
 | `SharingEvent` | N | 평가 1—N | 사전/사후 구분·시각·방법(교육·게시·서면·전자·TBM)·대상·담당자·**내용 스냅샷**. PDF≠공유증명 |
 공유 범위(사후) = 유해위험요인 + 위험성 결정 결과 + 개선대책 + **개선대책 이행 결과**.
+> **TBM 방법 공유의 정본은 `SafetyBriefing`(TBM-0 §8)**. 브리핑 finalize 시 `sourceBriefingID` + 내용 스냅샷을 가진 불변 `SharingEvent`를 원자적 생성 — mutable 브리핑 관계 의존 금지, 브리핑당 1건(중복 방지).
 
 ## 4. 기존 필드 매핑 + legacy 이관 조건 (교정 #5)
 - 흡수: `postRiskLevel`·`correctiveActionStatus`·`dueDate`·`responsibleName`·`reductionMeasure` → `CorrectiveAction`. **병렬 중복 필드 금지.**
@@ -60,7 +61,7 @@
 TestFlight 사용자 유무만으로 결정 ❌. **오너가 확인해야 할 4가지**(Apple 계정 필요 — Claude 불가):
 1. 내부/외부 **TestFlight 배포** 여부 (TestFlight = **Production CloudKit** 사용)
 2. **CloudKit Production 스키마 배포** 여부
-3. Production **보존 레코드** 존재 여부
+3. **데이터를 생성한 것으로 알려진 TestFlight/테스트 사용자** 존재 여부 (⚠️ private DB 레코드는 개발자 포털에서 **직접 조회 불가** — 교정 #10)
 4. 기존 설치 기기 **로컬 데이터** 보존 필요 여부
 
 **결정 규칙 (CloudKit 하드 제약)**: Production에 배포된 레코드 타입·필드는 **삭제 불가, 변경은 가산만**.
