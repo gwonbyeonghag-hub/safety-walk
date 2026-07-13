@@ -1,0 +1,350 @@
+<style>
+  :root{
+    /* cool-biased neutrals + navy accent + warm risk ramp (semantic, not accent) — reused from macos-dashboard-mockup.html */
+    --desktop:#DFE3EA;
+    --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#FAFBFD; --sidebar:#EEF1F6;
+    --border:#E3E7EE; --border-strong:#D6DBE4;
+    --ink:#1A1E26; --ink-2:#3A4150; --muted:#727B8C; --faint:#9AA3B2;
+    --accent:#2360C9; --accent-soft:rgba(35,96,201,.10); --accent-ink:#1E56B6;
+    --risk-low:#A9790A; --risk-low-bg:rgba(169,121,10,.12);
+    --risk-med:#DA761A; --risk-med-bg:rgba(218,118,26,.12);
+    --risk-high:#CF3F3F; --risk-high-bg:rgba(207,63,63,.11);
+    --ok:#2C9A57; --ok-bg:rgba(44,154,87,.12);
+    --shadow:0 1px 2px rgba(20,28,45,.05), 0 4px 16px rgba(20,28,45,.06);
+    --shadow-win:0 12px 48px rgba(15,23,42,.20), 0 2px 8px rgba(15,23,42,.12);
+    --r:12px; --r-sm:8px;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --desktop:#0C0E12;
+      --bg:#15181E; --surface:#1D2027; --surface-2:#22262E; --sidebar:#191C22;
+      --border:#2B303A; --border-strong:#363C48;
+      --ink:#E9ECF2; --ink-2:#C2C8D2; --muted:#8B93A2; --faint:#666E7D;
+      --accent:#5C9BF5; --accent-soft:rgba(92,155,245,.15); --accent-ink:#7FB0F7;
+      --risk-low:#D2A63C; --risk-low-bg:rgba(210,166,60,.16);
+      --risk-med:#EE9040; --risk-med-bg:rgba(238,144,64,.15);
+      --risk-high:#E4615C; --risk-high-bg:rgba(228,97,92,.15);
+      --ok:#40B673; --ok-bg:rgba(64,182,115,.16);
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
+      --shadow-win:0 16px 56px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="light"]{
+    --desktop:#DFE3EA;--bg:#F4F6F9;--surface:#FFFFFF;--surface-2:#FAFBFD;--sidebar:#EEF1F6;
+    --border:#E3E7EE;--border-strong:#D6DBE4;--ink:#1A1E26;--ink-2:#3A4150;--muted:#727B8C;--faint:#9AA3B2;
+    --accent:#2360C9;--accent-soft:rgba(35,96,201,.10);--accent-ink:#1E56B6;
+    --risk-low:#A9790A;--risk-low-bg:rgba(169,121,10,.12);--risk-med:#DA761A;--risk-med-bg:rgba(218,118,26,.12);
+    --risk-high:#CF3F3F;--risk-high-bg:rgba(207,63,63,.11);--ok:#2C9A57;--ok-bg:rgba(44,154,87,.12);
+    --shadow:0 1px 2px rgba(20,28,45,.05),0 4px 16px rgba(20,28,45,.06);
+    --shadow-win:0 12px 48px rgba(15,23,42,.20),0 2px 8px rgba(15,23,42,.12);
+  }
+  :root[data-theme="dark"]{
+    --desktop:#0C0E12;--bg:#15181E;--surface:#1D2027;--surface-2:#22262E;--sidebar:#191C22;
+    --border:#2B303A;--border-strong:#363C48;--ink:#E9ECF2;--ink-2:#C2C8D2;--muted:#8B93A2;--faint:#666E7D;
+    --accent:#5C9BF5;--accent-soft:rgba(92,155,245,.15);--accent-ink:#7FB0F7;
+    --risk-low:#D2A63C;--risk-low-bg:rgba(210,166,60,.16);--risk-med:#EE9040;--risk-med-bg:rgba(238,144,64,.15);
+    --risk-high:#E4615C;--risk-high-bg:rgba(228,97,92,.15);--ok:#40B673;--ok-bg:rgba(64,182,115,.16);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.28);
+    --shadow-win:0 16px 56px rgba(0,0,0,.55),0 2px 10px rgba(0,0,0,.4);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--desktop);color:var(--ink);
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  .page{min-height:100vh;padding:26px 22px 40px;display:flex;flex-direction:column;align-items:center;gap:16px}
+  .topbar{width:100%;max-width:1180px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .cap{font-size:12.5px;color:var(--ink-2);opacity:.9}
+  .cap b{color:var(--ink)}
+  .toggle{font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--ink-2);
+    background:var(--surface);border:1px solid var(--border-strong);border-radius:99px;
+    padding:6px 13px;cursor:pointer;display:flex;align-items:center;gap:7px;box-shadow:var(--shadow)}
+  .toggle:hover{border-color:var(--accent)}
+  .toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .window{width:100%;max-width:1180px;background:var(--bg);border:1px solid var(--border-strong);
+    border-radius:14px;overflow:hidden;box-shadow:var(--shadow-win)}
+  .titlebar{height:40px;display:flex;align-items:center;gap:8px;padding:0 15px;
+    background:var(--sidebar);border-bottom:1px solid var(--border)}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .dot.r{background:#F0605A}.dot.y{background:#F5BE4F}.dot.g{background:#61C554}
+  .titlebar .t{margin-left:8px;font-size:12.5px;color:var(--muted);font-weight:500}
+
+  .app{display:grid;grid-template-columns:236px 1fr;min-height:672px}
+
+  .sidebar{background:var(--sidebar);border-right:1px solid var(--border);padding:14px 12px;display:flex;flex-direction:column;gap:4px}
+  .acct{display:flex;align-items:center;gap:10px;padding:8px 8px 14px}
+  .acct .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(160deg,#2C6BD6,#173E85);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .acct .nm{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.25}
+  .acct .rl{font-size:11.5px;color:var(--muted)}
+  .navlabel{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:8px 10px 4px}
+  .nav{display:flex;flex-direction:column;gap:2px}
+  .nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;
+    font-size:13px;color:var(--ink-2);text-decoration:none;line-height:1}
+  .nav a svg{width:16px;height:16px;flex:0 0 auto;color:var(--muted)}
+  .nav a:hover{background:var(--border)}
+  .nav a.on{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+  .nav a.on svg{color:var(--accent-ink)}
+
+  .content{display:flex;flex-direction:column;min-width:0}
+  .chead{padding:22px 24px 0}
+  .h1{font-size:23px;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
+  .sub{font-size:13px;color:var(--muted);margin-top:3px}
+
+  .toolbar{display:flex;align-items:center;gap:10px;padding:16px 24px 14px}
+  .search{flex:1;min-width:180px;display:flex;align-items:center;gap:8px;background:var(--surface);
+    border:1px solid var(--border-strong);border-radius:8px;padding:7px 11px;box-shadow:var(--shadow)}
+  .search svg{width:15px;height:15px;color:var(--muted);flex:0 0 auto}
+  .search input{border:0;outline:0;background:transparent;font-family:var(--sans);font-size:13px;color:var(--ink);width:100%}
+  .search input::placeholder{color:var(--faint)}
+  .fbtn{font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--ink-2);background:var(--surface);
+    border:1px solid var(--border-strong);border-radius:8px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:7px;box-shadow:var(--shadow)}
+  .fbtn svg{width:14px;height:14px;color:var(--muted)}
+  .fbtn:hover{border-color:var(--accent)}
+
+  .split{display:grid;grid-template-columns:1fr 312px;flex:1;border-top:1px solid var(--border);min-height:0}
+  .board{overflow:auto;padding:18px 22px 22px}
+
+  .group{margin-bottom:20px}
+  .group:last-child{margin-bottom:0}
+  .ghead{display:flex;align-items:center;gap:9px;padding:0 2px 11px}
+  .ghead .d{width:9px;height:9px;border-radius:50%}
+  .ghead.todo .d{background:var(--faint)}.ghead.doing .d{background:var(--accent)}.ghead.done .d{background:var(--ok)}
+  .ghead .gl{font-size:13.5px;font-weight:600;color:var(--ink)}
+  .ghead .gc{font-size:12px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);
+    border-radius:99px;padding:1px 8px;min-width:22px;text-align:center}
+  .ghead.todo .gl{color:var(--ink)}
+  .ghead .rule{flex:1;height:1px;background:var(--border)}
+
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .hcard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 14px;
+    box-shadow:var(--shadow);cursor:pointer;position:relative;border-left:3px solid transparent}
+  .hcard:hover{border-color:var(--border-strong)}
+  .hcard.hi{border-left-color:var(--risk-high)}.hcard.md{border-left-color:var(--risk-med)}.hcard.lo{border-left-color:var(--risk-low)}
+  .hcard.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),var(--shadow)}
+  .hcard .top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .hcard .ht{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.35;margin-bottom:6px}
+  .hcard .hm{font-size:12px;color:var(--muted);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hcard .hf{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:9px;border-top:1px solid var(--border)}
+  .tag{font-size:11px;font-weight:500;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:2px 7px}
+  .hdate{font-size:12px;color:var(--muted)}
+
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;
+    font-size:11.5px;font-weight:600;line-height:1.4;white-space:nowrap}
+  .chip .bd{width:7px;height:7px;border-radius:50%}
+  .chip.hi{background:var(--risk-high-bg);color:var(--risk-high)}.chip.hi .bd{background:var(--risk-high)}
+  .chip.md{background:var(--risk-med-bg);color:var(--risk-med)}.chip.md .bd{background:var(--risk-med)}
+  .chip.lo{background:var(--risk-low-bg);color:var(--risk-low)}.chip.lo .bd{background:var(--risk-low)}
+  .st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;white-space:nowrap}
+  .st .d{width:8px;height:8px;border-radius:50%}
+  .st.todo{color:var(--muted)}.st.todo .d{background:var(--faint)}
+  .st.doing{color:var(--accent-ink)}.st.doing .d{background:var(--accent)}
+  .st.done{color:var(--ok)}.st.done .d{background:var(--ok)}
+
+  .insp{border-left:1px solid var(--border);background:var(--surface);padding:18px 18px 20px;overflow:auto}
+  .insp .ph{height:150px;border-radius:10px;border:1px solid var(--border);
+    background:repeating-linear-gradient(135deg,var(--surface-2),var(--surface-2) 10px,var(--bg) 10px,var(--bg) 20px);
+    display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:12px;gap:6px;margin-bottom:15px}
+  .insp .ph svg{width:16px;height:16px}
+  .insp .itl{font-size:16px;font-weight:600;color:var(--ink);line-height:1.35;margin:2px 0 4px}
+  .insp .chiprow{display:flex;gap:7px;margin:10px 0 16px}
+  .field{padding:9px 0;border-top:1px solid var(--border);display:flex;gap:12px;align-items:baseline}
+  .field:first-of-type{border-top:0}
+  .field .k{font-size:11.5px;color:var(--muted);flex:0 0 76px}
+  .field .v{font-size:13px;color:var(--ink);font-weight:500;flex:1;text-align:right}
+  .actions{margin-top:16px;display:flex;gap:8px}
+  .btn{flex:1;font-family:var(--sans);font-size:12.5px;font-weight:600;padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-2)}
+  .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  .footnote{width:100%;max-width:1180px;font-size:12.5px;color:var(--ink-2);
+    background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);
+    border-radius:8px;padding:11px 14px;box-shadow:var(--shadow)}
+  .footnote b{color:var(--ink)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="page">
+  <div class="topbar">
+    <div class="cap"><b>WO-14 · B안 — 작업함 중심(상태 그룹 + Inspector)</b> · Mac 위험요인 Browse 시안 (구현 전 비교용)</div>
+    <button class="toggle" id="tg" aria-label="라이트/다크 전환">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4" stroke-linecap="round"/></svg>
+      <span id="tglbl">다크로 보기</span>
+    </button>
+  </div>
+
+  <div class="window">
+    <div class="titlebar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="t">현장 안전 지킴이 — 관리자 · 위험요인</span>
+    </div>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="acct">
+          <div class="mark"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="1.8"><path d="M12 3l7 3v5c0 4.2-2.9 7.4-7 8.6C7.9 18.4 5 15.2 5 11V6l7-3z" stroke-linejoin="round"/><path d="M9 11.5l2 2 4-4.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><div class="nm">현장 안전 지킴이</div><div class="rl">권병학 · 관리자</div></div>
+        </div>
+        <div class="navlabel">개요</div>
+        <nav class="nav">
+          <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4"/></svg>대시보드</a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V6l8-3 8 3v14" stroke-linejoin="round"/><path d="M8 20V11m8 9V11M3 20h18" stroke-linecap="round"/></svg>현장</a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h11l3 3v13H5z" stroke-linejoin="round"/><path d="M8.5 10l1.5 1.5 3-3M8.5 15l1.5 1.5 3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>점검</a>
+          <a class="on" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4l9 15H3z" stroke-linejoin="round"/><path d="M12 10v4" stroke-linecap="round"/><circle cx="12" cy="16.5" r=".6" fill="currentColor" stroke="none"/></svg>위험요인</a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="4.5" width="17" height="15" rx="1.6"/><path d="M3.5 9.5h17M9 9.5v10M15 9.5v10" stroke-linecap="round"/></svg>위험성평가</a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h8l4 4v14H6z" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h2" stroke-linecap="round"/></svg>리포트</a>
+        </nav>
+      </aside>
+
+      <main class="content">
+        <div class="chead">
+          <div class="h1">위험요인</div>
+          <div class="sub">3개 현장 · 조치 진행 상황별 작업함</div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2" stroke-linecap="round"/></svg>
+            <input placeholder="설명·위치·현장 검색" />
+          </div>
+          <button class="fbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 4l9 15H3z" stroke-linejoin="round"/><path d="M12 10v4" stroke-linecap="round"/></svg>위험도: 전체</button>
+          <button class="fbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20V6l8-3 8 3v14" stroke-linejoin="round"/><path d="M8 20V12h8v8" stroke-linecap="round"/></svg>현장: 전체</button>
+        </div>
+
+        <div class="split">
+          <div class="board">
+
+            <div class="group">
+              <div class="ghead todo"><span class="d"></span><span class="gl">미착수</span><span class="gc tnum">5</span><span class="rule"></span></div>
+              <div class="cards">
+                <div class="hcard hi sel">
+                  <div class="top"><span class="chip hi"><span class="bd"></span>높음</span><span class="hdate tnum">7월 12일</span></div>
+                  <div class="ht">비계 발판 고정 불량·틈새</div>
+                  <div class="hm">○○건설 현장 · 3층 외부비계</div>
+                  <div class="hf"><span class="tag">추락 위험</span><span class="st todo"><span class="d"></span>미착수</span></div>
+                </div>
+                <div class="hcard hi">
+                  <div class="top"><span class="chip hi"><span class="bd"></span>높음</span><span class="hdate tnum">7월 11일</span></div>
+                  <div class="ht">프레스 방호덮개 인터록 불량</div>
+                  <div class="hm">□□플랜트 · 라인2 프레스</div>
+                  <div class="hf"><span class="tag">일반 위험</span><span class="st todo"><span class="d"></span>미착수</span></div>
+                </div>
+                <div class="hcard hi">
+                  <div class="top"><span class="chip hi"><span class="bd"></span>높음</span><span class="hdate tnum">7월 11일</span></div>
+                  <div class="ht">배전반 커버 파손 — 충전부 노출</div>
+                  <div class="hm">○○건설 현장 · 1층 배전반</div>
+                  <div class="hf"><span class="tag">전기 위험</span><span class="st todo"><span class="d"></span>미착수</span></div>
+                </div>
+                <div class="hcard md">
+                  <div class="top"><span class="chip md"><span class="bd"></span>보통</span><span class="hdate tnum">7월 9일</span></div>
+                  <div class="ht">미끄럼 방지 표면 마모</div>
+                  <div class="hm">△△물류센터 · 하역장 램프</div>
+                  <div class="hf"><span class="tag">추락 위험</span><span class="st todo"><span class="d"></span>미착수</span></div>
+                </div>
+                <div class="hcard md">
+                  <div class="top"><span class="chip md"><span class="bd"></span>보통</span><span class="hdate tnum">7월 7일</span></div>
+                  <div class="ht">보행자·차량 동선 미분리</div>
+                  <div class="hm">△△물류센터 · 지게차 통로</div>
+                  <div class="hf"><span class="tag">일반 위험</span><span class="st todo"><span class="d"></span>미착수</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="group">
+              <div class="ghead doing"><span class="d"></span><span class="gl">진행중</span><span class="gc tnum">4</span><span class="rule"></span></div>
+              <div class="cards">
+                <div class="hcard hi">
+                  <div class="top"><span class="chip hi"><span class="bd"></span>높음</span><span class="hdate tnum">7월 12일</span></div>
+                  <div class="ht">안전난간 미설치 개구부</div>
+                  <div class="hm">○○건설 현장 · 2층 개구부</div>
+                  <div class="hf"><span class="tag">추락 위험</span><span class="st doing"><span class="d"></span>진행중</span></div>
+                </div>
+                <div class="hcard hi">
+                  <div class="top"><span class="chip hi"><span class="bd"></span>높음</span><span class="hdate tnum">7월 12일</span></div>
+                  <div class="ht">비상정지 스위치 접근 곤란</div>
+                  <div class="hm">□□플랜트 · 라인1 컨베이어</div>
+                  <div class="hf"><span class="tag">일반 위험</span><span class="st doing"><span class="d"></span>진행중</span></div>
+                </div>
+                <div class="hcard md">
+                  <div class="top"><span class="chip md"><span class="bd"></span>보통</span><span class="hdate tnum">7월 10일</span></div>
+                  <div class="ht">MSDS 미게시 화학물질 보관</div>
+                  <div class="hm">△△물류센터 · 보관창고</div>
+                  <div class="hf"><span class="tag">화학물질 위험</span><span class="st doing"><span class="d"></span>진행중</span></div>
+                </div>
+                <div class="hcard md">
+                  <div class="top"><span class="chip md"><span class="bd"></span>보통</span><span class="hdate tnum">7월 9일</span></div>
+                  <div class="ht">소화기 정기점검 미실시</div>
+                  <div class="hm">□□플랜트 · 용접작업장</div>
+                  <div class="hf"><span class="tag">화재 위험</span><span class="st doing"><span class="d"></span>진행중</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="group">
+              <div class="ghead done"><span class="d"></span><span class="gl">완료</span><span class="gc tnum">3</span><span class="rule"></span></div>
+              <div class="cards">
+                <div class="hcard lo">
+                  <div class="top"><span class="chip lo"><span class="bd"></span>낮음</span><span class="hdate tnum">7월 5일</span></div>
+                  <div class="ht">방류벽 표시선 퇴색</div>
+                  <div class="hm">□□플랜트 · 옥외 저장탱크</div>
+                  <div class="hf"><span class="tag">화학물질 위험</span><span class="st done"><span class="d"></span>완료</span></div>
+                </div>
+                <div class="hcard lo">
+                  <div class="top"><span class="chip lo"><span class="bd"></span>낮음</span><span class="hdate tnum">7월 4일</span></div>
+                  <div class="ht">자재 적재 높이 기준 초과</div>
+                  <div class="hm">○○건설 현장 · 자재 야적장</div>
+                  <div class="hf"><span class="tag">일반 위험</span><span class="st done"><span class="d"></span>완료</span></div>
+                </div>
+                <div class="hcard lo">
+                  <div class="top"><span class="chip lo"><span class="bd"></span>낮음</span><span class="hdate tnum">7월 3일</span></div>
+                  <div class="ht">분전반 잠금장치 없음</div>
+                  <div class="hm">△△물류센터 · 전기실</div>
+                  <div class="hf"><span class="tag">전기 위험</span><span class="st done"><span class="d"></span>완료</span></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <aside class="insp">
+            <div class="ph">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10.5" r="1.8"/><path d="M4 18l5-4 3 2.2 3.5-3.2L20 16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              현장 증거 사진
+            </div>
+            <div class="itl">비계 발판 고정 불량·틈새</div>
+            <div class="chiprow">
+              <span class="chip hi"><span class="bd"></span>높음</span>
+              <span class="st todo"><span class="d"></span>미착수</span>
+            </div>
+            <div class="field"><span class="k">현장</span><span class="v">○○건설 현장</span></div>
+            <div class="field"><span class="k">위치</span><span class="v">3층 외부비계</span></div>
+            <div class="field"><span class="k">유형</span><span class="v">추락 위험</span></div>
+            <div class="field"><span class="k">등록일</span><span class="v tnum">7월 12일</span></div>
+            <div class="field"><span class="k">수정일</span><span class="v tnum">7월 12일</span></div>
+            <div class="field"><span class="k">연결 점검</span><span class="v">7월 12일 정기점검</span></div>
+            <div class="actions">
+              <button class="btn">상태 변경</button>
+              <button class="btn pri">리포트 추가</button>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <b>트레이드오프 —</b> 상태(미착수·진행중·완료)가 곧 화면 구조라 “지금 뭘 조치해야 하나”가 필터 없이 한눈에 보이고, 카드가 커 스캔이 편함. 대신 위험도 교차 정렬이나 대량 데이터 훑기는 표보다 약하고, 최고위험을 찾으려면 각 그룹 안을 봐야 함(위험도 정렬 부재).
+  </div>
+</div>
+
+<script>
+  (function(){
+    var root=document.documentElement, btn=document.getElementById('tg'), lbl=document.getElementById('tglbl');
+    function cur(){var t=root.getAttribute('data-theme');if(t)return t;return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+    function apply(t){root.setAttribute('data-theme',t);lbl.textContent=(t==='dark'?'라이트로 보기':'다크로 보기');}
+    apply(cur());
+    btn.addEventListener('click',function(){apply(cur()==='dark'?'light':'dark');});
+  })();
+</script>
