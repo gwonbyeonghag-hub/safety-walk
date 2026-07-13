@@ -13,6 +13,7 @@ struct RiskAssessmentCreateView: View {
     @State private var viewModel = RiskAssessmentViewModel()
     @State private var editorItem: RiskAssessmentViewModel.DraftItem?
     @State private var showInspectionPicker = false
+    @State private var showSaveError = false
 
     var body: some View {
         NavigationStack {
@@ -62,11 +63,22 @@ struct RiskAssessmentCreateView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(LocalizationKey.commonSave.localized) {
-                        viewModel.save(context: modelContext)
-                        dismiss()
+                        // LEGAL-0: never dismiss on a silent failure — save() throws,
+                        // and we only leave the screen once it actually persisted.
+                        do {
+                            try viewModel.save(context: modelContext)
+                            dismiss()
+                        } catch {
+                            showSaveError = true
+                        }
                     }
-                    .disabled(!viewModel.canSave)
+                    .disabled(saveDisabled)
                 }
+            }
+            .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $showSaveError) {
+                Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
+            } message: {
+                Text(LocalizationKey.raSaveFailedMessage.localized)
             }
             .sheet(item: $editorItem) { draft in
                 RiskAssessmentItemEditorView(
@@ -149,14 +161,41 @@ struct RiskAssessmentCreateView: View {
                                                : LocalizationKey.raItemAdd.localized,
                       systemImage: "plus.circle.fill")
             }
+
+            // LEGAL-0: tell the user why 저장 is disabled when an item is 미평가.
+            if hasUnassessedItem {
+                Label(LocalizationKey.raSaveIncompleteHint.localized, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("ra_incomplete_hint")
+            }
         }
+    }
+
+    /// True when at least one draft item still has no resolved 위험성 수준 (미평가).
+    private var hasUnassessedItem: Bool {
+        !viewModel.draftItems.isEmpty
+            && viewModel.draftItems.contains { viewModel.resolvedLevel(for: $0) == nil }
+    }
+
+    /// Normally `!canSave`. A DEBUG-only UI-test flag lets a test tap 저장 on an
+    /// incomplete assessment so the REAL guard-throw → 저장 실패 alert can be captured
+    /// (mirrors the app's other DEBUG-gated uitest hooks; stripped from Release).
+    private var saveDisabled: Bool {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-com.safetywalk.uitestAllowIncompleteSave") {
+            return false
+        }
+        #endif
+        return !viewModel.canSave
     }
 }
 
-/// Compact row for a draft item (create flow): title + resolved risk band.
+/// Compact row for a draft item (create flow): title + resolved risk band, or a
+/// neutral "미평가" placeholder when the risk level is not yet set (LEGAL-0).
 private struct DraftItemRow: View {
     let item: RiskAssessmentViewModel.DraftItem
-    let level: RiskLevel
+    let level: RiskLevel?
     var stepNumber: Int? = nil
 
     private var title: String {
@@ -189,7 +228,31 @@ private struct DraftItemRow: View {
                 }
             }
             Spacer(minLength: 8)
-            RiskChip(level: level)
+            if let level {
+                RiskChip(level: level)
+            } else {
+                UnassessedChip()
+            }
         }
+    }
+}
+
+/// Neutral "미평가" placeholder — no risk color, no score, no band badge (LEGAL-0:
+/// an unentered risk level must not read as any level).
+private struct UnassessedChip: View {
+    var body: some View {
+        Text(LocalizationKey.raRiskUnassessed.localized)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 4)
+            .background {
+                Capsule().fill(Color.secondary.opacity(0.12))
+            }
+            .overlay {
+                Capsule().strokeBorder(Color.secondary.opacity(0.25), lineWidth: 0.5)
+            }
+            .accessibilityLabel(LocalizationKey.raRiskUnassessed.localized)
+            .accessibilityIdentifier("ra_unassessed_chip")
     }
 }

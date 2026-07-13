@@ -80,7 +80,8 @@ struct RiskAssessmentModelTests {
     }
 
     @Test func itemDefaultsAreCloudKitReady() {
-        let item = RiskAssessmentItem()
+        // LEGAL-0: riskLevel is now a required init arg; the other defaults are unchanged.
+        let item = RiskAssessmentItem(riskLevel: .low)
         #expect(item.taskDescription == "")
         #expect(item.hazardDescription == "")
         #expect(item.currentControls == nil)
@@ -140,10 +141,10 @@ struct RiskAssessmentMethodTests {
 struct RiskAssessmentItemSortOrderTests {
 
     @Test func sortOrderDefaultsToZero() {
-        #expect(RiskAssessmentItem().sortOrder == 0)   // CloudKit-safe default
+        #expect(RiskAssessmentItem(riskLevel: .low).sortOrder == 0)   // CloudKit-safe default
     }
 
     @Test func sortOrderIsSettable() {
-        #expect(RiskAssessmentItem(sortOrder: 3).sortOrder == 3)
+        #expect(RiskAssessmentItem(riskLevel: .low, sortOrder: 3).sortOrder == 3)
     }
 }

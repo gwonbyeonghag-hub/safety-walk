@@ -48,10 +48,12 @@ struct RiskAssessmentMethodsTests {
         #expect(vm.draftItems.count == 2)   // only the two Fail items
         // hazardDescription = L(title); L returns the raw key when untranslated.
         #expect(vm.draftItems.map(\.hazardDescription).sorted() == ["k.fail1", "k.fail2"])
-        #expect(vm.draftItems.allSatisfy { $0.directRiskLevel == .medium })  // no linked hazard
+        // LEGAL-0: no auto-confirmed level. No linked hazard → no suggestion either.
+        #expect(vm.draftItems.allSatisfy { $0.directRiskLevel == nil })
+        #expect(vm.draftItems.allSatisfy { $0.suggestedLevel == nil })
     }
 
-    @Test func checklistSeedPersistsLinkAndLevel() throws {
+    @Test func checklistSeedPersistsLinkAndUserSetLevel() throws {
         let ctx = try makeContext()
         let insp = completedInspection(in: ctx)
         let fail = ChecklistItem(inspectionId: insp.id, templateItemId: "f",
@@ -63,13 +65,20 @@ struct RiskAssessmentMethodsTests {
         vm.method = .checklist
         vm.assessorName = "평가자"
         vm.seedFromInspection(insp)
-        vm.save(context: ctx)
+
+        // LEGAL-0: seeded item carries no auto level — the user must set one before saving.
+        var d = try #require(vm.draftItems.first)
+        #expect(d.directRiskLevel == nil)
+        d.directRiskLevel = .medium
+        vm.addOrUpdate(d)
+
+        try vm.save(context: ctx)
 
         let saved = try ctx.fetch(FetchDescriptor<RiskAssessment>())
             .first { $0.method == .checklist }
         #expect(saved?.linkedInspectionId == insp.id)
         let item = (saved?.items ?? []).first
-        #expect(item?.riskLevel == .medium)        // checklist → 3-level (direct)
+        #expect(item?.riskLevel == .medium)        // user's direct choice persisted
         #expect(item?.likelihood == nil)
     }
 
@@ -84,7 +93,7 @@ struct RiskAssessmentMethodsTests {
             d.likelihood = 1; d.severity = 1   // jsa → frequency×severity
             vm.addOrUpdate(d)
         }
-        vm.save(context: ctx)
+        try vm.save(context: ctx)
 
         let saved = try ctx.fetch(FetchDescriptor<RiskAssessment>())
             .first { $0.method == .jsa }

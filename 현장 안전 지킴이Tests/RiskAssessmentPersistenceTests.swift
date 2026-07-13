@@ -33,7 +33,7 @@ struct RiskAssessmentPersistenceTests {
         item.severity = 3                 // score 6 → high
         vm.addOrUpdate(item)
 
-        vm.save(context: ctx)
+        try vm.save(context: ctx)
 
         let all = try ctx.fetch(FetchDescriptor<RiskAssessment>())
         #expect(all.count == 1)
@@ -60,7 +60,7 @@ struct RiskAssessmentPersistenceTests {
         item.directRiskLevel = .medium
         vm.addOrUpdate(item)
 
-        vm.save(context: ctx)
+        try vm.save(context: ctx)
 
         let saved = try ctx.fetch(FetchDescriptor<RiskAssessment>())[0]
         #expect(saved.method == .threeLevel)
@@ -72,13 +72,20 @@ struct RiskAssessmentPersistenceTests {
         #expect(it.severity == nil)
     }
 
-    @Test func saveRequiresAssessorAndAtLeastOneItem() throws {
+    @Test func saveRequiresAssessorItemAndResolvedRisk() throws {
         let vm = RiskAssessmentViewModel()
+        vm.method = .threeLevel
         vm.assessorName = ""
         #expect(vm.canSave == false)           // no assessor, no items
         vm.assessorName = "Tester"
         #expect(vm.canSave == false)           // still no items
-        vm.addOrUpdate(RiskAssessmentViewModel.DraftItem(taskDescription: "x"))
-        #expect(vm.canSave == true)
+
+        var item = RiskAssessmentViewModel.DraftItem(taskDescription: "x")
+        vm.addOrUpdate(item)
+        #expect(vm.canSave == false)           // LEGAL-0: item present but 미평가 → still blocked
+
+        item.directRiskLevel = .high
+        vm.addOrUpdate(item)
+        #expect(vm.canSave == true)            // assessor + item + resolved risk
     }
 }

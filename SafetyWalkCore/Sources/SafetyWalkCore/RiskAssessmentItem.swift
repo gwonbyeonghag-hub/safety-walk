@@ -34,7 +34,10 @@ public final class RiskAssessmentItem {
         currentControls: String? = nil,
         likelihood: Int? = nil,
         severity: Int? = nil,
-        riskLevel: RiskLevel = .low,
+        // LEGAL-0: no default — every caller must pass a RESOLVED 위험성 수준 explicitly.
+        // (The stored-property default on line 17 stays for CloudKit; only the
+        // constructor default is removed so unassessed items can never be persisted.)
+        riskLevel: RiskLevel,
         reductionMeasure: String? = nil,
         postRiskLevel: RiskLevel? = nil,
         responsibleName: String? = nil,

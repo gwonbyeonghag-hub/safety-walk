@@ -90,23 +90,41 @@ struct RiskAssessmentItemEditorView: View {
     // MARK: - 3단계: direct 상/중/하 selection
 
     private var threeLevelInput: some View {
-        HStack(spacing: 10) {
-            ForEach([RiskLevel.high, .medium, .low], id: \.self) { level in
-                let selected = draft.directRiskLevel == level
-                Button {
-                    draft.directRiskLevel = level
-                } label: {
-                    Text(level.localizedLabel)
-                        .font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .foregroundStyle(selected ? .white : level.uiColor)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(selected ? level.uiColor : level.uiColor.opacity(0.12))
-                        )
+        VStack(alignment: .leading, spacing: 10) {
+            // LEGAL-0: a seeded 참고값 is shown only as a suggestion — never auto-applied.
+            // The user must tap "이 값으로 설정" for it to become the chosen level.
+            if let suggested = draft.suggestedLevel {
+                HStack(spacing: 8) {
+                    Text(String(format: LocalizationKey.raRiskSuggestedFormat.localized,
+                                suggested.localizedLabel))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button(LocalizationKey.raRiskApplySuggested.localized) {
+                        draft.directRiskLevel = suggested
+                    }
+                    .font(.caption.weight(.semibold))
+                    .buttonStyle(.borderless)
                 }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(selected ? [.isSelected] : [])
+            }
+            HStack(spacing: 10) {
+                ForEach([RiskLevel.high, .medium, .low], id: \.self) { level in
+                    let selected = draft.directRiskLevel == level
+                    Button {
+                        draft.directRiskLevel = level
+                    } label: {
+                        Text(level.localizedLabel)
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .foregroundStyle(selected ? .white : level.uiColor)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(selected ? level.uiColor : level.uiColor.opacity(0.12))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(selected ? [.isSelected] : [])
+                }
             }
         }
         .padding(.vertical, 4)

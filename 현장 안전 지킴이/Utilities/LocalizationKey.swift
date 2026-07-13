@@ -304,6 +304,14 @@ enum LocalizationKey: String {
     case raJsaStep              = "ra.jsa.step"
     case raJsaAddStep           = "ra.jsa.addStep"
 
+    // MARK: - Risk Assessment risk-input safety (LEGAL-0)
+    case raRiskUnassessed       = "ra.risk.unassessed"
+    case raRiskSuggestedFormat  = "ra.risk.suggested"
+    case raRiskApplySuggested   = "ra.risk.applySuggested"
+    case raSaveIncompleteHint   = "ra.save.incompleteHint"
+    case raSaveFailedTitle      = "ra.save.failedTitle"
+    case raSaveFailedMessage    = "ra.save.failedMessage"
+
     // MARK: - Reports (WO-5b)
     case reportRaTitle          = "report.ra.title"
     case reportNo               = "report.no"

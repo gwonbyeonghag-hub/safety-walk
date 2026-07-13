@@ -454,6 +454,14 @@
 "ra.jsa.step" = "작업 단계";
 "ra.jsa.addStep" = "단계 추가";
 
+/* Risk Assessment risk-input safety — LEGAL-0 */
+"ra.risk.unassessed" = "미평가";
+"ra.risk.suggested" = "참고값: %@ (연결된 위험요인)";
+"ra.risk.applySuggested" = "이 값으로 설정";
+"ra.save.incompleteHint" = "위험도가 미입력된 항목이 있어 저장할 수 없습니다";
+"ra.save.failedTitle" = "저장 실패";
+"ra.save.failedMessage" = "위험성평가를 저장하지 못했습니다. 다시 시도해 주세요.";
+
 /* Reports — WO-5b */
 "report.ra.title" = "위험성평가표";
 "report.no" = "번호";

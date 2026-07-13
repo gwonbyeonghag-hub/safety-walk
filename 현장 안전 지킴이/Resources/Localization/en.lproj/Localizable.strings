@@ -454,6 +454,14 @@
 "ra.jsa.step" = "Job Step";
 "ra.jsa.addStep" = "Add Step";
 
+/* Risk Assessment risk-input safety — LEGAL-0 */
+"ra.risk.unassessed" = "Not assessed";
+"ra.risk.suggested" = "Suggested: %@ (linked hazard)";
+"ra.risk.applySuggested" = "Use this value";
+"ra.save.incompleteHint" = "Some items have no risk level yet — set one to save";
+"ra.save.failedTitle" = "Couldn't Save";
+"ra.save.failedMessage" = "The risk assessment couldn't be saved. Please try again.";
+
 /* Reports — WO-5b */
 "report.ra.title" = "Risk Assessment Sheet";
 "report.no" = "No.";

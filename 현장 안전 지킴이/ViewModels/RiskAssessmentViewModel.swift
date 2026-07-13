@@ -37,7 +37,11 @@ final class RiskAssessmentViewModel {
         var currentControls = ""        // 현재 안전조치
         var likelihood: Int?            // 가능성 1–3 (빈도×강도)
         var severity: Int?              // 중대성 1–3 (빈도×강도)
-        var directRiskLevel: RiskLevel = .low   // 3단계 직접 선택
+        // LEGAL-0: nil = 미평가. The user must choose a level; nothing is auto-assigned.
+        var directRiskLevel: RiskLevel?         // 3단계 직접 선택
+        // 참고값 only — seeded from a linked hazard / checklist finding. Never auto-applied
+        // to directRiskLevel; the user taps to confirm (LEGAL-0: 자동 확정 금지).
+        var suggestedLevel: RiskLevel?
         var reductionMeasure = ""       // 감소대책
         var postRiskLevel: RiskLevel?   // 개선 후 위험성
         var responsibleName = ""        // 담당
@@ -49,14 +53,18 @@ final class RiskAssessmentViewModel {
 
     // MARK: - Derived
     var canSave: Bool {
-        !assessorName.trimmingCharacters(in: .whitespaces).isEmpty && !draftItems.isEmpty
+        guard !assessorName.trimmingCharacters(in: .whitespaces).isEmpty,
+              !draftItems.isEmpty else { return false }
+        // LEGAL-0: every item must have a resolved 위험성 수준 (no 미평가 items may be saved).
+        return draftItems.allSatisfy { resolvedLevel(for: $0) != nil }
     }
 
-    /// Resolved 위험성 수준 for a draft under the current method.
+    /// Resolved 위험성 수준 for a draft under the current method, or `nil` when not yet
+    /// assessed (LEGAL-0: 미입력은 등급 없음 — 색·점수·배지 미표시, 저장 불가).
     /// threeLevel → user's direct choice; frequencySeverity → derived from the matrix.
-    func resolvedLevel(for item: DraftItem) -> RiskLevel {
+    func resolvedLevel(for item: DraftItem) -> RiskLevel? {
         guard method.usesFrequencySeverity else { return item.directRiskLevel }
-        guard let l = item.likelihood, let s = item.severity else { return .low }
+        guard let l = item.likelihood, let s = item.severity else { return nil }
         return matrix.band(likelihood: l, severity: s)
     }
 
@@ -87,8 +95,9 @@ final class RiskAssessmentViewModel {
 
     /// Seeds draft items from a completed inspection's **failed (부적합)** checklist
     /// items: the localized item title becomes the hazard, its category the task,
-    /// any note the current control. Risk is seeded from a linked Hazard's level
-    /// when present, else 보통 (a Fail warrants attention) — the user can adjust.
+    /// any note the current control. A linked Hazard's level is carried as a
+    /// `suggestedLevel` **참고값 only** — LEGAL-0 forbids auto-assigning a risk level,
+    /// so `directRiskLevel` stays nil until the user confirms one.
     /// Template keys are resolved to literal text via `L(...)` (a text copy).
     func seedFromInspection(_ inspection: Inspection) {
         linkedInspectionId = inspection.id
@@ -103,17 +112,32 @@ final class RiskAssessmentViewModel {
             d.hazardDescription = L(ci.title)
             d.currentControls = ci.note ?? ""
             d.linkedHazardId = ci.linkedHazardId
+            // 참고값만: 연결된 위험요인의 기존 등급을 제안값으로. 자동 확정 금지 —
+            // directRiskLevel은 nil로 두고 사용자가 확인해야 반영된다.
             if let hid = ci.linkedHazardId, let hz = hazardsById[hid] {
-                d.directRiskLevel = hz.riskLevel
-            } else {
-                d.directRiskLevel = .medium
+                d.suggestedLevel = hz.riskLevel
             }
             draftItems.append(d)
         }
     }
 
     // MARK: - Persist
-    func save(context: ModelContext) {
+
+    /// Thrown when persistence cannot complete. LEGAL-0: save() never fails silently —
+    /// it throws so the caller can keep the screen up and surface an error.
+    enum SaveError: Error {
+        case incompleteItem   // a draft item has no resolved 위험성 수준 (defence-in-depth; canSave gates this)
+    }
+
+    func save(context: ModelContext) throws {
+        // LEGAL-0 방어 guard: resolve every level BEFORE touching the context, so an
+        // unassessed item aborts the save without leaving partial inserts. The normal
+        // path is already gated by `canSave`; this makes 미평가 저장 impossible.
+        let levels = try draftItems.map { d -> RiskLevel in
+            guard let level = resolvedLevel(for: d) else { throw SaveError.incompleteItem }
+            return level
+        }
+
         let assessment = RiskAssessment(
             kind: kind,
             method: method,
@@ -134,7 +158,7 @@ final class RiskAssessmentViewModel {
                 currentControls: d.currentControls.trimmedOrNil,
                 likelihood: isFreq ? d.likelihood : nil,
                 severity: isFreq ? d.severity : nil,
-                riskLevel: resolvedLevel(for: d),
+                riskLevel: levels[index],
                 reductionMeasure: d.reductionMeasure.trimmedOrNil,
                 postRiskLevel: d.postRiskLevel,
                 responsibleName: d.responsibleName.trimmedOrNil,
@@ -148,7 +172,14 @@ final class RiskAssessmentViewModel {
         }
         assessment.items = items
 
-        try? context.save()
+        // No `try?`: a failed save must propagate. Roll back the pending inserts so a
+        // retry (screen stays up) doesn't double-insert the assessment.
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
     }
 }
 
