@@ -1275,3 +1275,42 @@ main에서 브랜치 `wo15-mac-hazards-table`. handoff+스샷 → **플래너 �
 법인/팀 계정·권한·공유 데이터·감사 로그 · 통합검색의 설정/도움말 색인 · 통계 기간비교·추이 회귀·PDF export · 달력 일정 생성·알림·리마인더.
 
 (각 WO-19~21 상세 지시서는 WO-15~18 진행되며 그 직전에 작성 — 지금 다 쓰면 rot.)
+
+---
+
+# ⛔ 선결 (오너+검토자 토론 수렴 2026-07-13) — Connect 등록 전 필수, WO-15보다 앞
+
+토론 결론: 검색·통계·달력 풀기능 넣되, **결제 구조를 먼저 못 박아야** Mac Pro 구현 후 결제 때문에 다 뜯는 참사를 막는다. **App Store = 단일 레코드 + Universal Purchase 확정**(서버 0 — `Transaction.currentEntitlements`가 같은 Apple ID 기기 간 자동 공유, v3 계정/서버 정책 불변). **"앱 2건 등록" 지시 철회 → 단일 레코드.**
+
+## WO-A — 번들 ID 통일 + Universal Purchase 구성 🔴 BLOCKER (Connect 등록 전 필수)
+> Universal Purchase = 동일 번들 ID + 단일 앱 레코드. 현재 Mac은 `.mac` 접미사라 불가.
+- macOS 타깃 `PRODUCT_BUNDLE_IDENTIFIER`를 `com.gwonbyeonghag.safetywalk.mac` → **`com.gwonbyeonghag.safetywalk`** 로 통일(Apple은 iOS/macOS 플랫폼으로 구분하니 충돌 없음). Debug/Release 양 config.
+- Mac 서명/프로비저닝 재확인(-allowProvisioningUpdates), 엔타이틀먼트·CloudKit 컨테이너(이미 공유)·앱 아이콘 영향 확인.
+- 🚫 iOS 번들·CloudKit 컨테이너 ID·모델 변경 금지. 완료: 양 타깃 서명빌드 green + 번들ID 동일 확인.
+- ⚠️ 결제 구조라 실수 치명적 — /grill-with-docs로 Universal Purchase 요건 재확인 후 착수. 브랜치 `woA-universal-bundle`.
+**WO-A 결과:** ☐ 미착수
+
+## WO-B — Mac에 ProStore 이식 (구독 상태 공유) 🔴 BLOCKER
+> Mac엔 ProStore 없음. 통계·달력 Pro 게이트를 Mac에 걸려면 Mac이 구독 상태를 읽어야 함.
+- `ProEntitlement`(순수함수, 이미 있음)를 SafetyWalkCore로 올리거나 Mac 타깃에 ProStore 이식 — `Transaction.currentEntitlements`(Universal Purchase면 자동 공유) 매핑. 복원 버튼(설정).
+- 완료: Mac에서 구독 활성/비활성 판정 동작(SKTestSession) + iOS 회귀 0. 브랜치 `woB-mac-prostore`. WO-A 후.
+**WO-B 결과:** ☐ 미착수
+
+## WO-C — 수익화/제출 문서 정합화 📄
+> `MONETIZATION_STRATEGY.md`(무료후 일회성)·`SUBMISSION_RUNBOOK.md`(IAP 없음)가 실제 코드(월/연 구독)와 충돌 → Connect 입력 혼란.
+- 두 문서를 현행(월/연 자동갱신 구독, 검색무료/통계·달력 Pro, 단일레코드+Universal)으로 갱신 or deprecated 표기. docs/appstore/ 패키지와 정합.
+- 🚫 앱 코드 무변경(문서만). 브랜치 `woC-doc-sync`.
+**WO-C 결과:** ☐ 미착수
+
+## 플랫폼별 UI 밀도 규칙 (Mac 복제 금지 — 각 WO에 적용)
+| 기능 | iPhone | iPad | Mac |
+|---|---|---|---|
+| Table/Inspector | 미적용(기존 유지) | 터치용 목록+상세 유지 | 전체 적용 |
+| 통합검색(무료) | 기록 화면서 전체 검색 | 툴바검색+분할결과 | 툴바검색+Table결과 |
+| 통계(Pro) | 세로 핵심지표+간단차트 | 2열 분석 | 전체 분석 워크스페이스 |
+| 달력(Pro) | 월달력+선택일 목록 | 달력+상세 2열 | 달력+Inspector |
+- iPhone 탭 추가 금지(5탭 유지): 검색=기록 진입, 통계·달력=관리도구 진입. iPad/Mac은 사이드바 독립 섹션.
+- 달력 = Swift Charts 아님, `Calendar+LazyVGrid` 직접 → WO-21은 **中규모**.
+
+## 순서 (갱신)
+WO-A → WO-B → WO-C → (Connect 등록 재개 가능) → WO-15(위험요인 Table, **상태변경 제외·조회+리포트만**) → 오너 승인 → WO-16~18 → WO-19(검색) → WO-20(통계,분석섹션=WO-18 대시보드와 분리) → WO-21(달력) → 마감.
