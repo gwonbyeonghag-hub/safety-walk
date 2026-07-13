@@ -1385,3 +1385,41 @@ optional만으로 불완전. 다음 전부 포함:
 - **TBM-3**: PDF + 기록조회 + Mac 읽기 화면.
 - **TBM-4**: 한국 TBM / 미국 Generic Toolbox / 특정규정 프로필 QA.
 - App Store 키워드 = **지금 제거(LEGAL-QUICK), TBM 종단 QA(TBM-4) 후 재추가.**
+
+---
+# 🎫 WO LEGAL-0 — 위험도 시맨틱 정합 (실행자 지시문 · 코드 첫 작업)
+**출처**: 검토자 2차 검수, 오너 확정. **원칙**: "미입력=등급 없음, 자동 확정 금지, 저장 실패는 침묵 금지."
+**⚠️ 착수 전 필수**: `git branch --show-current`로 실브랜치 확인 → `git checkout -b legal0-risk-semantics` 전용 브랜치. main 직커밋 금지.
+**대상 파일**: `현장 안전 지킴이/ViewModels/RiskAssessmentViewModel.swift`, `.../Views/RiskAssessment/RiskAssessmentCreateView.swift`(+행/셀 뷰), `SafetyWalkCore/Sources/SafetyWalkCore/RiskAssessmentItem.swift`
+
+## LEGAL-0a — Core 생성자 필수화
+- `RiskAssessmentItem.swift:17` `public var riskLevel: RiskLevel = RiskLevel.low` **저장 프로퍼티 기본값은 유지**(SwiftData 요구).
+- `RiskAssessmentItem.swift:37` **생성자 인자 `riskLevel: RiskLevel = .low`의 기본값 제거** → `riskLevel: RiskLevel`(필수). 컴파일러가 모든 호출부에서 명시 강제.
+- 깨지는 모든 호출부(save·프리뷰·테스트픽스처·시드) 명시 전달로 수정.
+
+## LEGAL-0b — 미입력 = nil (자동 Low 제거)
+- `RiskAssessmentViewModel.swift:40` `var directRiskLevel: RiskLevel = .low` → `var directRiskLevel: RiskLevel? = nil`.
+- `resolvedLevel(for:) -> RiskLevel` → **`-> RiskLevel?`**. line59 `else { return .low }` → `else { return nil }`. threeLevel 분기는 `item.directRiskLevel`(이미 optional) 그대로 반환. (바로 아래 `score(for:)`의 nil 패턴과 동일하게.)
+- **모든 `resolvedLevel` 소비부**(행 셀·요약·색/점수/배지) 찾아 nil이면 **"미평가" 플레이스홀더**(색 없음·점수 없음·등급 배지 없음)로 표시.
+
+## LEGAL-0c — 자동 확정 제거 + 참고값
+- `seedFromInspection`(line100~112): line109 `d.directRiskLevel = .medium` **제거**(→ nil 유지). line107 연결 위험요인 등급도 **직접 확정 금지**.
+- DraftItem에 `var suggestedLevel: RiskLevel? = nil` 추가 → 연결 위험요인/체크리스트 부적합의 기존 등급을 여기 담아 **"참고값: 높음(연결된 위험요인)"** 식으로만 표시. 사용자가 눌러 확인해야 `directRiskLevel`에 반영. (UI 어포던스 형태는 실행자 재량 — "이 값으로 설정" 버튼 등, 단 자동 확정은 금지.)
+
+## LEGAL-0d — 전체 항목 검증
+- `canSave`(line51) 강화: 이름·항목수 + **모든 draft 항목의 `resolvedLevel`이 non-nil**이어야 true.
+- 저장 화면에 미완성 항목 시각 표시(어느 항목이 위험도 미입력인지). 저장 버튼 비활성 사유 안내.
+
+## LEGAL-0e — 저장 실패 침묵 금지
+- `save(context:)`(line116) → **`throws`**. line151 `try? context.save()` → `try context.save()`(do/catch는 호출부).
+- line137 `riskLevel: resolvedLevel(for: d)`가 optional 되므로 저장 직전 방어 guard(정상경로는 canSave가 보장, nil이면 throw).
+- `RiskAssessmentCreateView.swift:65-66` `viewModel.save(...); dismiss()` → **`do { try viewModel.save(...); dismiss() } catch { 오류 알럿 표시, 화면 유지 }`**. 저장 성공 시에만 dismiss.
+
+## LEGAL-0f — 테스트 (/tdd)
+- freq×severity 값 미입력 → `resolvedLevel == nil`(자동 Low 안 됨).
+- 체크리스트 부적합 시드 → `directRiskLevel == nil`(자동 Medium 안 됨), `suggestedLevel` 세팅됨.
+- 항목 하나라도 위험도 미입력 → `canSave == false`.
+- `context.save()` 실패 모킹 → `save`가 throw, 화면 미종료 경로 검증.
+
+## ✅ 리뷰어(나) 수용 기준 — 러버스탬프 안 함
+1. 전용 브랜치에서 작업(main 직커밋 아님). 2. iOS+Mac 둘 다 **서명 빌드** 성공(무서명=CloudKit SIGTRAP 오탐). 3. `/tdd` 4케이스 그린. 4. 실기기/시뮬 스샷: 미입력 시 "미평가" 표시 + 미완성 저장 차단 + 저장실패 알럿. 검증 후 refspec으로 main 병합.
