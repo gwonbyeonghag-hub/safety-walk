@@ -1174,3 +1174,32 @@ main에서 브랜치 `wo13-history-grouping`. ⚠️ 커밋 전 `git branch --sh
   - **검증 시드(승인 옵션 1)**: 날짜순 다중 버킷 스샷을 위해 **DEBUG + 런치인자(`-com.safetywalk.uitestSeedHistory`) 전용** 시드 훅 추가(`HistorySeed.swift`, 전체 `#if DEBUG`). 실 저장소/CloudKit 무접촉 — **인메모리 컨테이너**만 사용. `HistoryClock`(DEBUG에서만 고정일 pin, Release=`Date()`)로 요일 무관 결정론적 버킷(오늘=수 2026-07-08 기준). **Release 스트립 확인**: Release 바이너리 `strings` grep에서 `uitestSeedHistory`/`uitestNow`/`HistorySeed`/`makeSeededInMemoryContainer`/시드 한글 문자열 모두 **0 hit**(프로덕션 문자열은 존재; 서명 유지됨).
 - 커밋: `eff5d89`(기능+테스트+문자열), 스샷/시드 인프라 커밋(아래) — 둘 다 `wo13-history-grouping`, 미push.
 - 증거 위치: 테스트 `현장 안전 지킴이Tests/HistoryGroupingTests.swift`; 스샷 UI테스트 `현장 안전 지킴이UITests/HistoryScreenshots{,IPad}UITests.swift`; 스샷 PNG `docs/appstore/screenshots/verification/wo13-*`(iPhone 1320×2868, iPad 2064×2752, 라/다).
+
+---
+
+## WO-14 — Mac 데스크톱화 시안: 위험요인 Browse HTML 목업 3안 🔵 v1.1 (출시 후) — 지금은 시안만, 구현 금지
+
+> 오너 조사(`UI_PRELAUNCH_DESIGN_RESEARCH.md`, 2026-07-13): Mac 화면이 "잘 만든 웹 대시보드 목업"처럼 보임 — 넓은 창에 카드가 늘어나고 빈 공간 큼. Browse는 `List(width:300)+상세` 고정이라 **Mac 강점(Table·검색·정렬·인스펙터) 부재**(코드로 확인: `SafetyWalkMac/Browse/*`에 Table/searchable/inspector 0). 방향 = SwiftUI 유지·`Table+searchable+inspector`로 데스크톱 작업도구화. **단 출시 블로커 아님**(macOS=무료 컴패니언, 기능 완전) → **v1.1로**. 이번 WO는 **HTML 목업 3안만**(구현·앱코드 변경 절대 금지) — 방법론은 아이콘/대시보드 때와 동일(HTML 시안→비교→승인 1안만 후속 SwiftUI).
+
+### 목표 (verifiable)
+`docs/design/`에 **위험요인 Browse HTML 목업 3안**(자기완결 HTML, 승인 목업 토큰 시스템 재사용 = macos-dashboard-mockup.html의 쿨뉴트럴+navy 어댑티브·위험칩). 같은 샘플 데이터로 3가지 데스크톱 구조 비교:
+1. **표 중심**: 사이드바 + 검색/필터 툴바 + `Table`(열: 위험도·설명·현장·위치·상태·수정일) + 우측 인스펙터
+2. **작업함 중심**: 미조치/진행중/완료 컬럼(칸반風) 또는 상태 그룹 + 인스펙터
+3. **대시보드+표 혼합**: 상단 요약 스탯 + 하단 Table
+
+### 스코프/금지
+✅ HTML/CSS만(`docs/design/mac-hazards-browse-{table,worklist,hybrid}.html`). 라이트/다크 토글. 위험색=위험 의미만. 실제 위험요인 필드(위험도·설명·현장·위치·유형·상태·수정일) 반영. 
+🚫 **앱 Swift 코드 변경 절대 금지** · SwiftUI 구현 금지 · 기존 미추적 파일(아이콘/xcshareddata) 커밋 금지 · 출시 관련 파일 무접촉.
+
+### 완료 조건
+- [ ] 3안 HTML(라/다), 자기완결(외부 의존 0), 위험요인 실데이터 필드
+- [ ] 각 안의 트레이드오프 1줄 요약(README나 문서 하단)
+- [ ] 앱 코드 diff 0 확인
+
+### 진행 / 보고
+main에서 브랜치 `wo14-mac-hazards-mockup`. ⚠️ 커밋 전 브랜치+스테이징 확인, HTML만 stage(`git add docs/design/…` — `git add -A` 금지). 보고: 3안 링크(아티팩트化는 플래너가) → 오너가 5초 최고위험 찾기·2회내 필터 기준으로 선택 → 선택 1안만 v1.1에서 SwiftUI(WO-15 예정).
+
+**WO-14 결과:**
+- 상태: ☐ 미착수
+- 요약:
+- 증거 위치:
