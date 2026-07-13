@@ -1389,13 +1389,19 @@ optional만으로 불완전. 다음 전부 포함:
 ---
 # 🎫 WO LEGAL-0 — 위험도 시맨틱 정합 (실행자 지시문 · 코드 첫 작업)
 **출처**: 검토자 2차 검수, 오너 확정. **원칙**: "미입력=등급 없음, 자동 확정 금지, 저장 실패는 침묵 금지."
-**⚠️ 착수 전 필수**: `git branch --show-current`로 실브랜치 확인 → `git checkout -b legal0-risk-semantics` 전용 브랜치. main 직커밋 금지.
+**⚠️ 착수 전 필수**: `git branch --show-current`로 실브랜치 확인 → **`main`(현재 9f18c8c 이상) 기준** `git checkout -b legal0-risk-semantics` 전용 브랜치. main 직커밋 금지.
+**🚦 리뷰어(나) 규율**: 실행자가 이 브랜치를 잡고 있는 동안 나는 **공유 워킹카피에 커밋 금지**(과거 dca0145/wo14 사고 재발 방지). 실행자 완료 보고 → 내가 브랜치 전환 후에만 커밋/병합.
+**⚠️ 0a~0e는 하나의 원자 변경셋**: 0a만 하면 save() 등 호출부가 깨져 빌드 RED. 0e까지 끝나야 그린 — 중간 RED는 정상.
 **대상 파일**: `현장 안전 지킴이/ViewModels/RiskAssessmentViewModel.swift`, `.../Views/RiskAssessment/RiskAssessmentCreateView.swift`(+행/셀 뷰), `SafetyWalkCore/Sources/SafetyWalkCore/RiskAssessmentItem.swift`
 
 ## LEGAL-0a — Core 생성자 필수화
-- `RiskAssessmentItem.swift:17` `public var riskLevel: RiskLevel = RiskLevel.low` **저장 프로퍼티 기본값은 유지**(SwiftData 요구).
+- 🧨 **지뢰**: `RiskAssessmentItem.swift:17` `public var riskLevel: RiskLevel = RiskLevel.low` **저장 프로퍼티 기본값은 절대 건드리지 말 것** — CloudKit이 non-optional 저장 프로퍼티에 기본값을 요구(제거 시 CloudKit 동기화 붕괴). 0a는 **생성자 인자 기본값만** 손댐.
 - `RiskAssessmentItem.swift:37` **생성자 인자 `riskLevel: RiskLevel = .low`의 기본값 제거** → `riskLevel: RiskLevel`(필수). 컴파일러가 모든 호출부에서 명시 강제.
-- 깨지는 모든 호출부(save·프리뷰·테스트픽스처·시드) 명시 전달로 수정.
+- **깨지는 호출부 전수(grep 확정)** — 전부 명시 전달로 수정:
+  - `SafetyWalkMac/SeedData.swift` 4곳(160·196·223·259) ← **Mac도 파급**, 시드값에 위험도 명시
+  - `현장 안전 지킴이Tests/ReportRenderingTests.swift` 2곳(48·75)
+  - `SafetyWalkCore/Tests/.../RiskAssessmentTests.swift` — 무인자 `RiskAssessmentItem()`(83·143·147)·`RiskAssessmentItem(sortOrder:)` 포함. "CloudKit-safe default" 무인자 테스트는 **저장 프로퍼티 기본값(line17)을 검증하는 것**이지 생성자 기본값이 아님 → 명시 인자로 갱신하되 line17은 유지.
+  - `RiskAssessmentViewModel.swift:131` save() (→ 0e에서 함께 처리)
 
 ## LEGAL-0b — 미입력 = nil (자동 Low 제거)
 - `RiskAssessmentViewModel.swift:40` `var directRiskLevel: RiskLevel = .low` → `var directRiskLevel: RiskLevel? = nil`.
@@ -1421,5 +1427,9 @@ optional만으로 불완전. 다음 전부 포함:
 - 항목 하나라도 위험도 미입력 → `canSave == false`.
 - `context.save()` 실패 모킹 → `save`가 throw, 화면 미종료 경로 검증.
 
-## ✅ 리뷰어(나) 수용 기준 — 러버스탬프 안 함
-1. 전용 브랜치에서 작업(main 직커밋 아님). 2. iOS+Mac 둘 다 **서명 빌드** 성공(무서명=CloudKit SIGTRAP 오탐). 3. `/tdd` 4케이스 그린. 4. 실기기/시뮬 스샷: 미입력 시 "미평가" 표시 + 미완성 저장 차단 + 저장실패 알럿. 검증 후 refspec으로 main 병합.
+## ✅ 리뷰어(나) 수용 기준 — 러버스탬프 안 함 (타깃별로 분리 · UI는 iOS 전용)
+1. 전용 브랜치에서 작업(main 직커밋 아님).
+2. **iOS/iPad**(위험성평가 생성 UI가 여기만 존재 — RiskAssessmentCreateView는 iOS 전용): **서명 빌드** 성공(무서명=CloudKit SIGTRAP 오탐) + 스샷 3장 = ①미입력 "미평가" 표시 ②미완성 저장 차단 ③저장실패 알럿+화면 유지.
+3. **Mac**(생성 UI 없음, SeedData+Browse 읽기만): **서명 빌드** 성공 + SeedData 4곳 명시 전달 확인 + 스샷 불필요.
+4. **Core 패키지**: `swift test`(0f 4케이스 + 기존 RiskAssessmentTests 갱신분) 그린.
+검증 통과 후 refspec으로 main 병합.
