@@ -11,6 +11,7 @@
 - **`closed`는 저장 상태가 아니라 파생** — 모든 **필수** 조치의 이행·효과확인 완료 시 계산
 - 화면 표시 예: `평가완료 · 개선조치 3건 진행 중`
 - `planned` 상태에서 제37조의3 **사전 일정 공유** 지원
+- **불변 시점**(교정 #3): `AssessmentCriteria`=**inProgress 전환 시** 잠금 · 항목·`RiskAssessmentParticipant`=**finalized** 잠금(작성 중 추가·수정 가능) · `SharingEvent`=**생성 즉시** · `CorrectiveAction`=**finalized 후에도** 별도 수명주기로 수정. ([통합 지도](ENTITY_MAP_V3_DRAFT.md) lock timing 표)
 
 ### 1.1 "필수 개선조치" 정의 (closed 파생 규칙)
 > ⚠️ **"불허용"은 법적 위반 판정이 아님** (교정 #6). = **사용자/사업장이 설정한 허용 기준(임계값) 초과**. 앱은 자동 계산할 뿐, **사용자가 확인**해 확정. 기록 도구이지 판정 도구 아님.
@@ -23,8 +24,8 @@
 
 | 엔티티 | 상태 | 소유·관계 | 핵심 | 교정 |
 |---|---|---|---|---|
-| `RiskAssessmentProgram` | N | Site 1—N | 운영방식(정기/상시) + **jurisdiction + industry/profile + effective period** | #4 |
-| `RiskAssessment` | E | Program 1—N | + 평가상태(§1) + scheduledAt + **소유 기준 스냅샷** + 근로자대표 필드(§흡수) | #2 #8 |
+| `RiskAssessmentProgram` | N | Site 1—N (**물리삭제 대신 `archived`**) | 운영방식(정기/상시) + **jurisdiction + industry/profile + effective period** | #4 |
+| `RiskAssessment` | E | **독립 기록 루트**(Program 연결 선택·nullify + siteName·jurisdiction·profile 값 스냅샷) | + 평가상태(§1) + scheduledAt + **소유 기준 스냅샷** + 근로자대표 필드 | #1·#2·#8 |
 | `AssessmentCriteria` | N | 평가 **1:1 소유·불변(값 복사)** | 위험성 기준·허용 임계값·매트릭스 = 평가 시점 스냅샷. 공통 가변 엔티티 참조 금지 | #3 |
 | `RiskAssessmentItem` | E | 평가 1—N | + **기준 초과 여부**(자동계산+사용자 확인, §1.1) · **`riskLevel: RiskLevel?`(nil=미평가, §2.1)** | §2.1 |
 | `CorrectiveAction` | N | 항목 1—N | 실제 조치·이행일·확인자·증거·개선후위험도·효과확인 (기존 status·dueDate·responsibleName·감소대책 **흡수**) | #5 |
@@ -44,9 +45,9 @@
 ## 3. 공유 이벤트
 | 엔티티 | 상태 | 소유 | 핵심 |
 |---|---|---|---|
-| `SharingEvent` | N | 평가 1—N | 사전/사후 구분·시각·방법(교육·게시·서면·전자·TBM)·대상·담당자·**내용 스냅샷**. PDF≠공유증명 |
+| `SharingEvent` | N | 평가 1—N | 사전/사후 구분·시각·방법(**교육·게시·서면·전자** — TBM 제외)·대상·담당자·**내용 스냅샷**. PDF≠공유증명 |
 공유 범위(사후) = 유해위험요인 + 위험성 결정 결과 + 개선대책 + **개선대책 이행 결과**.
-> **TBM 방법 공유의 정본은 `SafetyBriefing`(TBM-0 §8)**. 브리핑 finalize 시 `sourceBriefingID` + 내용 스냅샷을 가진 불변 `SharingEvent`를 원자적 생성 — mutable 브리핑 관계 의존 금지, 브리핑당 1건(중복 방지).
+> **이중 저장 제거(교정 #2)**: TBM 방식 공유는 별도 `SharingEvent`를 만들지 않는다 — 확정된 `SafetyBriefing` **자체가 TBM 공유 증명**(CloudKit 무 unique 제약 → 다기기 중복 소멸). `SharingEvent`는 비TBM 공유만. **조회 모듈**이 둘을 통합 공유 이력으로 반환.
 
 ## 4. 기존 필드 매핑 + legacy 이관 조건 (교정 #5)
 - 흡수: `postRiskLevel`·`correctiveActionStatus`·`dueDate`·`responsibleName`·`reductionMeasure` → `CorrectiveAction`. **병렬 중복 필드 금지.**
@@ -55,7 +56,7 @@
 ## 5. 개인정보 재판정 (교정 #7 — 결론 열어둠, 지금 진행)
 - Apple: collect = 기기 밖 전송으로 **개발자/파트너가 지속 접근** 가능. **private CloudKit은 사용자 전용 접근·개발자 포털 미표시** → **미수집 해석도 방어 가능**.
 - ⇒ "Data Not Collected가 깨졌다"고 **선결론 금지**. 항목별(이름·주소·사진·사용자콘텐츠·참여자 제3자정보) 공식 정의로 판정, **불확실 항목은 "Apple 공식 문의 필요"로 분리**.
-- 산출물: 별도 `PRIVACY_AUDIT.md`(항목별 판정) → `app_privacy_answers`·`privacy_policy` 갱신 여부 결정. 참여자=제3자 정보라 한국 PIPA(앱=도구/수탁) 병기. **Connect 단일레코드 등록 게이트.**
+- 산출물: 별도 [PRIVACY_AUDIT.md](PRIVACY_AUDIT.md)(두 축 분리 판정) → `app_privacy_answers`·`privacy_policy` 갱신 여부 결정. 참여자=제3자라 PIPA 별도 축(**수탁자 여부 미확정 — 별도 법률 검토**). Privacy Audit = **App Store 최종 제출 게이트**(레코드 생성은 막지 않음 — 그건 WO-A).
 
 ## 6. SCHEMA-V3 lock #2 — 마이그레이션 판단 4확인 (교정 #6)
 TestFlight 사용자 유무만으로 결정 ❌. **오너가 확인해야 할 4가지**(Apple 계정 필요 — Claude 불가):

@@ -40,10 +40,10 @@ draft → conducted → finalized  (+ cancelled)
 ## 7. 정정 기록 (교정 #5 — 중복 아닌 정정)
 - 잠긴 브리핑 정정 = **새 기록** + `supersedesBriefingID`·`correctionReason`·`correctedAt`·`correctedBy`로 원본 연결.
 
-## 8. SafetyBriefing ↔ SharingEvent 정본 (교정 #1)
-- **`SafetyBriefing`이 원본 기록.** 연결된 위험성평가에 공유 증명이 필요하면 **finalize 시 불변 `SharingEvent` 스냅샷을 같은 저장 단위에서 원자적 생성**.
-- `SharingEvent`는 `sourceBriefingID` + 내용 스냅샷만 보유 — **mutable SafetyBriefing 관계 의존 금지**.
-- **중복 방지 규칙**: 한 브리핑 finalize당 SharingEvent 최대 1건(재정정 시 §7 supersedes 체인으로).
+## 8. SafetyBriefing ↔ SharingEvent — 이중 저장 제거 (교정 #2)
+- **확정된 `SafetyBriefing` 자체가 TBM 방식의 공유 증명.** 별도 `SharingEvent`를 **생성하지 않음**(CloudKit엔 `@Attribute(.unique)` 없어 다기기 동기화 시 중복 SharingEvent 위험 → 원천 제거).
+- `SharingEvent`는 **비TBM 공유(교육·게시·서면·전자)만** 저장.
+- **조회 모듈**이 `SafetyBriefing`(TBM) + `SharingEvent`(비TBM)를 **하나의 통합 공유 이력**으로 반환.
 
 ## 9. 보존기간 (교정 #8)
 - **3년 일괄 단정 금지.** 한국 위험성평가 공유기록 / 미국 관할 프로필 / 사업장 정책 분리.
@@ -56,5 +56,5 @@ draft → conducted → finalized  (+ cancelled)
 ## 11. SCHEMA-V3 반영 항목 (LEGAL-2와 함께 동결)
 - [ ] `SafetyBriefing`(Site 필수·나머지 선택) + `BriefingParticipant` + `BriefingRiskItemSnapshot`
 - [ ] 공유 enum `ParticipantRole`·`ConfirmationMethod` 추출(모델 공유 아님)
-- [ ] SafetyBriefing→SharingEvent 원자적 스냅샷 생성 규칙
-- [ ] 삭제 보호(cascade 금지) + 정정 체인(supersedes)
+- [ ] 통합 공유 이력 조회 모듈(SafetyBriefing[TBM] + SharingEvent[비TBM]) — TBM은 별도 SharingEvent 미생성
+- [ ] 삭제 보호(cascade 금지) + 정정 체인(supersedes) + Site 필수·물리 nullify
