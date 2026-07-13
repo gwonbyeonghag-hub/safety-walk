@@ -13,9 +13,10 @@
 - `planned` 상태에서 제37조의3 **사전 일정 공유** 지원
 
 ### 1.1 "필수 개선조치" 정의 (closed 파생 규칙)
-- **불허용 판정 항목**(허용 임계값 초과)은 **최소 1개의 필수 `CorrectiveAction`** 필요.
-- **허용 판정만 있는 평가**(불허용 0건)는 필수 조치 없음 → `finalized` 즉시 `closed` 파생 가능.
-- **효과확인 완료** = 각 필수 조치가 이행일·확인자 기록 + 효과확인(개선후위험도가 허용 범위 등) 완료.
+> ⚠️ **"불허용"은 법적 위반 판정이 아님** (교정 #6). = **사용자/사업장이 설정한 허용 기준(임계값) 초과**. 앱은 자동 계산할 뿐, **사용자가 확인**해 확정. 기록 도구이지 판정 도구 아님.
+- **허용 기준 초과 항목**은 **최소 1개의 필수 `CorrectiveAction`** 필요.
+- **기준 초과 0건 평가**는 필수 조치 없음 → `finalized` 즉시 `closed` 파생 가능.
+- **효과확인 완료** = 각 필수 조치가 이행일·확인자 기록 + 효과확인(개선후위험도가 기준 이내 등) 완료.
 - `closed` = `finalized` **AND** 모든 필수 조치의 이행·효과확인 완료.
 
 ## 2. 엔티티 지도 (N 신규 / E 확장 / K 기존)
@@ -25,7 +26,7 @@
 | `RiskAssessmentProgram` | N | Site 1—N | 운영방식(정기/상시) + **jurisdiction + industry/profile + effective period** | #4 |
 | `RiskAssessment` | E | Program 1—N | + 평가상태(§1) + scheduledAt + **소유 기준 스냅샷** + 근로자대표 필드(§흡수) | #2 #8 |
 | `AssessmentCriteria` | N | 평가 **1:1 소유·불변(값 복사)** | 위험성 기준·허용 임계값·매트릭스 = 평가 시점 스냅샷. 공통 가변 엔티티 참조 금지 | #3 |
-| `RiskAssessmentItem` | E | 평가 1—N | + 허용/불허용 결정 · **`riskLevel: RiskLevel?`(nil=미평가, §2.1)** | §2.1 |
+| `RiskAssessmentItem` | E | 평가 1—N | + **기준 초과 여부**(자동계산+사용자 확인, §1.1) · **`riskLevel: RiskLevel?`(nil=미평가, §2.1)** | §2.1 |
 | `CorrectiveAction` | N | 항목 1—N | 실제 조치·이행일·확인자·증거·개선후위험도·효과확인 (기존 status·dueDate·responsibleName·감소대책 **흡수**) | #5 |
 | `RiskAssessmentParticipant` | N | **평가가 소유·불변** | 이름(필수)·사번/소속/직무(선택)·근로자|대표·참여방법·시각·확인방식·서명(선택) | #1 |
 | `BriefingParticipant` | N | **TBM이 소유·불변**(TBM-0) | 위와 동형. 공통 **enum·검증 로직만** 공유 | #1 |
