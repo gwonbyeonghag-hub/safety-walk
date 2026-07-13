@@ -1177,7 +1177,7 @@ main에서 브랜치 `wo13-history-grouping`. ⚠️ 커밋 전 `git branch --sh
 
 ---
 
-## WO-14 — Mac 데스크톱화 시안: 위험요인 Browse HTML 목업 3안 🔵 v1.1 (출시 후) — 지금은 시안만, 구현 금지
+## WO-14 — Mac 데스크톱화 시안: 위험요인 Browse HTML 목업 3안 ✅ 완료·**A안(표) 승격** (2026-07-13) — 출시 범위로 편입
 
 > 오너 조사(`UI_PRELAUNCH_DESIGN_RESEARCH.md`, 2026-07-13): Mac 화면이 "잘 만든 웹 대시보드 목업"처럼 보임 — 넓은 창에 카드가 늘어나고 빈 공간 큼. Browse는 `List(width:300)+상세` 고정이라 **Mac 강점(Table·검색·정렬·인스펙터) 부재**(코드로 확인: `SafetyWalkMac/Browse/*`에 Table/searchable/inspector 0). 방향 = SwiftUI 유지·`Table+searchable+inspector`로 데스크톱 작업도구화. **단 출시 블로커 아님**(macOS=무료 컴패니언, 기능 완전) → **v1.1로**. 이번 WO는 **HTML 목업 3안만**(구현·앱코드 변경 절대 금지) — 방법론은 아이콘/대시보드 때와 동일(HTML 시안→비교→승인 1안만 후속 SwiftUI).
 
@@ -1203,3 +1203,52 @@ main에서 브랜치 `wo14-mac-hazards-mockup`. ⚠️ 커밋 전 브랜치+스�
 - 상태: ☐ 미착수
 - 요약:
 - 증거 위치:
+
+---
+
+## 🚀 출시 전 최종 경계 (오너 확정 2026-07-13) — "할 거 다 하고 출시"
+
+WO-0~14 완료. 출시 범위로 **WO-15~18만** 추가하고 그 뒤 제출. **법인/팀(B2B)=v3, Mac 대시보드 전면재설계·검색/달력/통계 신기능=제외.**
+순서: **WO-15(위험요인 Table 대표구현) → 플래너+오너 실화면 승인 → WO-16(나머지 3개 확산) → WO-17(F-4/5) → WO-18(대시보드 레이아웃 교정) → Mac 스샷 재선정·촬영 → 제출.**
+⚠️ **WO-15 승인 전 WO-16 착수 금지**(패턴 확정 후 확산 — 안 그러면 4화면 되돌리기).
+
+## WO-15 — Mac 위험요인 Browse = Table + 검색/필터 + Inspector (대표 구현) 🔴 OPEN
+
+> WO-14 A안(`docs/design/mac-hazards-browse-table.html`, 아티팩트 af598942) 승인. `HazardsBrowseView` + `BrowseLayout`(List width:300)를 **`Table + searchable + inspector`** 데스크톱 패턴으로. **이 한 화면만** — 승인 후 WO-16에서 확산.
+
+### 목표 (verifiable)
+Mac 위험요인 화면 = 사이드바 + 검색/위험도세그먼트/상태·현장 필터 툴바 + `Table`(열: 위험도·설명·현장·위치·유형·상태·수정일, **열 정렬 가능**) + 우측 `inspector`(사진·전필드·상태변경/리포트 액션). 위험색=위험도 전용, 상태=중립/accent/green 분리. **데이터/모델/CloudKit·iOS·코어 무변경**(표시·상호작용 계층만). 기존 위험요인 데이터 그대로.
+
+### 스코프/금지
+✅ `SafetyWalkMac/Browse/HazardsBrowseView.swift`(+ 필요시 공용 헬퍼). SwiftUI `Table`/`TableColumn`/`.searchable`/`.inspector`. 정렬·검색·필터는 뷰 상태(모델 쿼리 로직 불변). ko/en parity. 라/다·최소/기본/광폭 창.
+🚫 모델/스키마/CloudKit/iOS/코어 변경 · 리포트 허브(별개 구조) · **나머지 3개 Browse는 이번에 손대지 말 것**(WO-16) · 대시보드(WO-18) · 위험색 오용.
+
+### 완료 조건 (증거)
+- [ ] 위험요인 Table 렌더 스샷(라/다·최소/기본/광폭 창) — 정렬·검색·필터·인스펙터 동작
+- [ ] 빈 상태·긴 텍스트·한/영 확인 · macOS 빌드 green · iOS/코어 diff 0 · 위험색=위험도 전용 확인
+### 진행/보고
+main에서 브랜치 `wo15-mac-hazards-table`. handoff+스샷 → **플래너 검수 + 오너 실화면 승인**(A 구조 OK인지) → 머지 → 그 다음에야 WO-16.
+**WO-15 결과:** ☐ 미착수 / 요약 / 증거
+
+## WO-16 — 승인 패턴을 나머지 Browse 3개에 확산 🔴 OPEN — WO-15 승인 후에만
+
+> WO-15에서 확정·승인된 Table+Inspector 패턴을 **점검·현장·위험성평가** Browse에 적용(리포트 허브 제외 — 별개 구조). 각 화면 도메인 열 구성만 다름.
+- 점검: 현장·구역·상태·시작일·적합/부적합 수 / 위험성평가: 현장·기법·평가일·기한상태·항목수 / 현장: 이름·주소·구역수·미조치위험수.
+🚫 리포트 허브에 Table 강제 금지 · 모델/iOS/코어·대시보드 변경 금지 · 패턴을 WO-15와 다르게 재발명 금지(일관성).
+완료: 3개 화면 Table 스샷(라/다)·정렬/검색/인스펙터·빌드 green·diff(mac Browse만). 브랜치 `wo16-mac-browse-rollout`.
+**WO-16 결과:** ☐ 미착수
+
+## WO-17 — 접근성 마감 (F-4 탭타깃 · F-5 Dynamic Type) 🔴 OPEN
+
+> 프리론치 리뷰 잔여. F-4: 위험성평가 빈도×강도 세그먼트(<44pt) → ≥44pt(같은 화면 3단계 버튼과 통일). F-5: **iOS 사용자 대면 텍스트만** 고정폰트→Dynamic Type(시맨틱/`@ScaledMetric`).
+🚫 **F-5 범위 제한(오너 지시)**: 장식 아이콘·macOS 고정폰트·리포트(PDF)·런치인트로는 **전수 교체 금지** — iOS 본문 텍스트 한정. 위험색·기능 불변.
+완료: freq×severity 44pt 스샷 · Dynamic Type 최대크기서 iOS 주요화면 안 깨짐 스샷 · iOS 빌드 green · 회귀 0. 브랜치 `wo17-a11y-finish`.
+**WO-17 결과:** ☐ 미착수
+
+## WO-18 — Mac 대시보드 레이아웃 교정 (시각언어·기능 불변) 🔴 OPEN
+
+> 전면 재설계 아님. 넓은 창의 3+1 카드·고정 300pt 높이로 생기는 큰 빈 공간만 교정.
+✅ KPI(상단 스탯) 높이 축소 · 업무 카드 2×2 또는 명시적 8:4 배치 · **강제 300pt 높이 완화**(내용 기반 자연 높이 or 상한) · 최소/기본/광폭 창 폭 검증.
+🚫 색·토큰·위험칩·카드 구성요소·데이터/기능 변경 금지(WO-11 균일화 정신 유지, 배치/높이만). iOS/코어 무변경.
+완료: 대시보드 스샷(라/다·최소/기본/광폭) 빈공간 해소·카드 자연높이 · macOS 빌드 green · diff(DashboardView 중심). 브랜치 `wo18-mac-dashboard-layout`.
+**WO-18 결과:** ☐ 미착수
