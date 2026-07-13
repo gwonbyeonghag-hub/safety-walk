@@ -1164,6 +1164,8 @@ main에서 브랜치 `wo12-ipad-ra-sheet`. `/tdd`(red = 제공된 프로브) · 
 ### 진행 / 보고
 main에서 브랜치 `wo13-history-grouping`. ⚠️ 커밋 전 `git branch --show-current`+`git status` 확인(공유 워킹카피). ⚠️ 검증 빌드 서명 유지(무서명 = CloudKit SIGTRAP 오진). handoff + 스샷 → 플래너 검수 후 머지.
 
+> **플래너 검수(2026-07-13, 러버스탬프X)**: 스코프(macOS/코어 diff 0) ✅ · 그룹핑 순수함수 정독(now 주입·siteName 파생·결정론) ✅ · 유닛 26 tests green **직접 실행**(HistoryGroupingTests 7종 포함 — swift-testing이라 파일단위 -only-testing이 0잡아 타깃 전체로 재실행해 확인) ✅ · **Release 바이너리 시드훅 문자열 0건 직접 확인**(uitestSeedHistory/HistorySeed/makeSeededInMemoryContainer/uitestNow) ✅ · 시드훅 게이트(#if DEBUG + HistorySeed.isRequested, 프로덕션 CloudKit 불변) ✅ · 스샷 육안: 날짜순 오늘/어제/이번주/이번달 다중버킷 + 상태필터·세그먼트 공존 ✅, 온보딩 SafetyWalk+현장안전지킴이 병기+부제 유지 ✅ · report.generatedBy 불변 ✅ · ko/en parity 420=420 ✅
+
 **WO-13 결과:**
 - 상태: ✅ 완료 (브랜치 `wo13-history-grouping`, 미push — 플래너 검수 후 머지)
 - 요약:
