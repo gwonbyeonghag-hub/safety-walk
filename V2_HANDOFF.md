@@ -1436,3 +1436,41 @@ optional만으로 불완전. 다음 전부 포함:
 3. **Mac**(생성 UI 없음, SeedData+Browse 읽기만): **서명 빌드** 성공 + SeedData 4곳 명시 전달 확인 + 스샷 불필요.
 4. **Core 패키지**: `swift test`(0f 4케이스 + 기존 RiskAssessmentTests 갱신분) 그린.
 검증 통과 후 refspec으로 main 병합.
+
+---
+# 🎫 WO LEGAL-1 — 언어↔지역 디커플링 (도메인 모델 안정화)
+**출처**: 검토자 #4, 로드맵. **원칙**: 표시 언어와 법적 관할(RegionProfile)은 **독립 축**(한국어 읽는 미국현장 관리자·영어 읽는 한국현장 관리자 모두 지원). LEGAL-2(한국)/LEGAL-3(미국) 콘텐츠가 언어와 무관하게 region에 걸리려면 이게 선행.
+**⚠️ 착수 전**: `git branch --show-current` 확인 → **main(c860d5a 이상)** 에서 `legal1-lang-region-decouple` 전용 브랜치. main 직커밋 금지(공유 워킹카피).
+**토대 이미 있음**: `RegionProfileStore`(get/set·기본 `.korea`·KR/GLOBAL 코드) + 지역 키·값 ko/en 완비(`settings.regionProfile`="지역/Region", `settings.region.korea`="한국/Korea", `settings.region.global`="글로벌/Global") + LocalizationKey 케이스(212–214). **커플링만 끊고 피커만 붙이면 됨.**
+
+## 1a — 커플링 제거
+- `LocalizationManager.swift:47` `RegionProfileStore.set(lang.regionProfile)` **삭제**(언어 변경이 지역을 강제하지 않게).
+- 그 결과 dead 되는 `AppLanguage.regionProfile`(line15) **삭제**(line47이 유일 사용처, grep 확정).
+- 낡은 주석 갱신: `LocalizationManager` 5–10·18–22·41–42, `SettingsView` 38–39("region picker folded into this control"), `OnboardingView` 8–9 — "언어가 지역도 선택" 서술 제거.
+- 첫 실행 지역 기본값 = `RegionProfileStore` 기존 `.korea` 유지. **언어에서 파생 금지**(그게 커플링).
+
+## 1b — 독립 지역 피커 (iOS)
+- `SettingsView`(언어 섹션 40–48 아래): 새 Section + RegionProfile `Picker`. `get: RegionProfileStore.get()`, `set: RegionProfileStore.set($0)`. 라벨 `settingsRegionProfile`, 옵션 `settingsRegionKorea`.tag(.korea)/`settingsRegionGlobal`.tag(.global).
+- `OnboardingView`(언어 87–98 아래): 동일 피커. **※onboarding 배치는 오너 판단** — 미니멀 원하면 Settings 전용, 기본은 둘 다(관할을 처음에 명시).
+- 지역 변경은 **전체 트리 재빌드 불필요**(언어와 달리 UI 언어를 안 바꿈) — persist만. 템플릿 선택은 `StartInspectionViewModel`이 `onAppear`에 `RegionProfileStore.get()` 재조회(이미 그럼) → 자동 반영.
+
+## 1c — 현지화
+- 키·값·enum 케이스 **이미 완비**. 신규 문자열 불필요 — ko/en 패리티 유지만 확인.
+
+## 1d — 테스트 (/tdd, iOS 타깃 — RegionProfileStore/LocalizationManager는 iOS 타깃)
+- 언어 변경(`LocalizationManager.shared.set(.english)`) 후 `RegionProfileStore.get()` **불변**(디커플링 핵심).
+- 지역 set→get 왕복 persist.
+- 첫 실행(미저장) 기본 `.korea`.
+
+## Mac — 이번 스코프 밖(플래그, 무해)
+- `SafetyWalkMacApp`도 언어 피커+`loc.set()` 있음 → 커플 제거 전역 적용되나 **Mac은 region을 읽지 않아 무해**. Mac 지역 피커는 Mac이 region 기반 콘텐츠를 쓸 때(LEGAL-2/3) 추가. 지금은 컴파일만.
+
+## 스코프 밖
+- `RegionProfile`에 US 등 신규 케이스 추가 = **LEGAL-3**. korea/global 2케이스 유지.
+
+## ✅ 리뷰어(나) 수용 기준 — 러버스탬프 안 함
+1. 전용 브랜치(main 직커밋 아님).
+2. **iOS/iPad 서명 빌드** + 스샷: ①설정에서 **언어=한국어인데 지역=Global로 독립 설정**된 화면(디커플링 증명) ②지역 바꾸면 점검 시작의 템플릿 선택에 반영.
+3. **Mac 서명 빌드** 성공(컴파일·언어피커 정상).
+4. iOS 테스트 그린. **Core는 `swift test --no-parallel`**(SchemaMigration 선재 플레이크 회피 — task_fb1e657c).
+검증 통과 후 refspec으로 main 병합.
