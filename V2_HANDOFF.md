@@ -1476,3 +1476,27 @@ optional만으로 불완전. 다음 전부 포함:
 3. **Mac 서명 빌드** 성공(컴파일·언어피커 정상).
 4. iOS 테스트 그린. **Core는 `swift test --no-parallel`**(SchemaMigration 선재 플레이크 회피 — task_fb1e657c).
 검증 통과 후 refspec으로 main 병합.
+
+---
+# 🎫 WO SCHEMA-V3 + 2a — V3 스키마 구현·리셋·평가계획/참여자 (첫 코드 WO)
+**정본**: [docs/SCHEMA_V3.md](docs/SCHEMA_V3.md) **동결됨**(main c3343d4). 계약 임의 변경 금지 — 변경 필요 시 멈추고 플래너 보고.
+**⚠️ 착수 전**: `git branch --show-current` 확인 → **main(c3343d4 이상)** 에서 `git checkout -b schemav3-2a`. main 직커밋 금지.
+**⛔ 하드 게이트**: **양 플랫폼(iOS·macOS) 빌드·테스트 통과 전 어떤 store·CloudKit 데이터도 초기화 금지.**
+
+## 고정 6단계 (반드시 이 순서)
+1. **V3 15모델 구현** — SCHEMA_V3.md 계약 그대로: 기존 5 불변 + RiskAssessment/Item 확장 + 신규 8. `SchemaV3: VersionedSchema`(3.0.0)에 15개 등록. **SchemaV1·V2·SafetyWalkMigrationPlan·V1→V2 마이그레이션/테스트 제거**. 모든 관계 **inverse** 명시. **생성자 계약**(name/role/phase/method/site 필수, 저장 기본값은 유지). + 스키마·관계·검증 테스트.
+2. **양 플랫폼 빌드·테스트 통과** — iOS + macOS 서명 빌드 성공 + 전체 테스트 그린. **여기 통과 전 3~5 절대 금지.**
+3. **앱 샌드박스 store 백업 이동** — 기존 `moveStoreAside`(타임스탬프) 패턴으로 ①iOS 시뮬레이터 앱 컨테이너 store ②macOS 샌드박스 `~/Library/Containers/com.gwonbyeonghag.safetywalk.mac/…/default.store`만. **공용 `~/Library/Application Support/default.store`는 제외**(삭제 아님, 이동).
+4. **Development CloudKit + 승인된 개발 데이터만 초기화** (Production 무관 — 이미 비어있음).
+5. **새 V3 store 생성 + 양 플랫폼 cold launch 검증** (크래시 없이 V3로 부팅).
+6. **2a 기능 구현**: 평가 계획(수명주기 planned/inProgress + scheduledAt) + 참여자(RiskAssessmentParticipant: 이름 필수·역할·참여방법·확인·선택 서명) + 근로자대표 상태. + 런타임 QA.
+
+## 핵심 불변식 (SCHEMA_V3 §7 + 오너)
+- **nil = 미기록** 전부: riskLevel·criteriaDecision·participationMethod·confirmationMethod·workerRepStatus·phase·effectivenessResult. **자동 Low/No/기준내 금지.** finalize 전 전 항목 검증.
+- `isRequired` = 저장/인자 아님, `item.criteriaDecision==exceedsThreshold`에서 파생.
+- 효과확인: `effectivenessResult`·`effectivenessConfirmedAt`·`confirmedBy` **원자적 함께 갱신**.
+- 집합체 간 = UUID+값 스냅샷(관계 아님→cascade 없음). 소유-자식만 cascade+inverse.
+- 생성자 검증 실패 시 insert/finalize 금지(빈 모델 차단).
+
+## ✅ 리뷰어(나) 수용 기준 — 러버스탬프 안 함
+1. 전용 브랜치. 2. **iOS·macOS 양 플랫폼 서명 빌드** + 전체 테스트 그린(nil=미기록·생성자 검증·cascade 불변 테스트 포함). 3. cold launch 스샷(양 플랫폼 V3 부팅). 4. 리셋이 **백업 이동**(삭제 아님)·공용 store 미접촉 확인. 5. 2a 기능 스샷(평가 계획·참여자·미평가 표시). 검증 후 refspec 병합.
