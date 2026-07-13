@@ -1297,10 +1297,10 @@ main에서 브랜치 `wo15-mac-hazards-table`. handoff+스샷 → **플래너 �
 
 ## WO-B — 공통 StoreKit entitlement + Mac 네이티브 결제 UI 🔴 BLOCKER (WO-A 후)
 > "iOS ProStore 복붙" 금지. **플랫폼 중립 코어 + 플랫폼별 UI**.
-- 상품 조회·구매권 판정(`ProEntitlement` 순수함수)·복원 = **SafetyWalkCore 공유 코드**로. 페이월 화면만 iPhone/iPad/Mac 각 플랫폼 UI.
+- **레이어 경계**: `ProEntitlement`(순수 판정, StoreKit 미의존) = SafetyWalkCore. `Product`/`Transaction` 조회·구매·복원(StoreKit 의존) = **공유 StoreKit 서비스 계층**(양 타깃 멤버십, Core 밖 — 도메인 Core에 StoreKit 안 넣음). 페이월 화면만 iPhone/iPad/Mac 각 플랫폼 UI.
 - 검증: 월간·연간 동일 product ID가 양쪽 로드 · **iOS 구매→Mac 인식, Mac 구매→iOS 인식** · 만료·취소·미구매·복원 상태.
-- 순서: **StoreKit Test 먼저 → Connect 상품 생성 후 Sandbox 종단 검증**(2단계).
-- 완료: 위 양방향+상태 검증 통과, iOS 회귀 0. 브랜치 `woB-mac-prostore`(착수 전 실브랜치 확인).
+- **2단계(순서 주의)**: ① **StoreKit Test(로컬, 레코드 불필요)** 로 구현·양방향·상태 먼저 통과 → ② **ASC 레코드·상품 생성 후**(아래 순서 참조) **Sandbox 양방향 종단 검증**. ⚠️ Sandbox는 Connect 앱 레코드+구독 상품이 있어야 가능하므로 WO-A 완료 후 등록이 선행.
+- 완료: StoreKit Test 통과(구현 완료) + Sandbox 양방향·상태 검증 통과, iOS 회귀 0. 브랜치 `woB-mac-prostore`(착수 전 실브랜치 확인).
 **WO-B 결과:** ☐ 미착수
 
 ## WO-C — 수익화·제출·로드맵 문서 정합화 📄 (WO-A/B 후)
@@ -1308,5 +1308,16 @@ main에서 브랜치 `wo15-mac-hazards-table`. handoff+스샷 → **플래너 �
 - 두 문서 현행화 or deprecated 표기 + docs/appstore/ 패키지 정합. 🚫 앱 코드 무변경. 브랜치 `woC-doc-sync`.
 **WO-C 결과:** ☐ 미착수
 
-## 순서 (갱신)
-WO-A → WO-B → WO-C → (Connect 등록 재개 가능) → WO-15(위험요인 Table, **상태변경 제외·조회+리포트만**) → 오너 승인 → WO-16~18 → WO-19(검색) → WO-20(통계,분석섹션=WO-18 대시보드와 분리) → WO-21(달력) → 마감.
+## 순서 (확정 — 순환 모순 제거, 검토자 교정 2025-07-13)
+```
+0     ASC 현재 상태 확인 — 이미 만든 레코드는 삭제·변경 없이 보고만 (오너)
+WO-A  Distribution Identity 전환 (동일 번들ID·서명·App ID·CloudKit·저장영역 영향 검증)
+ASC   단일 앱 레코드 생성 → iOS 앱에 macOS 플랫폼 추가 → 동일 구독 상품 생성 (오너, WO-A 후)
+WO-B  공유 StoreKit 구현·검증 (① StoreKit Test 로컬 → ② Sandbox 양방향 종단)
+WO-C  실제 확정된 구성에 맞춰 문서 정합화
+WO-15 Mac 위험요인 = 조회·검색·필터·인스펙터·리포트 (상태변경 삭제) → 오너 실화면 승인
+WO-16~18  Mac 데스크톱 UX 확산·접근성·대시보드 레이아웃 정돈
+WO-19 무료 통합검색 / WO-20 Pro 통계(분석 별도화면, WO-18과 결합 금지) / WO-21 Pro 달력(Calendar+LazyVGrid, 中규모)
+마감  Mac 스샷 재선정·촬영 → 제출
+```
+> ⚠️ **핵심 정정**: "WO-A/B/C 후 Connect 등록"은 모순(WO-B Sandbox 검증에 레코드·상품 필요). 올바른 흐름 = **WO-A 완료 → 단일 레코드·상품 생성(ASC) → WO-B Sandbox 검증 → WO-C 문서 확정.**
