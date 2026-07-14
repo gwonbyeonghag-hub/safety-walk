@@ -22,7 +22,7 @@ struct RiskAssessmentDetailView: View {
                         assessment.siteName.isEmpty ? LocalizationKey.raSiteNone.localized : assessment.siteName)
                 infoRow(LocalizationKey.raAssessor.localized, assessment.assessorName)
                 infoRow(LocalizationKey.commonDone.localized,
-                        assessment.assessedAt.formatted(date: .abbreviated, time: .shortened))
+                        (assessment.assessedAt ?? assessment.createdAt).formatted(date: .abbreviated, time: .shortened))
                 if assessment.linkedInspectionId != nil {
                     infoRow(LocalizationKey.raSeededFromInspection.localized, "✓")
                 }
@@ -95,7 +95,13 @@ private struct ItemDetailRow: View {
                     }
                 }
                 Spacer(minLength: 8)
-                RiskChip(level: item.riskLevel)
+                if let level = item.riskLevel {
+                    RiskChip(level: level)
+                } else {
+                    Text(LocalizationKey.raRiskUnassessed.localized)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
             }
 
             if method.usesFrequencySeverity, let l = item.likelihood, let s = item.severity {
@@ -105,13 +111,16 @@ private struct ItemDetailRow: View {
                     .monospacedDigit()
             }
 
-            if let reduction = item.reductionMeasure, !reduction.isEmpty {
+            // Improvement fields now live on CorrectiveAction (SCHEMA_V3 §4); read the item's
+            // primary action for the interim single-action display.
+            let action = item.primaryCorrectiveAction
+            if let reduction = action?.measure, !reduction.isEmpty {
                 detailLine(LocalizationKey.raItemReduction.localized, reduction)
             }
-            if let responsible = item.responsibleName, !responsible.isEmpty {
+            if let responsible = action?.responsibleName, !responsible.isEmpty {
                 detailLine(LocalizationKey.raItemResponsible.localized, responsible)
             }
-            if let due = item.dueDate {
+            if let due = action?.dueDate {
                 detailLine(LocalizationKey.raItemDueDate.localized,
                            due.formatted(date: .abbreviated, time: .omitted))
             }
@@ -119,7 +128,7 @@ private struct ItemDetailRow: View {
             HStack(spacing: 6) {
                 Text(LocalizationKey.raItemStatus.localized)
                     .font(.caption2).foregroundStyle(.secondary)
-                Text(item.correctiveActionStatus.localizedLabel)
+                Text((action?.status ?? .notStarted).localizedLabel)
                     .font(.caption2.weight(.medium))
             }
         }

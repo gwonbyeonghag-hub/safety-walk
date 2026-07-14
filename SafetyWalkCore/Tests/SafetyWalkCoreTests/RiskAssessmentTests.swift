@@ -56,20 +56,31 @@ struct RiskMatrixBandTests {
 @Suite("RiskAssessment models")
 struct RiskAssessmentModelTests {
 
+    private let siteId = UUID()
+
     @Test func assessmentDefaultsAreCloudKitReady() {
-        let ra = RiskAssessment()
+        // SCHEMA_V3 §4.1: siteId·siteName·kind·method are required; the lifecycle starts at
+        // .planned with every audit/record field nil (미기록, 교정 #3).
+        let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                siteId: siteId, siteName: "1공장")
         #expect(ra.kind == .regular)
         #expect(ra.method == .frequencySeverity)
-        #expect(ra.siteId == nil)
-        #expect(ra.siteName == "")
+        #expect(ra.siteId == siteId)
+        #expect(ra.siteName == "1공장")
         #expect(ra.assessorName == "")
         #expect(ra.note == nil)
         #expect(ra.linkedInspectionId == nil)
+        #expect(ra.status == .planned)
+        #expect(ra.scheduledAt == nil)
+        #expect(ra.assessedAt == nil)          // nil=미기록(교정 #3)
+        #expect(ra.finalizedAt == nil)
+        #expect(ra.workerRepStatus == nil)     // nil=미기록
         #expect(ra.items?.isEmpty == true)
+        #expect(ra.participants?.isEmpty == true)
+        #expect(ra.criteria == nil)
     }
 
     @Test func assessmentInitSetsValues() {
-        let siteId = UUID()
         let ra = RiskAssessment(kind: .initial, method: .threeLevel,
                                 siteId: siteId, siteName: "1공장", assessorName: "홍길동")
         #expect(ra.kind == .initial)
@@ -79,18 +90,21 @@ struct RiskAssessmentModelTests {
         #expect(ra.assessorName == "홍길동")
     }
 
-    @Test func itemDefaultsAreCloudKitReady() {
-        // LEGAL-0: riskLevel is now a required init arg; the other defaults are unchanged.
-        let item = RiskAssessmentItem(riskLevel: .low)
+    @Test func itemDefaultsAreUnassessed() {
+        // SCHEMA_V3 교정 #3: a fresh item is 미평가 — riskLevel/criteriaDecision are nil, never
+        // auto-Low/기준내. The old per-item improvement fields now live on CorrectiveAction.
+        let item = RiskAssessmentItem()
         #expect(item.taskDescription == "")
         #expect(item.hazardDescription == "")
         #expect(item.currentControls == nil)
         #expect(item.likelihood == nil)
         #expect(item.severity == nil)
-        #expect(item.riskLevel == .low)
-        #expect(item.postRiskLevel == nil)
-        #expect(item.correctiveActionStatus == .notStarted)
+        #expect(item.riskLevel == nil)
+        #expect(item.criteriaDecision == nil)
+        #expect(item.decisionConfirmedAt == nil)
+        #expect(item.isAssessed == false)
         #expect(item.linkedHazardId == nil)
+        #expect(item.correctiveActions?.isEmpty == true)
     }
 
     /// 3단계 (threeLevel): user sets riskLevel directly; likelihood/severity stay nil.

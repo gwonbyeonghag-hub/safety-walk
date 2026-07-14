@@ -140,6 +140,32 @@ enum SeedData {
 
     // MARK: - Risk assessments
 
+    /// Builds a V3 assessment item and, when the seed row carries improvement data, its
+    /// `CorrectiveAction` child (the fields that moved off the item in SCHEMA_V3 §4).
+    /// Seed rows represent finalized assessments, so 초과여부 결정도 함께 기록한다.
+    @MainActor
+    private static func seedItem(
+        _ context: ModelContext, ra: RiskAssessment,
+        task: String, hazard: String, controls: String?,
+        likelihood: Int? = nil, severity: Int? = nil, level: RiskLevel,
+        measure: String? = nil, responsible: String? = nil, due: Date? = nil,
+        status: CorrectiveActionStatus = .notStarted, sortOrder: Int
+    ) -> RiskAssessmentItem {
+        let it = RiskAssessmentItem(
+            taskDescription: task, hazardDescription: hazard, currentControls: controls,
+            likelihood: likelihood, severity: severity, riskLevel: level,
+            criteriaDecision: level == .low ? .withinThreshold : .exceedsThreshold,
+            sortOrder: sortOrder)
+        it.riskAssessment = ra
+        context.insert(it)
+        if measure != nil || responsible != nil || due != nil || status != .notStarted {
+            let action = CorrectiveAction(item: it, measure: measure,
+                                          responsibleName: responsible, dueDate: due, status: status)
+            context.insert(action)
+        }
+        return it
+    }
+
     @MainActor
     private static func seedThreeLevel(site: Site, at: Date, context: ModelContext) {
         let ra = RiskAssessment(kind: .regular, method: .threeLevel, siteId: site.id,
@@ -157,13 +183,9 @@ enum SeedData {
             ("차량계 장비", "협착·충돌", "후방감지기 점검", .medium, "유도자·서행 표지", "장비팀장"),
         ]
         ra.items = rows.enumerated().map { i, r in
-            let it = RiskAssessmentItem(taskDescription: r.0, hazardDescription: r.1,
-                                        currentControls: r.2, riskLevel: r.3,
-                                        reductionMeasure: r.4, responsibleName: r.5,
-                                        dueDate: at.addingTimeInterval(Double((i + 20) * 86400)),
-                                        sortOrder: i)
-            context.insert(it)
-            return it
+            seedItem(context, ra: ra, task: r.0, hazard: r.1, controls: r.2, level: r.3,
+                     measure: r.4, responsible: r.5,
+                     due: at.addingTimeInterval(Double((i + 20) * 86400)), sortOrder: i)
         }
     }
 
@@ -193,14 +215,10 @@ enum SeedData {
         ]
         ra.items = rows.enumerated().map { i, r in
             let level = RiskMatrixConfig.threeByThree.band(likelihood: r.3, severity: r.4)
-            let it = RiskAssessmentItem(taskDescription: r.0, hazardDescription: r.1,
-                                        currentControls: r.2, likelihood: r.3, severity: r.4,
-                                        riskLevel: level, reductionMeasure: r.5,
-                                        responsibleName: r.6,
-                                        dueDate: at.addingTimeInterval(Double((i + 15) * 86400)),
-                                        sortOrder: i)
-            context.insert(it)
-            return it
+            return seedItem(context, ra: ra, task: r.0, hazard: r.1, controls: r.2,
+                            likelihood: r.3, severity: r.4, level: level,
+                            measure: r.5, responsible: r.6,
+                            due: at.addingTimeInterval(Double((i + 15) * 86400)), sortOrder: i)
         }
     }
 
@@ -220,14 +238,10 @@ enum SeedData {
             ("표지 관리", "위험 표지 훼손", "표지 정비", .medium, "훼손 표지 교체"),
         ]
         ra.items = rows.enumerated().map { i, r in
-            let it = RiskAssessmentItem(taskDescription: r.0, hazardDescription: r.1,
-                                        currentControls: r.2, riskLevel: r.3,
-                                        reductionMeasure: r.4, responsibleName: "안전관리자",
-                                        dueDate: at.addingTimeInterval(Double((i + 7) * 86400)),
-                                        correctiveActionStatus: i % 2 == 0 ? .inProgress : .notStarted,
-                                        linkedHazardId: nil, sortOrder: i)
-            context.insert(it)
-            return it
+            seedItem(context, ra: ra, task: r.0, hazard: r.1, controls: r.2, level: r.3,
+                     measure: r.4, responsible: "안전관리자",
+                     due: at.addingTimeInterval(Double((i + 7) * 86400)),
+                     status: i % 2 == 0 ? .inProgress : .notStarted, sortOrder: i)
         }
     }
 
@@ -256,12 +270,9 @@ enum SeedData {
         ]
         ra.items = steps.enumerated().map { i, s in
             let level = RiskMatrixConfig.threeByThree.band(likelihood: s.3, severity: s.4)
-            let it = RiskAssessmentItem(taskDescription: s.0, hazardDescription: s.1,
-                                        currentControls: s.2, likelihood: s.3, severity: s.4,
-                                        riskLevel: level, reductionMeasure: s.5,
-                                        sortOrder: i)
-            context.insert(it)
-            return it
+            return seedItem(context, ra: ra, task: s.0, hazard: s.1, controls: s.2,
+                            likelihood: s.3, severity: s.4, level: level,
+                            measure: s.5, sortOrder: i)
         }
     }
 }

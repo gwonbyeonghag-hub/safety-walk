@@ -12,8 +12,7 @@ import SafetyWalkCore
 struct RiskAssessmentMethodsTests {
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema([RiskAssessment.self, RiskAssessmentItem.self,
-                             Inspection.self, ChecklistItem.self, Hazard.self])
+        let schema = Schema(versionedSchema: SchemaV3.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return ModelContext(try ModelContainer(for: schema, configurations: config))
     }
@@ -64,6 +63,7 @@ struct RiskAssessmentMethodsTests {
         let vm = RiskAssessmentViewModel()
         vm.method = .checklist
         vm.assessorName = "평가자"
+        vm.selectedSite = { let s = Site(name: "현장A"); ctx.insert(s); return s }()
         vm.seedFromInspection(insp)
 
         // LEGAL-0: seeded item carries no auto level — the user must set one before saving.
@@ -87,6 +87,7 @@ struct RiskAssessmentMethodsTests {
         let vm = RiskAssessmentViewModel()
         vm.method = .jsa
         vm.assessorName = "평가자"
+        vm.selectedSite = { let s = Site(name: "현장C"); ctx.insert(s); return s }()
         for name in ["단계1", "단계2", "단계3"] {
             var d = RiskAssessmentViewModel.DraftItem()
             d.taskDescription = name

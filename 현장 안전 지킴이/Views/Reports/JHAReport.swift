@@ -19,7 +19,7 @@ enum JHAReport {
         let items = (assessment.items ?? []).sorted { $0.sortOrder < $1.sortOrder }
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("JHA-\(assessment.id.uuidString).pdf")
-        let dateText = assessment.assessedAt.formatted(date: .abbreviated, time: .omitted)
+        let dateText = (assessment.assessedAt ?? assessment.createdAt).formatted(date: .abbreviated, time: .omitted)
         let subtitle = assessment.siteName.isEmpty ? dateText : "\(assessment.siteName) · \(dateText)"
 
         var blocks: [AnyView] = [AnyView(headerGrid(assessment))]
@@ -40,7 +40,7 @@ enum JHAReport {
         ReportInfoGrid(pairs: [
             (LocalizationKey.raSite.localized, a.siteName.isEmpty ? "—" : a.siteName),
             (LocalizationKey.raAssessor.localized, a.assessorName.isEmpty ? "—" : a.assessorName),
-            (LocalizationKey.commonDone.localized, a.assessedAt.formatted(date: .abbreviated, time: .shortened)),
+            (LocalizationKey.commonDone.localized, (a.assessedAt ?? a.createdAt).formatted(date: .abbreviated, time: .shortened)),
             (LocalizationKey.raMethod.localized, a.method.localizedLabel),
         ])
     }
@@ -77,7 +77,12 @@ enum JHAReport {
             cell(item.hazardDescription, Col.hazards)
             cell(joinControls(item), Col.controls)
             VStack(spacing: 2) {
-                ReportRiskBand(level: item.riskLevel)
+                if let level = item.riskLevel {
+                    ReportRiskBand(level: level)
+                } else {
+                    Text(LocalizationKey.raRiskUnassessed.localized)
+                        .font(.system(size: 7.5)).foregroundStyle(.black.opacity(0.5))
+                }
                 if method.usesFrequencySeverity, let l = item.likelihood, let s = item.severity {
                     Text("\(l)×\(s)=\(l * s)")
                         .font(.system(size: 7)).monospacedDigit()
@@ -95,7 +100,7 @@ enum JHAReport {
 
     /// Current safety controls + the reduction measure (recommended controls), combined.
     private static func joinControls(_ item: RiskAssessmentItem) -> String {
-        [item.currentControls, item.reductionMeasure]
+        [item.currentControls, item.primaryCorrectiveAction?.measure]
             .compactMap { $0?.isEmpty == false ? $0 : nil }
             .joined(separator: "\n")
     }

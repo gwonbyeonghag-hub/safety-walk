@@ -120,6 +120,7 @@ struct RiskAssessmentCreateView: View {
                     .foregroundStyle(.tertiary)
             }
         }
+        .accessibilityIdentifier("ra_site_picker")
     }
 
     // MARK: - Items

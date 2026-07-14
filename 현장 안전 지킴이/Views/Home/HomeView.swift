@@ -26,8 +26,12 @@ struct HomeView: View {
     /// 정기 assessments at/near their annual deadline — shared rule (SafetyWalkCore).
     private var dueAssessments: [RiskAssessment] {
         assessments
-            .filter { $0.kind == .regular && RiskAssessment.dueStatus(assessedAt: $0.assessedAt) != .notDue }
-            .sorted { $0.assessedAt < $1.assessedAt }
+            .filter {
+                // nil assessedAt = 아직 평가 안 함 → 기한 계산 대상 아님(교정 #3).
+                guard $0.kind == .regular, let at = $0.assessedAt else { return false }
+                return RiskAssessment.dueStatus(assessedAt: at) != .notDue
+            }
+            .sorted { ($0.assessedAt ?? .distantPast) < ($1.assessedAt ?? .distantPast) }
     }
 
     private var todayCount: Int {
@@ -380,7 +384,7 @@ struct HomeView: View {
                                     .lineLimit(1)
                             }
                             Spacer(minLength: 8)
-                            DuePill(status: RiskAssessment.dueStatus(assessedAt: ra.assessedAt))
+                            DuePill(status: ra.assessedAt.map { RiskAssessment.dueStatus(assessedAt: $0) } ?? .notDue)
                         }
                         .padding(.vertical, 4)
                     }

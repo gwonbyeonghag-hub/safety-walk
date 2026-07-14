@@ -67,7 +67,7 @@ struct ReportHubView: View {
 
     private var assessmentEntries: [ReportEntry] {
         var out: [ReportEntry] = []
-        for ra in assessments.sorted(by: { $0.assessedAt > $1.assessedAt }) {
+        for ra in assessments.sorted(by: { ($0.assessedAt ?? $0.createdAt) > ($1.assessedAt ?? $1.createdAt) }) {
             let site = ra.siteName.isEmpty ? ra.method.localizedLabel : ra.siteName
             if ra.method == .jsa {
                 out.append(ReportEntry(id: "jha-\(ra.id)", title: LocalizationKey.reportJhaTitle.localized,

@@ -20,9 +20,20 @@ final class WO5ScreensUITests: XCTestCase {
             "-com.safetywalk.hasCompletedOnboarding", onboarded ? "1" : "0",
             "-com.safetywalk.inspectorName", "평가자",
             "-com.safetywalk.uitestPro", "1",   // WO-10: Pro so RA create opens
+            "-com.safetywalk.uitestSeedSite", "1",  // SCHEMA_V3 §4.1: RA create requires a site
         ]
         app.launch()
         return app
+    }
+
+    /// Selects the DEBUG-seeded site — required to save an assessment (SCHEMA_V3 §4.1).
+    private func selectSeededSite(_ app: XCUIApplication) {
+        let picker = app.buttons["ra_site_picker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 10), "site picker not found")
+        picker.tap()
+        let site = app.buttons["테스트 현장"].firstMatch
+        XCTAssertTrue(site.waitForExistence(timeout: 5), "seeded site not in picker")
+        site.tap()
     }
 
     func testCaptureBothAppearances() throws {
@@ -44,6 +55,7 @@ final class WO5ScreensUITests: XCTestCase {
             card.tap()
             home.buttons["새 위험성평가"].firstMatch.tap()
             XCTAssertTrue(home.buttons["항목 추가"].waitForExistence(timeout: 10))
+            selectSeededSite(home)
             // default method = 빈도×강도; add 3 items spanning low/med/high
             addFreqItem(home, likelihood: "1", severity: "1", task: "낮음 작업")  // 1 → 하
             addFreqItem(home, likelihood: "2", severity: "2", task: "보통 작업")  // 4 → 중

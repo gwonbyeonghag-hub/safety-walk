@@ -22,7 +22,7 @@ enum RiskAssessmentReport {
         let items = (assessment.items ?? []).sorted { $0.sortOrder < $1.sortOrder }
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("RiskAssessment-\(assessment.id.uuidString).pdf")
-        let dateText = assessment.assessedAt.formatted(date: .abbreviated, time: .omitted)
+        let dateText = (assessment.assessedAt ?? assessment.createdAt).formatted(date: .abbreviated, time: .omitted)
         let subtitle = assessment.siteName.isEmpty ? dateText : "\(assessment.siteName) · \(dateText)"
 
         var blocks: [AnyView] = [AnyView(headerGrid(assessment))]
@@ -45,7 +45,7 @@ enum RiskAssessmentReport {
             (LocalizationKey.raAssessor.localized, a.assessorName.isEmpty ? "—" : a.assessorName),
             (LocalizationKey.raKind.localized, a.kind.localizedLabel),
             (LocalizationKey.raMethod.localized, a.method.localizedLabel),
-            (LocalizationKey.commonDone.localized, a.assessedAt.formatted(date: .abbreviated, time: .shortened)),
+            (LocalizationKey.commonDone.localized, (a.assessedAt ?? a.createdAt).formatted(date: .abbreviated, time: .shortened)),
         ])
     }
 
@@ -80,9 +80,9 @@ enum RiskAssessmentReport {
             cell(item.hazardDescription, Col.hazard)
             cell(item.currentControls ?? "", Col.controls)
             riskCell(item: item, method: method)
-            cell(item.reductionMeasure ?? "", Col.reduction)
+            cell(item.primaryCorrectiveAction?.measure ?? "", Col.reduction)
             ownerCell(item)
-            cell(item.correctiveActionStatus.localizedLabel, Col.status)
+            cell((item.primaryCorrectiveAction?.status ?? .notStarted).localizedLabel, Col.status)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottom) {
@@ -102,7 +102,12 @@ enum RiskAssessmentReport {
 
     private static func riskCell(item: RiskAssessmentItem, method: RiskAssessmentMethod) -> some View {
         VStack(spacing: 2) {
-            ReportRiskBand(level: item.riskLevel)
+            if let level = item.riskLevel {
+                ReportRiskBand(level: level)
+            } else {
+                Text(LocalizationKey.raRiskUnassessed.localized)
+                    .font(.system(size: 7)).foregroundStyle(.black.opacity(0.5))
+            }
             if method.usesFrequencySeverity, let l = item.likelihood, let s = item.severity {
                 Text("\(l)×\(s)=\(l * s)")
                     .font(.system(size: 6.5)).monospacedDigit()
@@ -114,10 +119,11 @@ enum RiskAssessmentReport {
     }
 
     private static func ownerCell(_ item: RiskAssessmentItem) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text((item.responsibleName?.isEmpty == false ? item.responsibleName! : "—"))
+        let action = item.primaryCorrectiveAction
+        return VStack(alignment: .leading, spacing: 1) {
+            Text((action?.responsibleName?.isEmpty == false ? action!.responsibleName! : "—"))
                 .font(.system(size: 7))
-            if let due = item.dueDate {
+            if let due = action?.dueDate {
                 Text(due.formatted(date: .numeric, time: .omitted))
                     .font(.system(size: 6.5)).monospacedDigit()
                     .foregroundStyle(.black.opacity(0.6))

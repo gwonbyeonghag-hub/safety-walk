@@ -10,8 +10,7 @@ import SafetyWalkCore
 final class ReportRenderingTests: XCTestCase {
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema([RiskAssessment.self, RiskAssessmentItem.self,
-                             Inspection.self, ChecklistItem.self, Hazard.self])
+        let schema = Schema(versionedSchema: SchemaV3.self)
         return ModelContext(try ModelContainer(for: schema,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
     }
@@ -39,7 +38,7 @@ final class ReportRenderingTests: XCTestCase {
     func testRiskAssessmentReportMultiPage() throws {
         let ctx = try makeContext()
         let assessment = RiskAssessment(kind: .regular, method: .frequencySeverity,
-                                        siteName: "○○건설 1현장", assessorName: "홍길동")
+                                        siteId: UUID(), siteName: "○○건설 1현장", assessorName: "홍길동")
         ctx.insert(assessment)
         var items: [RiskAssessmentItem] = []
         for i in 0..<28 {
@@ -49,11 +48,14 @@ final class ReportRenderingTests: XCTestCase {
                 taskDescription: "공정 \(i + 1) — 작업 단계 기록",
                 hazardDescription: "유해·위험요인 상세 설명 \(i + 1)",
                 currentControls: "현재 안전조치 \(i + 1)",
-                likelihood: l, severity: s, riskLevel: level,
-                reductionMeasure: "감소대책 항목 \(i + 1)",
-                responsibleName: "담당\(i + 1)", dueDate: Date(),
-                correctiveActionStatus: .notStarted, sortOrder: i)
-            ctx.insert(item); items.append(item)
+                likelihood: l, severity: s, riskLevel: level, sortOrder: i)
+            ctx.insert(item)
+            // Improvement fields now live on CorrectiveAction (SCHEMA_V3 §4) — the report
+            // renders the reduction/owner/status columns from item.primaryCorrectiveAction.
+            let action = CorrectiveAction(item: item, measure: "감소대책 항목 \(i + 1)",
+                                          responsibleName: "담당\(i + 1)", dueDate: Date())
+            ctx.insert(action)
+            items.append(item)
         }
         assessment.items = items
         try? ctx.save()
@@ -66,7 +68,7 @@ final class ReportRenderingTests: XCTestCase {
     func testJHAReportMultiPage() throws {
         let ctx = try makeContext()
         let assessment = RiskAssessment(kind: .regular, method: .jsa,
-                                        siteName: "Plant A — Line 2", assessorName: "J. Park")
+                                        siteId: UUID(), siteName: "Plant A — Line 2", assessorName: "J. Park")
         ctx.insert(assessment)
         var items: [RiskAssessmentItem] = []
         for i in 0..<22 {
@@ -76,10 +78,11 @@ final class ReportRenderingTests: XCTestCase {
                 taskDescription: "Job step \(i + 1): position and secure equipment",
                 hazardDescription: "Pinch point / falling object hazard \(i + 1)",
                 currentControls: "LOTO; barricade exclusion zone \(i + 1)",
-                likelihood: l, severity: s, riskLevel: level,
-                reductionMeasure: "Add spotter; PPE check \(i + 1)",
-                sortOrder: i)
-            ctx.insert(item); items.append(item)
+                likelihood: l, severity: s, riskLevel: level, sortOrder: i)
+            ctx.insert(item)
+            let action = CorrectiveAction(item: item, measure: "Add spotter; PPE check \(i + 1)")
+            ctx.insert(action)
+            items.append(item)
         }
         assessment.items = items
         try? ctx.save()

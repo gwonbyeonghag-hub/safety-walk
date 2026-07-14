@@ -1,10 +1,11 @@
 import Foundation
 import SwiftData
 
-/// 위험성평가 항목 (Risk Assessment Item) — one row of an assessment.
-/// `riskLevel` always holds the RESOLVED 위험성 수준: for `.threeLevel` the user
-/// sets it directly; for `.frequencySeverity` it is derived from
-/// `likelihood × severity` via `RiskMatrixConfig.band(forScore:)`.
+/// 위험성평가 항목 (Risk Assessment Item) — one row of an assessment (SCHEMA_V3 §4).
+/// V3 splits the old per-item improvement fields out into `CorrectiveAction` children, and
+/// makes `riskLevel`/`criteriaDecision` optional: **nil = 미평가**, never auto-Low/기준내
+/// (교정 #3). The user's 초과 여부 decision is recorded in `criteriaDecision` with the
+/// confirming time/person; finalize-time validation enforces that every item is assessed.
 /// CloudKit-ready: optional/defaulted attributes, no `.unique`.
 @Model
 public final class RiskAssessmentItem {
@@ -14,19 +15,18 @@ public final class RiskAssessmentItem {
     public var currentControls: String?            // 현재 안전조치
     public var likelihood: Int?                     // 가능성 1–3 (빈도×강도 전용; 3단계는 nil)
     public var severity: Int?                        // 중대성 1–3 (빈도×강도 전용; 3단계는 nil)
-    public var riskLevel: RiskLevel = RiskLevel.low  // resolved 위험성 수준
-    public var reductionMeasure: String?            // 감소대책
-    public var postRiskLevel: RiskLevel?            // 개선 후 위험성 (선택)
-    public var responsibleName: String?            // 담당
-    public var dueDate: Date?                        // 개선예정일
-    public var correctiveActionStatus: CorrectiveActionStatus = CorrectiveActionStatus.notStarted
+    public var riskLevel: RiskLevel?               // ★optional — nil=미평가(교정 #3)
+    public var criteriaDecision: CriteriaDecision? // nil=미평가, 초과 여부는 사용자 확인
+    public var decisionConfirmedAt: Date?          // 결정 확인 시각(교정 #3)
+    public var decisionConfirmedBy: String?        // 결정 확인자(교정 #3)
     public var linkedHazardId: UUID?               // optional link to Hazard
-    // Explicit ordering for JSA work steps; CloudKit does not preserve to-many order
-    // (same reason ChecklistItem has sortOrder). Defaulted → CloudKit-safe.
+    // Explicit ordering for JSA work steps; CloudKit does not preserve to-many order.
     public var sortOrder: Int = 0
     // CloudKit-required inverse of RiskAssessment.items. Not read by app code —
     // containment in RiskAssessment.items remains the source of truth.
     public var riskAssessment: RiskAssessment?
+    // 리셋이라 legacy 이관 없음 — 개선대책은 CorrectiveAction 자식으로.
+    @Relationship(deleteRule: .cascade, inverse: \CorrectiveAction.item) public var correctiveActions: [CorrectiveAction]?
 
     public init(
         taskDescription: String = "",
@@ -34,15 +34,10 @@ public final class RiskAssessmentItem {
         currentControls: String? = nil,
         likelihood: Int? = nil,
         severity: Int? = nil,
-        // LEGAL-0: no default — every caller must pass a RESOLVED 위험성 수준 explicitly.
-        // (The stored-property default on line 17 stays for CloudKit; only the
-        // constructor default is removed so unassessed items can never be persisted.)
-        riskLevel: RiskLevel,
-        reductionMeasure: String? = nil,
-        postRiskLevel: RiskLevel? = nil,
-        responsibleName: String? = nil,
-        dueDate: Date? = nil,
-        correctiveActionStatus: CorrectiveActionStatus = .notStarted,
+        riskLevel: RiskLevel? = nil,
+        criteriaDecision: CriteriaDecision? = nil,
+        decisionConfirmedAt: Date? = nil,
+        decisionConfirmedBy: String? = nil,
         linkedHazardId: UUID? = nil,
         sortOrder: Int = 0
     ) {
@@ -53,12 +48,24 @@ public final class RiskAssessmentItem {
         self.likelihood = likelihood
         self.severity = severity
         self.riskLevel = riskLevel
-        self.reductionMeasure = reductionMeasure
-        self.postRiskLevel = postRiskLevel
-        self.responsibleName = responsibleName
-        self.dueDate = dueDate
-        self.correctiveActionStatus = correctiveActionStatus
+        self.criteriaDecision = criteriaDecision
+        self.decisionConfirmedAt = decisionConfirmedAt
+        self.decisionConfirmedBy = decisionConfirmedBy
         self.linkedHazardId = linkedHazardId
         self.sortOrder = sortOrder
+        self.correctiveActions = []
+    }
+
+    /// True once the user has assessed both the 위험성 수준 and the 허용기준 초과 여부.
+    /// finalize 전 검증의 단위 조건 (SCHEMA_V3 §7).
+    public var isAssessed: Bool {
+        riskLevel != nil && criteriaDecision != nil
+    }
+
+    /// Interim single-action bridge: the item's corrective action, if any. The V3 create flow
+    /// records one `CorrectiveAction` per item (measure/담당/기한/status); detail and the PDF
+    /// reports read it back through here until the full 2c corrective-action UI lands.
+    public var primaryCorrectiveAction: CorrectiveAction? {
+        correctiveActions?.first
     }
 }

@@ -13,10 +13,17 @@ import SafetyWalkCore
 struct RiskAssessmentPersistenceTests {
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema([RiskAssessment.self, RiskAssessmentItem.self])
+        let schema = Schema(versionedSchema: SchemaV3.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: config)
         return ModelContext(container)
+    }
+
+    /// A persisted site to satisfy the V3 site requirement (SCHEMA_V3 §4.1).
+    private func seededSite(in ctx: ModelContext) -> Site {
+        let site = Site(name: "테스트현장")
+        ctx.insert(site)
+        return site
     }
 
     @Test func frequencySeverityPersistsDerivedBand() throws {
@@ -25,6 +32,7 @@ struct RiskAssessmentPersistenceTests {
         vm.method = .frequencySeverity
         vm.kind = .regular
         vm.assessorName = "Tester"
+        vm.selectedSite = seededSite(in: ctx)
 
         var item = RiskAssessmentViewModel.DraftItem()
         item.taskDescription = "용접 작업"
@@ -54,6 +62,7 @@ struct RiskAssessmentPersistenceTests {
         vm.method = .threeLevel
         vm.kind = .initial
         vm.assessorName = "Tester"
+        vm.selectedSite = seededSite(in: ctx)
 
         var item = RiskAssessmentViewModel.DraftItem()
         item.taskDescription = "고소 작업"
@@ -72,11 +81,12 @@ struct RiskAssessmentPersistenceTests {
         #expect(it.severity == nil)
     }
 
-    @Test func saveRequiresAssessorItemAndResolvedRisk() throws {
+    @Test func saveRequiresSiteAssessorItemAndResolvedRisk() throws {
         let vm = RiskAssessmentViewModel()
         vm.method = .threeLevel
         vm.assessorName = ""
-        #expect(vm.canSave == false)           // no assessor, no items
+        #expect(vm.canSave == false)           // no site, no assessor, no items
+        vm.selectedSite = Site(name: "현장")    // SCHEMA_V3 §4.1: site required
         vm.assessorName = "Tester"
         #expect(vm.canSave == false)           // still no items
 
@@ -86,6 +96,9 @@ struct RiskAssessmentPersistenceTests {
 
         item.directRiskLevel = .high
         vm.addOrUpdate(item)
-        #expect(vm.canSave == true)            // assessor + item + resolved risk
+        #expect(vm.canSave == true)            // site + assessor + item + resolved risk
+
+        vm.selectedSite = nil
+        #expect(vm.canSave == false)           // dropping the site blocks save again
     }
 }

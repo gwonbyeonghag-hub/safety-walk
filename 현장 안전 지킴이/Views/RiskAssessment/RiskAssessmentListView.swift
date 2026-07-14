@@ -101,7 +101,7 @@ struct RiskAssessmentRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(assessment.assessedAt.formatted(date: .abbreviated, time: .omitted))
+                Text((assessment.assessedAt ?? assessment.createdAt).formatted(date: .abbreviated, time: .omitted))
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Text(assessment.method.localizedLabel)

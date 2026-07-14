@@ -9,13 +9,14 @@ import SwiftData
 /// app always launches instead of trapping.
 public enum SafetyWalkModelContainer {
 
-    /// Production entry point. Builds the CloudKit-backed container for the shared v2 schema,
-    /// recovering rather than crashing if its store can't be opened.
+    /// Production entry point. Builds the CloudKit-backed container for the SchemaV3 baseline,
+    /// recovering rather than crashing if its store can't be opened. No migration plan: V3 is a
+    /// reset first-launch baseline (SCHEMA_V3.md §2), so there is no earlier schema to migrate.
     public static func makeCloudKitContainer(containerID: String) -> ModelContainer {
-        let schema = Schema(versionedSchema: SchemaV2.self)
+        let schema = Schema(versionedSchema: SchemaV3.self)
         return makeRecoverable(
             schema: schema,
-            migrationPlan: SafetyWalkMigrationPlan.self,
+            migrationPlan: nil,
             storeURL: defaultStoreURL,
             backupSuffix: backupTimestamp()
         ) {

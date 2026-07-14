@@ -12,9 +12,20 @@ final class RiskMethodsUITests: XCTestCase {
             "-com.safetywalk.hasCompletedOnboarding", "1",
             "-com.safetywalk.inspectorName", "평가자",
             "-com.safetywalk.uitestPro", "1",   // WO-10: Pro so the create gate opens
+            "-com.safetywalk.uitestSeedSite", "1",  // SCHEMA_V3 §4.1: RA create requires a site
         ]
         app.launch()
         return app
+    }
+
+    /// Selects the DEBUG-seeded site — required to save an assessment (SCHEMA_V3 §4.1).
+    private func selectSeededSite(_ app: XCUIApplication) {
+        let picker = app.buttons["ra_site_picker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 10), "site picker not found")
+        picker.tap()
+        let site = app.buttons["테스트 현장"].firstMatch
+        XCTAssertTrue(site.waitForExistence(timeout: 5), "seeded site not in picker")
+        site.tap()
     }
 
     private func snap(_ app: XCUIApplication, _ name: String) {
@@ -68,6 +79,7 @@ final class RiskMethodsUITests: XCTestCase {
         typeTask(app, label: "작업 단계", "자재 양중")
         app.buttons["완료"].tap()
 
+        selectSeededSite(app)   // site is required to save (SCHEMA_V3 §4.1); pick it last
         snap(app, "jsa_01_create_steps")
         app.buttons["저장"].tap()
 
@@ -101,6 +113,7 @@ final class RiskMethodsUITests: XCTestCase {
         typeTask(app, label: "공정·작업", "전기 안전")
         app.buttons["완료"].tap()
 
+        selectSeededSite(app)   // site is required to save (SCHEMA_V3 §4.1); pick it last
         app.buttons["저장"].tap()
         XCTAssertTrue(app.cells.firstMatch.waitForExistence(timeout: 10))
         snap(app, "checklist_03_list")

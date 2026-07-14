@@ -125,7 +125,7 @@ struct DashboardView: View {
     private var assessmentsDueCard: some View {
         MacCard(title: LocalizationKey.macAssessmentsDue.localized, systemImage: "calendar.badge.exclamationmark") {
             cardBody(footerLabel: LocalizationKey.macViewAllAssessments.localized, section: .riskAssessments) {
-                let due = Array(dueAssessments.sorted { $0.assessedAt < $1.assessedAt }.prefix(cardRowLimit))
+                let due = Array(dueAssessments.sorted { ($0.assessedAt ?? .distantPast) < ($1.assessedAt ?? .distantPast) }.prefix(cardRowLimit))
                 if due.isEmpty {
                     EmptyLine(textKey: .macNoOpenItems)
                 } else {
@@ -141,7 +141,7 @@ struct DashboardView: View {
                                     .foregroundStyle(Color.macMuted)
                             }
                             Spacer(minLength: MacTheme.s2)
-                            DueBadge(assessedAt: ra.assessedAt)
+                            if let at = ra.assessedAt { DueBadge(assessedAt: at) }
                         }
                     }
                 }
@@ -213,7 +213,10 @@ struct DashboardView: View {
     private var completedInspections: [Inspection] { inspections.filter { $0.status == .completed } }
     private var openHazards: [Hazard] { hazards.filter { $0.correctiveActionStatus != .completed } }
     private var dueAssessments: [RiskAssessment] {
-        assessments.filter { $0.kind == .regular && RiskAssessment.dueStatus(assessedAt: $0.assessedAt) != .notDue }
+        assessments.filter {
+            guard $0.kind == .regular, let at = $0.assessedAt else { return false }
+            return RiskAssessment.dueStatus(assessedAt: at) != .notDue
+        }
     }
 
     private func distribution(for site: Site) -> [RiskLevel: Int] {

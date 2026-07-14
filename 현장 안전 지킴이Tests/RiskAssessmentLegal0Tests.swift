@@ -12,8 +12,7 @@ import SafetyWalkCore
 struct RiskAssessmentLegal0Tests {
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema([RiskAssessment.self, RiskAssessmentItem.self,
-                             Inspection.self, ChecklistItem.self, Hazard.self])
+        let schema = Schema(versionedSchema: SchemaV3.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return ModelContext(try ModelContainer(for: schema, configurations: config))
     }
@@ -69,11 +68,12 @@ struct RiskAssessmentLegal0Tests {
         let vm = RiskAssessmentViewModel()
         vm.method = .threeLevel
         vm.assessorName = "평가자"
+        vm.selectedSite = Site(name: "현장")           // SCHEMA_V3 §4.1: site required
 
         var assessed = RiskAssessmentViewModel.DraftItem(taskDescription: "a")
         assessed.directRiskLevel = .high
         vm.addOrUpdate(assessed)
-        #expect(vm.canSave == true)                   // one fully-assessed item
+        #expect(vm.canSave == true)                   // site + one fully-assessed item
 
         let unassessed = RiskAssessmentViewModel.DraftItem(taskDescription: "b")
         vm.addOrUpdate(unassessed)                    // no risk level

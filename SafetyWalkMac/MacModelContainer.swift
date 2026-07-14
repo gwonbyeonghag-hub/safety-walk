@@ -9,7 +9,7 @@ import SafetyWalkCore
 /// both apps sync through one iCloud container.
 enum MacModelContainer {
 
-    static let schema = Schema(versionedSchema: SchemaV2.self)
+    static let schema = Schema(versionedSchema: SchemaV3.self)
 
     static let shared: ModelContainer = make()
 

@@ -5,7 +5,9 @@ import SafetyWalkCore
 struct RiskAssessmentsBrowseView: View {
     @Query private var assessments: [RiskAssessment]
 
-    private var sorted: [RiskAssessment] { assessments.sorted { $0.assessedAt > $1.assessedAt } }
+    private var sorted: [RiskAssessment] {
+        assessments.sorted { ($0.assessedAt ?? $0.createdAt) > ($1.assessedAt ?? $1.createdAt) }
+    }
 
     var body: some View {
         BrowseLayout(items: sorted) { ra in
@@ -14,7 +16,7 @@ struct RiskAssessmentsBrowseView: View {
                 HStack(spacing: 6) {
                     Text(ra.method.localizedLabel)
                     Text("·")
-                    Text(ra.assessedAt.formatted(date: .abbreviated, time: .omitted)).monospacedDigit()
+                    Text((ra.assessedAt ?? ra.createdAt).formatted(date: .abbreviated, time: .omitted)).monospacedDigit()
                 }
                 .font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
@@ -36,7 +38,7 @@ struct RiskAssessmentsBrowseView: View {
                     DetailField(label: LocalizationKey.raMethod.localized, value: ra.method.localizedLabel)
                     DetailField(label: LocalizationKey.raKind.localized, value: ra.kind.localizedLabel)
                     DetailField(label: LocalizationKey.commonDone.localized,
-                                value: ra.assessedAt.formatted(date: .abbreviated, time: .shortened))
+                                value: (ra.assessedAt ?? ra.createdAt).formatted(date: .abbreviated, time: .shortened))
                 }
             }
 
@@ -53,7 +55,12 @@ struct RiskAssessmentsBrowseView: View {
                             }
                             Spacer(minLength: 8)
                             VStack(alignment: .trailing, spacing: 2) {
-                                RiskChip(level: item.riskLevel)
+                                if let level = item.riskLevel {
+                                    RiskChip(level: level)
+                                } else {
+                                    Text(LocalizationKey.raRiskUnassessed.localized)
+                                        .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                                }
                                 if ra.method.usesFrequencySeverity, let l = item.likelihood, let s = item.severity {
                                     Text("\(l)×\(s)=\(l * s)").font(.caption2).monospacedDigit().foregroundStyle(.secondary)
                                 }

@@ -53,7 +53,10 @@ final class RiskAssessmentViewModel {
 
     // MARK: - Derived
     var canSave: Bool {
-        guard !assessorName.trimmingCharacters(in: .whitespaces).isEmpty,
+        // SCHEMA_V3 §4.1: a RiskAssessment requires a site (siteId·siteName). The Save button
+        // stays disabled until one is chosen, same as an empty assessor name.
+        guard selectedSite != nil,
+              !assessorName.trimmingCharacters(in: .whitespaces).isEmpty,
               !draftItems.isEmpty else { return false }
         // LEGAL-0: every item must have a resolved 위험성 수준 (no 미평가 items may be saved).
         return draftItems.allSatisfy { resolvedLevel(for: $0) != nil }
@@ -127,6 +130,7 @@ final class RiskAssessmentViewModel {
     /// it throws so the caller can keep the screen up and surface an error.
     enum SaveError: Error {
         case incompleteItem   // a draft item has no resolved 위험성 수준 (defence-in-depth; canSave gates this)
+        case missingSite      // SCHEMA_V3 §4.1: RiskAssessment requires a site (canSave gates this)
     }
 
     func save(context: ModelContext) throws {
@@ -137,16 +141,21 @@ final class RiskAssessmentViewModel {
             guard let level = resolvedLevel(for: d) else { throw SaveError.incompleteItem }
             return level
         }
+        // SCHEMA_V3 §4.1: siteId·siteName are required at construction (defence-in-depth).
+        guard let site = selectedSite else { throw SaveError.missingSite }
 
         let assessment = RiskAssessment(
             kind: kind,
             method: method,
-            siteId: selectedSite?.id,
-            siteName: selectedSite?.name ?? "",
+            siteId: site.id,
+            siteName: site.name,
             assessorName: assessorName.trimmingCharacters(in: .whitespaces),
             note: note.trimmedOrNil,
             linkedInspectionId: linkedInspectionId
         )
+        // This one-shot create flow records the assessment as done now. (The planned →
+        // inProgress → finalized lifecycle with scheduledAt arrives in 2a.)
+        assessment.assessedAt = Date()
         context.insert(assessment)
 
         let isFreq = method.usesFrequencySeverity
@@ -159,15 +168,17 @@ final class RiskAssessmentViewModel {
                 likelihood: isFreq ? d.likelihood : nil,
                 severity: isFreq ? d.severity : nil,
                 riskLevel: levels[index],
-                reductionMeasure: d.reductionMeasure.trimmedOrNil,
-                postRiskLevel: d.postRiskLevel,
-                responsibleName: d.responsibleName.trimmedOrNil,
-                dueDate: d.hasDueDate ? d.dueDate : nil,
-                correctiveActionStatus: d.status,
                 linkedHazardId: d.linkedHazardId,
                 sortOrder: index
             )
             context.insert(item)
+            item.riskAssessment = assessment
+            // The improvement fields moved off the item to CorrectiveAction (SCHEMA_V3 §4).
+            // Persist whatever the user captured so nothing is silently dropped; the richer
+            // corrective-action management UI (효과확인 등) is 2c.
+            if let action = makeCorrectiveAction(from: d, item: item) {
+                context.insert(action)
+            }
             items.append(item)
         }
         assessment.items = items
@@ -180,6 +191,24 @@ final class RiskAssessmentViewModel {
             context.rollback()
             throw error
         }
+    }
+
+    /// Builds a `CorrectiveAction` for the draft's improvement fields, or nil when the user
+    /// entered none — so an empty action is never persisted (SCHEMA_V3 §4.1 빈 모델 차단).
+    private func makeCorrectiveAction(from d: DraftItem, item: RiskAssessmentItem) -> CorrectiveAction? {
+        let measure = d.reductionMeasure.trimmedOrNil
+        let responsible = d.responsibleName.trimmedOrNil
+        let due = d.hasDueDate ? d.dueDate : nil
+        guard measure != nil || responsible != nil || due != nil
+                || d.postRiskLevel != nil || d.status != .notStarted else { return nil }
+        return CorrectiveAction(
+            item: item,
+            measure: measure,
+            responsibleName: responsible,
+            dueDate: due,
+            status: d.status,
+            postRiskLevel: d.postRiskLevel
+        )
     }
 }
 

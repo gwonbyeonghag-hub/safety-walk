@@ -10,7 +10,7 @@ import SwiftData
 // which is exactly what SwiftPM can run headlessly.
 struct ModelContainerFactoryTests {
 
-    private static let schema = Schema(versionedSchema: SchemaV2.self)
+    private static let schema = Schema(versionedSchema: SchemaV3.self)
 
     private func uniqueStoreURL() -> URL {
         FileManager.default.temporaryDirectory

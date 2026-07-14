@@ -21,10 +21,11 @@ struct SafetyWalkApp: App {
     // resolves entitlements once the scene appears.
     @State private var proStore = ProStore()
 
-    // CloudKit-backed store (WO-3). Same container id + migration plan as
+    // CloudKit-backed store (WO-3). Same container id + SchemaV3 baseline as
     // SafetyWalkMac/MacModelContainer.swift so both apps sync through one iCloud
-    // container. VersionedSchema/SafetyWalkMigrationPlan lives in SafetyWalkCore so a
-    // schema change only has to be made once for both targets (SWIFTDATA_MIGRATION.md).
+    // container. The VersionedSchema (SchemaV3) lives in SafetyWalkCore so a schema
+    // change only has to be made once for both targets. V3 is a reset first-launch
+    // baseline — no migration plan (SCHEMA_V3.md §2).
     // The shared factory recovers instead of trapping if the store can't be opened
     // (WO-9 / F-1 defense) — see SafetyWalkCore/ModelContainerFactory.swift.
     static let modelContainer: ModelContainer = makeModelContainer()
@@ -38,8 +39,29 @@ struct SafetyWalkApp: App {
             return HistorySeed.makeSeededInMemoryContainer()
         }
         #endif
-        return SafetyWalkModelContainer.makeCloudKitContainer(containerID: "iCloud.com.gwonbyeonghag.safetywalk")
+        let container = SafetyWalkModelContainer.makeCloudKitContainer(containerID: "iCloud.com.gwonbyeonghag.safetywalk")
+        #if DEBUG
+        seedUITestSiteIfRequested(into: container)
+        #endif
+        return container
     }
+
+    #if DEBUG
+    /// UI-test site name for flows that require a site (RA create needs siteId·siteName per
+    /// SCHEMA_V3 §4.1). Seeded only under the launch arg below; never ships (`#if DEBUG`).
+    static let uitestSeedSiteName = "테스트 현장"
+
+    /// Seeds one `Site` so a UI test can exercise the RA create flow's mandatory-site path.
+    /// Idempotent — never duplicates on a relaunch against a persisted store.
+    private static func seedUITestSiteIfRequested(into container: ModelContainer) {
+        guard UserDefaults.standard.bool(forKey: "com.safetywalk.uitestSeedSite") else { return }
+        let ctx = ModelContext(container)
+        let sites = (try? ctx.fetch(FetchDescriptor<Site>())) ?? []
+        guard !sites.contains(where: { $0.name == uitestSeedSiteName }) else { return }
+        ctx.insert(Site(name: uitestSeedSiteName))
+        try? ctx.save()
+    }
+    #endif
 
     var body: some Scene {
         WindowGroup {
