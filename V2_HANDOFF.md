@@ -1479,6 +1479,7 @@ optional만으로 불완전. 다음 전부 포함:
 
 ---
 # 🎫 WO SCHEMA-V3 + 2a — V3 스키마 구현·리셋·평가계획/참여자 (첫 코드 WO)
+> ✅ **완료·검증·병합 2026-07-15 (main 412f3a5)** — 리뷰어 독립검증: 15모델 계약 정독·V1V2제거(플레이크 소멸)·Core 61/61·iOS·Mac 빌드·2a UI테스트 통과·nil=미기록/validate/생성자 확인. 리셋(Dev CloudKit+로컬 백업이동, 공용 store inode 157337411 무접촉) 완료. **5 테스트 실패 전수 추적→2a 무죄**(3=iPad-on-iPhone 내 실수·1=WO5 마라톤플레이크(격리통과)·1=photo-grid 선재[main에도 실패, task 분리]).
 **정본**: [docs/SCHEMA_V3.md](docs/SCHEMA_V3.md) **동결됨**(main c3343d4). 계약 임의 변경 금지 — 변경 필요 시 멈추고 플래너 보고.
 **⚠️ 착수 전**: `git branch --show-current` 확인 → **main(c3343d4 이상)** 에서 `git checkout -b schemav3-2a`. main 직커밋 금지.
 **⛔ 하드 게이트**: **양 플랫폼(iOS·macOS) 빌드·테스트 통과 전 어떤 store·CloudKit 데이터도 초기화 금지.**
@@ -1500,3 +1501,28 @@ optional만으로 불완전. 다음 전부 포함:
 
 ## ✅ 리뷰어(나) 수용 기준 — 러버스탬프 안 함
 1. 전용 브랜치. 2. **iOS·macOS 양 플랫폼 서명 빌드** + 전체 테스트 그린(nil=미기록·생성자 검증·cascade 불변 테스트 포함). 3. cold launch 스샷(양 플랫폼 V3 부팅). 4. 리셋이 **백업 이동**(삭제 아님)·공용 store 미접촉 확인. 5. 2a 기능 스샷(평가 계획·참여자·미평가 표시). 검증 후 refspec 병합.
+
+---
+# 🎫 WO LEGAL-2b — 기준·허용가능성 결정 (criteria snapshot + criteriaDecision)
+**정본**: docs/SCHEMA_V3.md(동결). **모델: Sonnet 5**(동결 스펙 구현 슬라이스).
+**⚠️ 착수 전**: `git branch --show-current` 확인 → main(412f3a5 이상)에서 `legal2b-criteria` 전용 브랜치. main 직커밋 금지.
+**현황**: 2a가 `AssessmentCriteria`·`RiskAssessmentItem.criteriaDecision`·decisionConfirmedAt/By를 **스키마만** 뒀음(뷰/뷰모델 배선 0, grep 확인). 2b가 전체 배선.
+
+## 스코프
+- **AssessmentCriteria 스냅샷**: 평가가 **inProgress 전환 시 생성·잠금**(값 복사 불변). `matrixData`(+`matrixFormatVersion`)·`acceptabilityThreshold`. 디코딩 실패 = **fail-closed**(미평가 취급, 조용히 진행 금지).
+- **criteriaDecision(항목별)**: likelihood×severity(또는 riskLevel)를 기준 임계값과 비교해 "기준 초과 여부"를 **자동 계산해 제안** → **사용자가 확인해야 `criteriaDecision` 확정**(자동 확정 금지). `decisionConfirmedAt`·`decisionConfirmedBy` 기록. **nil=미평가**(확인 전).
+- **표시(교정 #6)**: "기준 이내/기준 초과". **"허용/불허용"·법적 위반 판정 표현 금지.** 사용자/사업장 설정 기준 대비임을 명시.
+
+## 불변식
+- criteriaDecision nil=미평가(확인 전 자동 채움 금지) — 미평가는 색·초과표시 없음.
+- 자동 계산은 **제안**일 뿐, 확정은 사용자 확인. finalize 전 전 항목 결정 필요(canFinalize 강화).
+- 기준 스냅샷은 inProgress에 잠금 — 이후 기준 설정 바뀌어도 과거 평가 불변.
+
+## 테스트(/tdd)
+- criteria가 inProgress에 잠기고 값 복사됨.
+- criteriaDecision 확인 전 nil, 사용자 확인 후에만 확정.
+- exceedsThreshold 계산 정확(경계값 포함).
+- 표시 문구 "기준 초과"(법적판정 아님).
+
+## ✅ 리뷰어 기준 — 러버스탬프 안 함
+1. 전용 브랜치. 2. iOS·Mac 서명 빌드 + 테스트 그린(Core `swift test` — 이제 마이그레이션 플레이크 없음). **UI 테스트는 올바른 destination**(iPhone 테스트=iPhone 시뮬 · iPad 테스트=iPad 시뮬, 혼용 금지). 3. 스샷: 기준 설정·기준 초과 제안·사용자 확인·미평가 표시. 4. **선재 photo-grid 실패는 2b 무관**(main에도 있음·별도 task). 검증 후 refspec 병합.
