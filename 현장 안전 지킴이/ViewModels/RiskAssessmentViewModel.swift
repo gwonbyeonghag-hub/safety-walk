@@ -153,9 +153,12 @@ final class RiskAssessmentViewModel {
             note: note.trimmedOrNil,
             linkedInspectionId: linkedInspectionId
         )
-        // This one-shot create flow records the assessment as done now. (The planned →
-        // inProgress → finalized lifecycle with scheduledAt arrives in 2a.)
+        // This one-shot "assess now" flow conducts the assessment immediately, so it opens
+        // as .inProgress (not the .planned default) — participants/worker-rep can still be
+        // recorded on it, and it is not treated as an un-started plan. (2a; the .planned →
+        // scheduled path is PlanAssessmentView, finalize is later.)
         assessment.assessedAt = Date()
+        assessment.status = .inProgress
         context.insert(assessment)
 
         let isFreq = method.usesFrequencySeverity

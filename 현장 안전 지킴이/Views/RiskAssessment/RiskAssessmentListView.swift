@@ -6,7 +6,9 @@ import SafetyWalkCore
 /// tapping a row pushes the detail.
 struct RiskAssessmentListView: View {
 
-    @Query(sort: \RiskAssessment.assessedAt, order: .reverse)
+    // Sort by createdAt (not assessedAt) so a newly planned assessment — which has no
+    // assessedAt yet — surfaces at the top instead of sinking below every conducted one.
+    @Query(sort: \RiskAssessment.createdAt, order: .reverse)
     private var assessments: [RiskAssessment]
 
     @Environment(ProStore.self) private var proStore
@@ -16,7 +18,7 @@ struct RiskAssessmentListView: View {
     @State private var activeSheet: ActiveSheet?
 
     private enum ActiveSheet: Int, Identifiable {
-        case create, paywall
+        case create, plan, paywall
         var id: Int { rawValue }
     }
 
@@ -39,6 +41,16 @@ struct RiskAssessmentListView: View {
         }
         .navigationTitle(LocalizationKey.raTitle.localized)
         .toolbar {
+            // Separate toolbar items (not a Menu) so `ra_new_toolbar` stays a direct create
+            // entry — existing RA UI tests tap it expecting the create sheet.
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    startPlan()
+                } label: {
+                    Label(LocalizationKey.raPlanNew.localized, systemImage: "calendar.badge.plus")
+                }
+                .accessibilityIdentifier("ra_plan_toolbar")
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     startCreate()
@@ -51,6 +63,7 @@ struct RiskAssessmentListView: View {
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .create:  RiskAssessmentCreateView()
+            case .plan:    PlanAssessmentView()
             case .paywall: PaywallView()
             }
         }
@@ -61,6 +74,11 @@ struct RiskAssessmentListView: View {
     /// instead of the create sheet.
     private func startCreate() {
         activeSheet = proStore.isPro ? .create : .paywall
+    }
+
+    /// Same Pro gate as `startCreate()` — planning is authoring too (SCHEMA_V3 §3 lifecycle).
+    private func startPlan() {
+        activeSheet = proStore.isPro ? .plan : .paywall
     }
 
     private var emptyState: some View {
@@ -74,14 +92,23 @@ struct RiskAssessmentListView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-            Button {
-                startCreate()
-            } label: {
-                Label(LocalizationKey.raNew.localized, systemImage: "plus.circle.fill")
-                    .font(.headline)
+            VStack(spacing: 10) {
+                Button {
+                    startCreate()
+                } label: {
+                    Label(LocalizationKey.raNew.localized, systemImage: "plus.circle.fill")
+                        .font(.headline)
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("ra_new_button")
+
+                Button {
+                    startPlan()
+                } label: {
+                    Label(LocalizationKey.raPlanNew.localized, systemImage: "calendar.badge.plus")
+                }
+                .accessibilityIdentifier("ra_plan_button")
             }
-            .buttonStyle(.borderedProminent)
-            .accessibilityIdentifier("ra_new_button")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
@@ -94,6 +121,12 @@ struct RiskAssessmentRowView: View {
 
     private var items: [RiskAssessmentItem] { assessment.items ?? [] }
 
+    /// Planned records sort/display by their scheduled date; conducted ones by assessed date.
+    private var rowDate: Date {
+        if assessment.status == .planned, let scheduled = assessment.scheduledAt { return scheduled }
+        return assessment.assessedAt ?? assessment.createdAt
+    }
+
     private func count(_ level: RiskLevel) -> Int {
         items.filter { $0.riskLevel == level }.count
     }
@@ -101,8 +134,12 @@ struct RiskAssessmentRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text((assessment.assessedAt ?? assessment.createdAt).formatted(date: .abbreviated, time: .omitted))
+                // Planned records show their scheduled date; conducted ones their assessed date.
+                Text(rowDate.formatted(date: .abbreviated, time: .omitted))
                     .font(.subheadline.weight(.semibold))
+                if assessment.status == .planned {
+                    AssessmentStatusBadge(status: .planned)
+                }
                 Spacer()
                 Text(assessment.method.localizedLabel)
                     .font(.caption.weight(.medium))

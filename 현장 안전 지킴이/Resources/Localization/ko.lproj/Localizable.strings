@@ -462,6 +462,46 @@
 "ra.save.failedTitle" = "저장 실패";
 "ra.save.failedMessage" = "위험성평가를 저장하지 못했습니다. 다시 시도해 주세요.";
 
+/* Risk Assessment 2a — plan lifecycle · participants · worker rep (SCHEMA_V3 §3) */
+"ra.notRecorded" = "미기록";
+"ra.plan.new" = "평가 계획";
+"ra.plan.hint" = "예정일을 지정해 평가를 계획합니다. 평가 항목은 평가를 시작한 뒤 추가합니다.";
+"ra.schedule" = "예정일";
+"ra.status" = "상태";
+"ra.status.planned" = "예정";
+"ra.status.inProgress" = "진행 중";
+"ra.status.finalized" = "완료";
+"ra.status.cancelled" = "취소됨";
+"ra.startAssessment" = "평가 시작";
+"ra.workerRep.section" = "근로자 대표 참여";
+"ra.workerRep.notRequested" = "미요청";
+"ra.workerRep.requestedNotParticipated" = "요청·미참여";
+"ra.workerRep.participated" = "참여";
+"ra.participants" = "참여자";
+"ra.participants.empty" = "기록된 참여자가 없습니다";
+"ra.participant.add" = "참여자 추가";
+"ra.participant.edit" = "참여자 편집";
+"ra.participant.name" = "이름";
+"ra.participant.namePlaceholder" = "참여자 이름";
+"ra.participant.nameRequired" = "이름은 필수입니다";
+"ra.participant.role" = "역할";
+"ra.role.worker" = "근로자";
+"ra.role.workerRep" = "근로자 대표";
+"ra.participant.method" = "참여 방법";
+"ra.partMethod.patrol" = "순회";
+"ra.partMethod.interview" = "면담";
+"ra.partMethod.survey" = "설문";
+"ra.partMethod.other" = "기타";
+"ra.participant.participatedAt" = "참여일";
+"ra.participant.confirmation" = "확인 방식";
+"ra.confirm.managerRecord" = "관리자 기록";
+"ra.confirm.selfConfirm" = "본인 확인";
+"ra.confirm.signature" = "서명";
+"ra.participant.signature" = "서명 (선택)";
+"ra.signature.sign" = "여기에 서명하세요";
+"ra.signature.clear" = "지우기";
+"ra.signature.captured" = "서명됨";
+
 /* Reports — WO-5b */
 "report.ra.title" = "위험성평가표";
 "report.no" = "번호";

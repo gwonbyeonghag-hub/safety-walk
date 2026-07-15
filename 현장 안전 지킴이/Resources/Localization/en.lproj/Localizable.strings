@@ -462,6 +462,46 @@
 "ra.save.failedTitle" = "Couldn't Save";
 "ra.save.failedMessage" = "The risk assessment couldn't be saved. Please try again.";
 
+/* Risk Assessment 2a — plan lifecycle · participants · worker rep (SCHEMA_V3 §3) */
+"ra.notRecorded" = "Not recorded";
+"ra.plan.new" = "Plan Assessment";
+"ra.plan.hint" = "Schedule the assessment. Add assessment items after you start it.";
+"ra.schedule" = "Scheduled Date";
+"ra.status" = "Status";
+"ra.status.planned" = "Planned";
+"ra.status.inProgress" = "In Progress";
+"ra.status.finalized" = "Finalized";
+"ra.status.cancelled" = "Cancelled";
+"ra.startAssessment" = "Start Assessment";
+"ra.workerRep.section" = "Worker Representative";
+"ra.workerRep.notRequested" = "Not requested";
+"ra.workerRep.requestedNotParticipated" = "Requested, did not participate";
+"ra.workerRep.participated" = "Participated";
+"ra.participants" = "Participants";
+"ra.participants.empty" = "No participants recorded";
+"ra.participant.add" = "Add Participant";
+"ra.participant.edit" = "Edit Participant";
+"ra.participant.name" = "Name";
+"ra.participant.namePlaceholder" = "Participant name";
+"ra.participant.nameRequired" = "Name is required";
+"ra.participant.role" = "Role";
+"ra.role.worker" = "Worker";
+"ra.role.workerRep" = "Worker Representative";
+"ra.participant.method" = "Participation Method";
+"ra.partMethod.patrol" = "Patrol";
+"ra.partMethod.interview" = "Interview";
+"ra.partMethod.survey" = "Survey";
+"ra.partMethod.other" = "Other";
+"ra.participant.participatedAt" = "Participated On";
+"ra.participant.confirmation" = "Confirmation";
+"ra.confirm.managerRecord" = "Manager Record";
+"ra.confirm.selfConfirm" = "Self-Confirmed";
+"ra.confirm.signature" = "Signature";
+"ra.participant.signature" = "Signature (optional)";
+"ra.signature.sign" = "Sign here";
+"ra.signature.clear" = "Clear";
+"ra.signature.captured" = "Signed";
+
 /* Reports — WO-5b */
 "report.ra.title" = "Risk Assessment Sheet";
 "report.no" = "No.";
