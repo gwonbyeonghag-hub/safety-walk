@@ -12,6 +12,8 @@ struct RiskAssessmentDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var participantSheet: ParticipantSheet?
+    @State private var showStartSheet = false
+    @State private var showSaveError = false
 
     // Sorted by sortOrder so JSA work steps display in their entered order
     // (CloudKit does not preserve to-many relationship order).
@@ -32,10 +34,27 @@ struct RiskAssessmentDetailView: View {
         assessment.status == .finalized || assessment.status == .cancelled
     }
 
+    /// The locked criteria, decoded once for the whole screen (nil = no criteria yet, or a
+    /// fail-closed decode). The 기준 이내/초과 SUGGESTION is derived from this — never re-computed
+    /// in a view (WO LEGAL-2b §5).
+    private var decodedCriteria: AcceptabilityCriteria? {
+        guard let c = assessment.criteria else { return nil }
+        return try? AcceptabilityCriteria.decode(
+            matrixData: c.matrixData,
+            matrixFormatVersion: c.matrixFormatVersion,
+            threshold: c.acceptabilityThreshold,
+            usesFrequencySeverity: assessment.method.usesFrequencySeverity)
+    }
+
     var body: some View {
         List {
             overviewSection
             if assessment.status == .planned { startSection }
+            // Once started the criteria is locked — show it read-only above the items it governs.
+            if assessment.status != .planned, let criteria = assessment.criteria {
+                LockedCriteriaSection(criteria: criteria,
+                                      usesFrequencySeverity: assessment.method.usesFrequencySeverity)
+            }
             // Items stay directly under the header (the risk content); the 2a participation
             // sections follow so a conducted assessment reads content-first.
             itemsSection
@@ -51,6 +70,14 @@ struct RiskAssessmentDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $participantSheet) { sheet in
             ParticipantEditorView(assessment: assessment, existing: sheet.participant)
+        }
+        .sheet(isPresented: $showStartSheet) {
+            AssessmentStartSheet(assessment: assessment)
+        }
+        .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $showSaveError) {
+            Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
+        } message: {
+            Text(LocalizationKey.raSaveFailedMessage.localized)
         }
     }
 
@@ -92,9 +119,11 @@ struct RiskAssessmentDetailView: View {
 
     private var startSection: some View {
         Section {
+            // Starting opens the criteria-confirmation sheet; the actual planned→inProgress
+            // transition runs through the shared atomic AssessmentStart.start (WO LEGAL-2b §5) —
+            // no direct status mutation / try? save here anymore.
             Button {
-                assessment.status = .inProgress
-                saveChanges()
+                showStartSheet = true
             } label: {
                 Label(LocalizationKey.raStartAssessment.localized, systemImage: "play.circle.fill")
                     .font(.headline)
@@ -188,15 +217,36 @@ struct RiskAssessmentDetailView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                    // The 기준 이내/초과 SUGGESTION comes from the locked criteria (single Core source);
+                    // it is a proposal only — nothing is recorded until the user taps 확인.
+                    let suggestion = decodedCriteria?.suggestion(
+                        likelihood: item.likelihood, severity: item.severity, riskLevel: item.riskLevel)
                     ItemDetailRow(item: item,
                                   method: assessment.method,
-                                  stepNumber: assessment.method == .jsa ? index + 1 : nil)
+                                  stepNumber: assessment.method == .jsa ? index + 1 : nil,
+                                  suggestion: suggestion,
+                                  canConfirm: assessment.status == .inProgress && item.criteriaDecision == nil,
+                                  onConfirm: { if let suggestion { confirmDecision(item, suggestion) } })
                 }
             }
         }
     }
 
     // MARK: - Helpers
+
+    /// Records the user's confirmation of the 기준 이내/초과 decision (all three fields, atomically)
+    /// and persists it. Unlike the 2a participation edits this must not swallow errors — a failed
+    /// save rolls back and surfaces the localized alert (WO LEGAL-2b §5).
+    private func confirmDecision(_ item: RiskAssessmentItem, _ decision: CriteriaDecision) {
+        item.confirmCriteriaDecision(decision, at: Date(), by: assessment.assessorName)
+        assessment.updatedAt = Date()
+        do {
+            try modelContext.save()
+        } catch {
+            modelContext.rollback()
+            showSaveError = true
+        }
+    }
 
     private func saveChanges() {
         assessment.updatedAt = Date()
@@ -289,6 +339,9 @@ private struct ItemDetailRow: View {
     let item: RiskAssessmentItem
     let method: RiskAssessmentMethod
     let stepNumber: Int?   // 1-based JSA step number; nil for other methods
+    let suggestion: CriteriaDecision?   // computed 기준 이내/초과 proposal (nil = 위험도 미입력)
+    let canConfirm: Bool                // inProgress + not yet confirmed
+    let onConfirm: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -331,6 +384,8 @@ private struct ItemDetailRow: View {
                     .monospacedDigit()
             }
 
+            criteriaDecisionView
+
             // Improvement fields now live on CorrectiveAction (SCHEMA_V3 §4); read the item's
             // primary action for the interim single-action display.
             let action = item.primaryCorrectiveAction
@@ -353,6 +408,37 @@ private struct ItemDetailRow: View {
             }
         }
         .padding(.vertical, 4)
+    }
+
+    /// 기준 이내/초과: the recorded decision (neutral — NOT the risk ramp) once confirmed, or a
+    /// suggestion + explicit 확인 button (≥44pt) while in progress. 위험도 미입력(suggestion nil)
+    /// shows nothing — 미평가 stays 미평가, with no color or 이내/초과 text (WO LEGAL-2b §6).
+    @ViewBuilder private var criteriaDecisionView: some View {
+        if let decision = item.criteriaDecision {
+            HStack(spacing: 6) {
+                Image(systemName: decision.systemImage).font(.caption2)
+                Text(decision.localizedLabel).font(.caption2.weight(.semibold))
+                if let by = item.decisionConfirmedBy, !by.isEmpty {
+                    Text(String(format: LocalizationKey.raDecisionConfirmedFmt.localized, by))
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+            .foregroundStyle(.secondary)
+            .accessibilityElement(children: .combine)
+        } else if canConfirm, let suggestion {
+            HStack(spacing: 8) {
+                Image(systemName: suggestion.systemImage).font(.caption2)
+                Text(String(format: LocalizationKey.raDecisionSuggestedFmt.localized, suggestion.localizedLabel))
+                    .font(.caption2)
+                Spacer(minLength: 8)
+                Button(LocalizationKey.raDecisionConfirm.localized, action: onConfirm)
+                    .font(.caption.weight(.semibold))
+                    .buttonStyle(.bordered)
+                    .frame(minHeight: 44)
+                    .accessibilityIdentifier("ra_confirm_decision")
+            }
+            .foregroundStyle(.secondary)
+        }
     }
 
     private func detailLine(_ label: String, _ value: String) -> some View {

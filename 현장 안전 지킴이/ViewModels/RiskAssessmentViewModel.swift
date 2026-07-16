@@ -11,10 +11,23 @@ final class RiskAssessmentViewModel {
 
     // MARK: - Header
     var kind: RiskAssessmentKind = .regular
-    var method: RiskAssessmentMethod = .frequencySeverity
+    var method: RiskAssessmentMethod = .frequencySeverity {
+        didSet {
+            // The acceptability threshold means different things for score vs. level methods
+            // (raw score 2/4 vs. rank 1/2), so reset to the method default when the input
+            // category flips — never carry an out-of-range value across (WO LEGAL-2b §3).
+            if oldValue.usesFrequencySeverity != method.usesFrequencySeverity {
+                criteriaThreshold = AcceptabilityCriteria
+                    .makeDefault(usesFrequencySeverity: method.usesFrequencySeverity).threshold
+            }
+        }
+    }
     var selectedSite: Site?
     var assessorName: String = ""
     var note: String = ""
+    /// 허용 기준(acceptability) — the highest "기준 이내" score/rank, locked at start (WO LEGAL-2b).
+    /// Default = 빈도×강도 2 (score). Reset on method-category change (see `method.didSet`).
+    var criteriaThreshold: Int = 2
     /// Set when items were seeded from a completed Inspection (체크리스트법).
     var linkedInspectionId: UUID?
 
@@ -143,7 +156,17 @@ final class RiskAssessmentViewModel {
         }
         // SCHEMA_V3 §4.1: siteId·siteName are required at construction (defence-in-depth).
         guard let site = selectedSite else { throw SaveError.missingSite }
+        let isFreq = method.usesFrequencySeverity
 
+        // Build the acceptability criteria BEFORE touching the context; an invalid threshold
+        // aborts the whole save (fail-closed) rather than starting a half-built assessment.
+        let criteria = try AcceptabilityCriteria
+            .makeDefault(usesFrequencySeverity: isFreq)
+            .withThreshold(criteriaThreshold)
+
+        // Construct as .planned so both entry paths share the ONE start rule (WO LEGAL-2b §5):
+        // this "assess now" flow immediately starts it via AssessmentStart, which locks the
+        // criteria and flips it to .inProgress in a single atomic save.
         let assessment = RiskAssessment(
             kind: kind,
             method: method,
@@ -153,15 +176,8 @@ final class RiskAssessmentViewModel {
             note: note.trimmedOrNil,
             linkedInspectionId: linkedInspectionId
         )
-        // This one-shot "assess now" flow conducts the assessment immediately, so it opens
-        // as .inProgress (not the .planned default) — participants/worker-rep can still be
-        // recorded on it, and it is not treated as an un-started plan. (2a; the .planned →
-        // scheduled path is PlanAssessmentView, finalize is later.)
-        assessment.assessedAt = Date()
-        assessment.status = .inProgress
         context.insert(assessment)
 
-        let isFreq = method.usesFrequencySeverity
         var items: [RiskAssessmentItem] = []
         for (index, d) in draftItems.enumerated() {
             let item = RiskAssessmentItem(
@@ -174,6 +190,8 @@ final class RiskAssessmentViewModel {
                 linkedHazardId: d.linkedHazardId,
                 sortOrder: index
             )
+            // criteriaDecision stays nil here — 기준 이내/초과 is confirmed by the user in detail,
+            // never auto-filled at creation (WO LEGAL-2b §5/§6).
             context.insert(item)
             item.riskAssessment = assessment
             // The improvement fields moved off the item to CorrectiveAction (SCHEMA_V3 §4).
@@ -186,14 +204,9 @@ final class RiskAssessmentViewModel {
         }
         assessment.items = items
 
-        // No `try?`: a failed save must propagate. Roll back the pending inserts so a
-        // retry (screen stays up) doesn't double-insert the assessment.
-        do {
-            try context.save()
-        } catch {
-            context.rollback()
-            throw error
-        }
+        // Single atomic start: validate criteria → lock a value-copied snapshot → inProgress →
+        // assessedAt/updatedAt → save (rolling back on any failure so the screen can retry).
+        try AssessmentStart.start(assessment, criteria: criteria, now: Date(), in: context)
     }
 
     /// Builds a `CorrectiveAction` for the draft's improvement fields, or nil when the user

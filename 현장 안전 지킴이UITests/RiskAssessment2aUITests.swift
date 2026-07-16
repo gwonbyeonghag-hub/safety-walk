@@ -81,10 +81,13 @@ final class RiskAssessment2aUITests: XCTestCase {
         }
         snap(app, "2a_05_detail_with_participant")
 
-        // --- Lifecycle: planned → inProgress ---
+        // --- Lifecycle: planned → inProgress (now via the LEGAL-2b criteria-confirmation sheet) ---
         let start = app.buttons["ra_start_assessment"]
         if start.waitForExistence(timeout: 3) {
             start.tap()
+            // Confirm the default criteria to actually start (planned → inProgress).
+            let confirmStart = app.buttons["ra_criteria_start_confirm"]
+            if confirmStart.waitForExistence(timeout: 5) { confirmStart.tap() }
             snap(app, "2a_06_detail_inprogress")
         }
     }

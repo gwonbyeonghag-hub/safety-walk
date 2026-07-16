@@ -355,6 +355,26 @@ enum LocalizationKey: String {
     case raSignatureClear       = "ra.signature.clear"
     case raSignatureCaptured    = "ra.signature.captured"
 
+    // MARK: - Risk Assessment 2b — acceptability criteria · 기준 이내/초과 결정 (WO LEGAL-2b)
+    case raCriteriaSection      = "ra.criteria.section"
+    case raCriteriaStartTitle   = "ra.criteria.startTitle"
+    case raCriteriaStartButton  = "ra.criteria.startButton"
+    case raCriteriaLocked       = "ra.criteria.locked"
+    case raCriteriaLockedHint   = "ra.criteria.lockedHint"
+    case raCriteriaExplainScore = "ra.criteria.explainScore"
+    case raCriteriaExplainLevel = "ra.criteria.explainLevel"
+    case raCriteriaScoreOption2 = "ra.criteria.scoreOption2"
+    case raCriteriaScoreOption4 = "ra.criteria.scoreOption4"
+    case raCriteriaLevelLow     = "ra.criteria.levelOptionLow"
+    case raCriteriaLevelMedium  = "ra.criteria.levelOptionMedium"
+    case raCriteriaThreshold    = "ra.criteria.thresholdLabel"
+    case raCriteriaCorrupt      = "ra.criteria.corrupt"
+    case raDecisionWithin       = "ra.decision.within"
+    case raDecisionExceeds      = "ra.decision.exceeds"
+    case raDecisionSuggestedFmt = "ra.decision.suggestedFormat"
+    case raDecisionConfirm      = "ra.decision.confirm"
+    case raDecisionConfirmedFmt = "ra.decision.confirmedByFormat"
+
     // MARK: - Reports (WO-5b)
     case reportRaTitle          = "report.ra.title"
     case reportNo               = "report.no"

@@ -502,6 +502,26 @@
 "ra.signature.clear" = "지우기";
 "ra.signature.captured" = "서명됨";
 
+/* Risk Assessment 2b — 허용 기준 · 기준 이내/초과 결정 (WO LEGAL-2b) */
+"ra.criteria.section" = "허용 기준";
+"ra.criteria.startTitle" = "기준 확인 후 시작";
+"ra.criteria.startButton" = "이 기준으로 시작";
+"ra.criteria.locked" = "잠긴 기준";
+"ra.criteria.lockedHint" = "평가 시작 시 고정됩니다. 이후 사업장 설정이 바뀌어도 이 평가에는 반영되지 않습니다.";
+"ra.criteria.explainScore" = "빈도×강도 점수로 판단합니다. 사업장이 정한 기준이며, 앱은 법적 위반·준수를 판정하지 않습니다.";
+"ra.criteria.explainLevel" = "위험 수준으로 판단합니다. 사업장이 정한 기준이며, 앱은 법적 위반·준수를 판정하지 않습니다.";
+"ra.criteria.scoreOption2" = "1~2점 기준 이내 (3점부터 초과)";
+"ra.criteria.scoreOption4" = "1~4점 기준 이내 (6점부터 초과)";
+"ra.criteria.levelOptionLow" = "낮음만 기준 이내";
+"ra.criteria.levelOptionMedium" = "낮음·보통 기준 이내";
+"ra.criteria.thresholdLabel" = "기준 이내 범위";
+"ra.criteria.corrupt" = "기준 데이터를 읽을 수 없습니다";
+"ra.decision.within" = "사업장 설정 기준 이내";
+"ra.decision.exceeds" = "사업장 설정 기준 초과";
+"ra.decision.suggestedFormat" = "제안: %@";
+"ra.decision.confirm" = "확인";
+"ra.decision.confirmedByFormat" = "확인: %@";
+
 /* Reports — WO-5b */
 "report.ra.title" = "위험성평가표";
 "report.no" = "번호";

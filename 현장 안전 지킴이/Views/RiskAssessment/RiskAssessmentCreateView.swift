@@ -53,6 +53,10 @@ struct RiskAssessmentCreateView: View {
                         .lineLimit(1...3)
                 }
 
+                // Same 허용 기준 selection the planned-start sheet uses; locked at save (WO §6).
+                CriteriaSelectionSection(usesFrequencySeverity: viewModel.method.usesFrequencySeverity,
+                                         threshold: $viewModel.criteriaThreshold)
+
                 itemsSection
             }
             .navigationTitle(LocalizationKey.raNew.localized)
