@@ -207,7 +207,9 @@ struct RiskAssessmentDetailView: View {
     // MARK: - Items
 
     private var itemsSection: some View {
-        Section(LocalizationKey.raItemsSection.localized) {
+        // Decode the locked criteria ONCE for the whole section, not per item.
+        let criteria = decodedCriteria
+        return Section(LocalizationKey.raItemsSection.localized) {
             if items.isEmpty {
                 Text(LocalizationKey.raItemsEmpty.localized)
                     .font(.subheadline)
@@ -216,7 +218,6 @@ struct RiskAssessmentDetailView: View {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                     // The 기준 이내/초과 SUGGESTION comes from the locked criteria (single Core source);
                     // it is a proposal only — nothing is recorded until the user taps 확인.
-                    let criteria = decodedCriteria
                     let suggestion = criteria?.suggestion(for: item)
                     // A decision counts as confirmed ONLY while it is CURRENT under the locked
                     // criteria (§2); a stale/incomplete record is shown as unconfirmed so the user
