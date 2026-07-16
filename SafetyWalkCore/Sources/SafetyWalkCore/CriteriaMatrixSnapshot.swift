@@ -8,6 +8,7 @@ public enum CriteriaError: Error, Equatable {
     case unsupportedFormatVersion(Int)   // 미지원 format version
     case corruptedData                   // 손상된 JSON
     case nonPositiveScale                // 0 이하 scale
+    case scaleOverflow                   // likelihoodScale × severityScale 곱셈 overflow
     case emptyBands                      // 밴드 없음
     case bandsNotAscending               // 중복·역순 band
     case maxScoreNotCovered              // 최대 점수 미포함
@@ -104,13 +105,16 @@ public struct CriteriaMatrixSnapshot: Equatable {
         return snapshot
     }
 
-    /// Structural validation shared by decode (and re-checkable at start).
+    /// Structural validation shared by decode (and re-checkable at start). Fail-closed on scale
+    /// multiplication overflow — never crash (WO P1-3).
     public func validate() throws {
         guard likelihoodScale > 0, severityScale > 0 else { throw CriteriaError.nonPositiveScale }
+        let (maxPossible, overflow) = likelihoodScale.multipliedReportingOverflow(by: severityScale)
+        guard !overflow else { throw CriteriaError.scaleOverflow }
         guard !bands.isEmpty else { throw CriteriaError.emptyBands }
         for i in 1..<bands.count where bands[i].maxScore <= bands[i - 1].maxScore {
             throw CriteriaError.bandsNotAscending
         }
-        guard let last = bands.last, last.maxScore >= maxScore else { throw CriteriaError.maxScoreNotCovered }
+        guard let last = bands.last, last.maxScore >= maxPossible else { throw CriteriaError.maxScoreNotCovered }
     }
 }

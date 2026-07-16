@@ -34,6 +34,10 @@ public struct AcceptabilityCriteria: Equatable {
         guard allowedThresholds(usesFrequencySeverity: usesScore).contains(threshold) else {
             throw CriteriaError.invalidThreshold
         }
+        // Score threshold must also be reachable in this matrix (WO P1-3).
+        if usesScore {
+            guard threshold <= matrix.maxScore else { throw CriteriaError.invalidThreshold }
+        }
     }
 
     /// Rank of a risk level for the 3단계/체크리스트 comparison (low=1, medium=2, high=3).
@@ -45,12 +49,22 @@ public struct AcceptabilityCriteria: Equatable {
         }
     }
 
-    /// 기준 이내/초과 SUGGESTION for one item, or `nil` when the risk is 미입력 (제안 없음).
-    /// 빈도×강도/JSA compares the raw score; 3단계/체크리스트 compares the level rank.
+    /// Fail-closed raw score for in-range likelihood×severity, or nil if either input is out of the
+    /// matrix scale or the product overflows (WO P1-3). The pure numeric proposal entry point.
+    func inRangeScore(likelihood: Int?, severity: Int?) -> Int? {
+        guard let l = likelihood, let s = severity,
+              (1...matrix.likelihoodScale).contains(l),
+              (1...matrix.severityScale).contains(s) else { return nil }
+        let (score, overflow) = l.multipliedReportingOverflow(by: s)
+        return overflow ? nil : score
+    }
+
+    /// 기준 이내/초과 SUGGESTION, or `nil` when the risk is 미입력 or out of range (제안 없음).
+    /// 빈도×강도/JSA compares the raw score (range/overflow guarded); 3단계/체크리스트 the level rank.
     public func suggestion(likelihood: Int?, severity: Int?, riskLevel: RiskLevel?) -> CriteriaDecision? {
         if usesScore {
-            guard let l = likelihood, let s = severity else { return nil }
-            return (l * s) <= threshold ? .withinThreshold : .exceedsThreshold
+            guard let score = inRangeScore(likelihood: likelihood, severity: severity) else { return nil }
+            return score <= threshold ? .withinThreshold : .exceedsThreshold
         } else {
             guard let level = riskLevel else { return nil }
             return Self.rank(level) <= threshold ? .withinThreshold : .exceedsThreshold
@@ -94,9 +108,17 @@ public struct AcceptabilityCriteria: Equatable {
         return try! AcceptabilityCriteria(matrix: .threeByThree, threshold: threshold, usesScore: usesFrequencySeverity)
     }
 
-    /// Convenience: the suggestion for a whole item's current risk input.
+    /// The suggestion for a whole item — stricter than the numeric form: for 빈도×강도/JSA it also
+    /// requires the stored `riskLevel` to MATCH the matrix-computed band (WO P1-3). Any range,
+    /// overflow, or riskLevel/matrix mismatch → nil (제안 없음 → 확정 거부·readiness false).
     public func suggestion(for item: RiskAssessmentItem) -> CriteriaDecision? {
-        suggestion(likelihood: item.likelihood, severity: item.severity, riskLevel: item.riskLevel)
+        if usesScore {
+            guard let score = inRangeScore(likelihood: item.likelihood, severity: item.severity),
+                  item.riskLevel == matrix.band(forScore: score) else { return nil }
+            return score <= threshold ? .withinThreshold : .exceedsThreshold
+        } else {
+            return suggestion(likelihood: nil, severity: nil, riskLevel: item.riskLevel)
+        }
     }
 }
 

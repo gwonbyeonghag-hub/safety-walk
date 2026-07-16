@@ -36,8 +36,8 @@ struct SchemaV3RegistrationTests {
         let ra = RiskAssessment(kind: .regular, method: .threeLevel,
                                 siteId: UUID(), siteName: "가나 현장")
         ctx.insert(ra)
-        let item = RiskAssessmentItem(taskDescription: "용접", riskLevel: .high,
-                                      criteriaDecision: .exceedsThreshold)
+        let item = RiskAssessmentItem(taskDescription: "용접", riskLevel: .high)
+        item.criteriaDecision = .exceedsThreshold   // @testable: internal setter for a cascade fixture
         item.riskAssessment = ra
         ctx.insert(item)
         let participant = RiskAssessmentParticipant(name: "김근로", role: .worker)
@@ -112,9 +112,9 @@ struct SchemaV3InvariantTests {
 
     /// isRequired is derived from the parent item's 초과 여부 — never stored (교정 #2).
     @Test func correctiveActionIsRequiredDerivesFromDecision() {
-        let exceed = RiskAssessmentItem(riskLevel: .high, criteriaDecision: .exceedsThreshold)
+        let exceed = RiskAssessmentItem(riskLevel: .high); exceed.criteriaDecision = .exceedsThreshold
         #expect(CorrectiveAction(item: exceed).isRequired == true)
-        let within = RiskAssessmentItem(riskLevel: .low, criteriaDecision: .withinThreshold)
+        let within = RiskAssessmentItem(riskLevel: .low); within.criteriaDecision = .withinThreshold
         #expect(CorrectiveAction(item: within).isRequired == false)
         let unassessed = RiskAssessmentItem(riskLevel: .high)   // criteriaDecision nil = 미평가
         #expect(CorrectiveAction(item: unassessed).isRequired == false)
@@ -122,7 +122,7 @@ struct SchemaV3InvariantTests {
 
     /// 효과확인은 result·confirmedBy·effectivenessConfirmedAt 를 한 번에 갱신 — 부분 갱신 없음.
     @Test func effectivenessConfirmUpdatesAllThreeFieldsAtomically() {
-        let item = RiskAssessmentItem(riskLevel: .high, criteriaDecision: .exceedsThreshold)
+        let item = RiskAssessmentItem(riskLevel: .high)
         let action = CorrectiveAction(item: item, measure: "가드 설치")
         #expect(action.isEffectivenessConfirmed == false)
         #expect(action.effectivenessResult == nil)
@@ -137,11 +137,26 @@ struct SchemaV3InvariantTests {
         #expect(action.isEffectivenessConfirmed == true)
     }
 
-    /// nil=미평가: an item is only 평가완료 when BOTH 위험도 and 초과여부 결정이 있다 (§7).
-    @Test func itemIsAssessedRequiresBothLevelAndDecision() {
-        #expect(RiskAssessmentItem(riskLevel: .high, criteriaDecision: .exceedsThreshold).isAssessed)
-        #expect(!RiskAssessmentItem(riskLevel: .high).isAssessed)                    // 결정 미평가
-        #expect(!RiskAssessmentItem(criteriaDecision: .withinThreshold).isAssessed)  // 위험도 미평가
-        #expect(!RiskAssessmentItem().isAssessed)                                    // 둘 다 미평가
+    /// nil=미평가: an item is 평가완료 only with a 위험도 AND a COMPLETE confirmation — decision +
+    /// 확인시각 + 비어있지 않은 확인자 (WO LEGAL-2b P2). A bare decision is not enough.
+    @Test func itemIsAssessedRequiresLevelAndCompleteConfirmation() {
+        // 완전 확정
+        let full = RiskAssessmentItem(riskLevel: .high)
+        full.criteriaDecision = .exceedsThreshold
+        full.decisionConfirmedAt = Date()
+        full.decisionConfirmedBy = "홍길동"
+        #expect(full.isAssessed)
+        // 결정만(확인시각·확인자 없음) → 미평가
+        let partial = RiskAssessmentItem(riskLevel: .high); partial.criteriaDecision = .exceedsThreshold
+        #expect(!partial.isAssessed)
+        // 확인자 공백 → 미평가
+        let blank = RiskAssessmentItem(riskLevel: .high)
+        blank.criteriaDecision = .exceedsThreshold; blank.decisionConfirmedAt = Date(); blank.decisionConfirmedBy = "  "
+        #expect(!blank.isAssessed)
+        // 위험도 없음 → 미평가
+        let noLevel = RiskAssessmentItem(); noLevel.criteriaDecision = .withinThreshold
+        #expect(!noLevel.isAssessed)
+        // 둘 다 미평가
+        #expect(!RiskAssessmentItem().isAssessed)
     }
 }

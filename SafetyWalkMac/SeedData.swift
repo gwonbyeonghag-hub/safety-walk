@@ -154,8 +154,8 @@ enum SeedData {
         let it = RiskAssessmentItem(
             taskDescription: task, hazardDescription: hazard, currentControls: controls,
             likelihood: likelihood, severity: severity, riskLevel: level,
-            criteriaDecision: level == .low ? .withinThreshold : .exceedsThreshold,
             sortOrder: sortOrder)
+        // 초과여부 결정은 seedLockAndConfirm 에서 잠긴 기준 기반으로 확정한다(임의 주입 금지).
         it.riskAssessment = ra
         context.insert(it)
         if measure != nil || responsible != nil || due != nil || status != .notStarted {
@@ -164,6 +164,19 @@ enum SeedData {
             context.insert(action)
         }
         return it
+    }
+
+    /// Locks a default criteria (via the sanctioned atomic `AssessmentStart.start`) and confirms
+    /// each seeded item's COMPUTED decision through the Core op — demo data goes through the same
+    /// domain path as real input, never injecting an arbitrary decision (WO LEGAL-2b P1-1/P1-2).
+    @MainActor
+    private static func seedLockAndConfirm(_ context: ModelContext, ra: RiskAssessment, at: Date) {
+        let criteria = AcceptabilityCriteria.makeDefault(usesFrequencySeverity: ra.method.usesFrequencySeverity)
+        try? AssessmentStart.start(ra, criteria: criteria, now: at, in: context)
+        for it in ra.items ?? [] {
+            try? it.confirmCriteriaDecision(under: criteria, at: at, by: ra.assessorName)
+        }
+        try? context.save()
     }
 
     @MainActor
@@ -187,6 +200,7 @@ enum SeedData {
                      measure: r.4, responsible: r.5,
                      due: at.addingTimeInterval(Double((i + 20) * 86400)), sortOrder: i)
         }
+        seedLockAndConfirm(context, ra: ra, at: at)
     }
 
     @MainActor
@@ -220,6 +234,7 @@ enum SeedData {
                             measure: r.5, responsible: r.6,
                             due: at.addingTimeInterval(Double((i + 15) * 86400)), sortOrder: i)
         }
+        seedLockAndConfirm(context, ra: ra, at: at)
     }
 
     @MainActor
@@ -243,6 +258,7 @@ enum SeedData {
                      due: at.addingTimeInterval(Double((i + 7) * 86400)),
                      status: i % 2 == 0 ? .inProgress : .notStarted, sortOrder: i)
         }
+        seedLockAndConfirm(context, ra: ra, at: at)
     }
 
     @MainActor
@@ -274,6 +290,7 @@ enum SeedData {
                             likelihood: s.3, severity: s.4, level: level,
                             measure: s.5, sortOrder: i)
         }
+        seedLockAndConfirm(context, ra: ra, at: at)
     }
 }
 #endif

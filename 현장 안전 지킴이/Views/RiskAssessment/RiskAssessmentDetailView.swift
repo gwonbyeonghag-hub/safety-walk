@@ -236,18 +236,15 @@ struct RiskAssessmentDetailView: View {
 
     // MARK: - Helpers
 
-    /// Records the user's confirmation: the Core domain op computes + validates the suggestion from
-    /// the locked criteria and the item's current input, and writes the three fields together (§2)
-    /// — no arbitrary decision. A confirm/validation/save failure rolls back and surfaces the
-    /// localized alert (WO LEGAL-2b §2·§5).
+    /// Records the user's confirmation via the single atomic Core op: it decodes the locked
+    /// criteria, computes + validates the decision, writes the three fields + updatedAt together,
+    /// and on any failure rolls back the store AND restores the in-memory instances before
+    /// rethrowing (WO LEGAL-2b P1-1). The View only surfaces the localized alert.
     private func confirmDecision(_ item: RiskAssessmentItem) {
-        guard let criteria = decodedCriteria else { showSaveError = true; return }
         do {
-            try item.confirmCriteriaDecision(under: criteria, at: Date(), by: assessment.assessorName)
-            assessment.updatedAt = Date()
-            try modelContext.save()
+            try AssessmentDecision.confirm(item: item, in: assessment,
+                                           by: assessment.assessorName, at: Date(), context: modelContext)
         } catch {
-            modelContext.rollback()
             showSaveError = true
         }
     }

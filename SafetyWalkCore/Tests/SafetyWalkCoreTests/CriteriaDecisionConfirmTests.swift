@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-import SafetyWalkCore
+@testable import SafetyWalkCore
 
 // WO LEGAL-2b §2 — a confirmation may ONLY record the suggestion computed from the item's
 // current risk input under the locked criteria (no arbitrary decision). All three fields
