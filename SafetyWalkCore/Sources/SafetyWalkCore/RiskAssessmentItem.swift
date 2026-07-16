@@ -69,21 +69,8 @@ public final class RiskAssessmentItem {
         correctiveActions?.first
     }
 
-    /// Records the user's confirmation of the 기준 이내/초과 decision — writes all three fields
-    /// TOGETHER (criteriaDecision · decisionConfirmedAt · decisionConfirmedBy) so a decision is
-    /// never half-recorded (WO LEGAL-2b §5 · 교정 #3). The computed suggestion alone never gets
-    /// here; only an explicit user confirmation does.
-    public func confirmCriteriaDecision(_ decision: CriteriaDecision, at date: Date, by person: String) {
-        criteriaDecision = decision
-        decisionConfirmedAt = date
-        decisionConfirmedBy = person
-    }
-
-    /// Clears a confirmed decision (all three fields) so a stale 이내/초과 never lingers after the
-    /// item's risk input — or the locked criteria — changes (WO LEGAL-2b §5). Returns to 미평가.
-    public func clearCriteriaDecision() {
-        criteriaDecision = nil
-        decisionConfirmedAt = nil
-        decisionConfirmedBy = nil
-    }
+    // 기준 이내/초과 CONFIRMATION is a Core domain operation that computes + validates the
+    // suggestion from the locked criteria and the item's current input — see the
+    // `confirmCriteriaDecision(under:at:by:)` / `hasCurrentCriteriaDecision(under:)` extension in
+    // AcceptabilityCriteria.swift (WO LEGAL-2b §2). No arbitrary-decision setter exists.
 }

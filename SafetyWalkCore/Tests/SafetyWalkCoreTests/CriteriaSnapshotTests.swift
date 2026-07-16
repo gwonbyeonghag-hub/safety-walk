@@ -20,6 +20,23 @@ struct CriteriaMatrixCodecTests {
         #expect(decoded.maxScore == 9)
     }
 
+    /// WO §6: the snapshot's 3×3 is value-copied from `RiskMatrixConfig.threeByThree` (single
+    /// source), with the `.max` top boundary normalized to the real max score (9) — and every
+    /// possible 3×3 input resolves to the SAME RiskLevel in both representations.
+    @Test func snapshotMatchesRiskMatrixConfigForAll3x3() {
+        let config = RiskMatrixConfig.threeByThree
+        let snapshot = CriteriaMatrixSnapshot.threeByThree
+        #expect(snapshot.likelihoodScale == config.likelihoodScale)
+        #expect(snapshot.severityScale == config.severityScale)
+        #expect(snapshot.bands.last?.maxScore == 9)   // .max normalized to the real max score
+        for l in 1...3 {
+            for s in 1...3 {
+                #expect(snapshot.band(forScore: l * s) == config.band(likelihood: l, severity: s),
+                        "l\(l)×s\(s): snapshot \(snapshot.band(forScore: l * s)) vs config \(config.band(likelihood: l, severity: s))")
+            }
+        }
+    }
+
     /// The default 3×3 resolves each raw score to the WO-documented band.
     @Test func defaultThreeByThreeBands() {
         let m = CriteriaMatrixSnapshot.threeByThree

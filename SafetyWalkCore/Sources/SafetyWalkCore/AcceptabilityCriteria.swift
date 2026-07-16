@@ -23,11 +23,16 @@ public struct AcceptabilityCriteria: Equatable {
         self.usesScore = usesScore
     }
 
+    /// The ONLY thresholds the launch policy permits (WO LEGAL-2b §3) — Core is the single
+    /// source: 빈도×강도/JSA = [2, 4] (raw score); 3단계/체크리스트 = [1, 2] (level rank). The UI
+    /// options and every decode/readiness path derive their allowed set from here.
+    public static func allowedThresholds(usesFrequencySeverity: Bool) -> [Int] {
+        usesFrequencySeverity ? [2, 4] : [1, 2]
+    }
+
     private static func validateThreshold(_ threshold: Int, matrix: CriteriaMatrixSnapshot, usesScore: Bool) throws {
-        if usesScore {
-            guard threshold >= 1, threshold <= matrix.maxScore else { throw CriteriaError.invalidThreshold }
-        } else {
-            guard threshold >= 1, threshold <= 3 else { throw CriteriaError.invalidThreshold }
+        guard allowedThresholds(usesFrequencySeverity: usesScore).contains(threshold) else {
+            throw CriteriaError.invalidThreshold
         }
     }
 
@@ -78,5 +83,41 @@ public struct AcceptabilityCriteria: Equatable {
         let threshold = usesFrequencySeverity ? 2 : 1
         // swiftlint:disable:next force_try  — .threeByThree + {1,2} is always valid.
         return try! AcceptabilityCriteria(matrix: .threeByThree, threshold: threshold, usesScore: usesFrequencySeverity)
+    }
+
+    /// Convenience: the suggestion for a whole item's current risk input.
+    public func suggestion(for item: RiskAssessmentItem) -> CriteriaDecision? {
+        suggestion(likelihood: item.likelihood, severity: item.severity, riskLevel: item.riskLevel)
+    }
+}
+
+/// Why a 기준 이내/초과 confirmation was refused (WO LEGAL-2b §2).
+public enum CriteriaConfirmationError: Error, Equatable {
+    case riskNotEntered   // 위험 입력 미기록 — 계산할 제안이 없음
+    case emptyConfirmer   // 확인자 공백
+}
+
+public extension RiskAssessmentItem {
+
+    /// Confirms the 기준 이내/초과 decision by RECORDING the suggestion computed from THIS item's
+    /// current input under `criteria` — the only value that may be stored (WO §2, no arbitrary
+    /// decision). Writes all three fields together; refuses a blank confirmer or 미입력 risk.
+    func confirmCriteriaDecision(under criteria: AcceptabilityCriteria, at date: Date, by person: String) throws {
+        guard !person.sw_isBlank else { throw CriteriaConfirmationError.emptyConfirmer }
+        guard let decision = criteria.suggestion(for: self) else { throw CriteriaConfirmationError.riskNotEntered }
+        criteriaDecision = decision
+        decisionConfirmedAt = date
+        decisionConfirmedBy = person
+    }
+
+    /// True only for a COMPLETE, CURRENT confirmation under `criteria`: all three fields present
+    /// (non-blank confirmer) AND the stored decision still equals the suggestion recomputed from
+    /// the current input. A later risk/criteria change makes a once-valid decision stale → false
+    /// (WO §2). Incomplete or stale records are never treated as confirmed.
+    func hasCurrentCriteriaDecision(under criteria: AcceptabilityCriteria) -> Bool {
+        guard let stored = criteriaDecision,
+              decisionConfirmedAt != nil,
+              let by = decisionConfirmedBy, !by.sw_isBlank else { return false }
+        return criteria.suggestion(for: self) == stored
     }
 }

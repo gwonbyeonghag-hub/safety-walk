@@ -90,6 +90,27 @@ struct AssessmentStartTests {
         #expect(ra.assessedAt == nil)
     }
 
+    /// WO §8 REAL rollback: when the commit fails, start's real mutations (criteria insert, status
+    /// flip, timestamps) are rolled back via a real `context.rollback()` to the pre-start persisted
+    /// state — no partial commit — and the error rethrows. Only the commit throw is injected
+    /// (SwiftData can't be made to throw a catchable save() on these unique-free models).
+    @Test func failedCommitRollsBackToPreStartState() throws {
+        struct CommitFailed: Error {}
+        let ctx = try makeContext()
+        let ra = plannedAssessment(in: ctx)
+        try ctx.save()                    // persist the .planned state as the rollback target
+
+        #expect(throws: CommitFailed.self) {
+            try AssessmentStart.start(ra, criteria: .makeDefault(usesFrequencySeverity: true),
+                                      now: now, in: ctx, commit: { throw CommitFailed() })
+        }
+        // Rolled back to the pre-start persisted state — every mutation reverted.
+        #expect(ra.status == .planned)
+        #expect(ra.criteria == nil)
+        #expect(ra.assessedAt == nil)
+        #expect(try ctx.fetch(FetchDescriptor<AssessmentCriteria>()).isEmpty)
+    }
+
     /// 실패 시 부분 상태 없음: a rejected start does not insert a criteria or mutate the assessment.
     @Test func rejectedStartLeavesNoPartialState() throws {
         let ctx = try makeContext()

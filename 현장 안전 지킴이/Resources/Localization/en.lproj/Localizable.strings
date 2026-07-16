@@ -503,17 +503,17 @@
 "ra.signature.captured" = "Signed";
 
 /* Risk Assessment 2b — acceptability criteria · within/exceeds decision (WO LEGAL-2b) */
-"ra.criteria.section" = "Acceptability Criteria";
+"ra.criteria.section" = "Site-set Criteria";
 "ra.criteria.startTitle" = "Confirm Criteria & Start";
 "ra.criteria.startButton" = "Start with These Criteria";
 "ra.criteria.locked" = "Locked Criteria";
 "ra.criteria.lockedHint" = "Fixed when the assessment starts. Later changes to the site's settings do not affect this assessment.";
-"ra.criteria.explainScore" = "Judged by the frequency × severity score. These are site-set values; the app does not judge legal violation or compliance.";
-"ra.criteria.explainLevel" = "Judged by the risk level. These are site-set values; the app does not judge legal violation or compliance.";
-"ra.criteria.scoreOption2" = "Score 1–2 within (3+ exceeds)";
-"ra.criteria.scoreOption4" = "Score 1–4 within (6+ exceeds)";
-"ra.criteria.levelOptionLow" = "Low only within";
-"ra.criteria.levelOptionMedium" = "Low & Medium within";
+"ra.criteria.explainScore" = "Compares the score with criteria set by your site. This is not a legal determination.";
+"ra.criteria.explainLevel" = "Compares the risk level with criteria set by your site. This is not a legal determination.";
+"ra.criteria.scoreOption2" = "Within criteria up to score 2";
+"ra.criteria.scoreOption4" = "Within criteria up to score 4";
+"ra.criteria.levelOptionLow" = "Low only within criteria";
+"ra.criteria.levelOptionMedium" = "Low & Medium within criteria";
 "ra.criteria.thresholdLabel" = "Within-criteria range";
 "ra.criteria.corrupt" = "Criteria data could not be read";
 "ra.decision.within" = "Within site-set criteria";

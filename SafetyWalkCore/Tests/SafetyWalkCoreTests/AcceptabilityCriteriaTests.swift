@@ -38,12 +38,17 @@ struct AcceptabilityScoreTests {
         #expect(c.suggestion(likelihood: nil, severity: nil, riskLevel: .high) == nil)
     }
 
-    @Test func invalidScoreThresholdThrows() {
-        #expect(throws: CriteriaError.invalidThreshold) {
-            try AcceptabilityCriteria(matrix: .threeByThree, threshold: 0, usesScore: true)
+    /// WO §3 출시 정책: 빈도×강도/JSA 허용 임계값은 2·4 뿐. 그 외(1·3·5·0·9…)는 거부.
+    @Test func onlyTwoAndFourAllowedForScore() {
+        #expect(AcceptabilityCriteria.allowedThresholds(usesFrequencySeverity: true) == [2, 4])
+        for bad in [0, 1, 3, 5, 9, 10] {
+            #expect(throws: CriteriaError.invalidThreshold) {
+                try AcceptabilityCriteria(matrix: .threeByThree, threshold: bad, usesScore: true)
+            }
         }
-        #expect(throws: CriteriaError.invalidThreshold) {
-            try AcceptabilityCriteria(matrix: .threeByThree, threshold: 10, usesScore: true)
+        #expect(throws: Never.self) {
+            _ = try AcceptabilityCriteria(matrix: .threeByThree, threshold: 2, usesScore: true)
+            _ = try AcceptabilityCriteria(matrix: .threeByThree, threshold: 4, usesScore: true)
         }
     }
 }
@@ -72,12 +77,17 @@ struct AcceptabilityRankTests {
         #expect(c.suggestion(likelihood: nil, severity: nil, riskLevel: nil) == nil)
     }
 
-    @Test func invalidRankThresholdThrows() {
-        #expect(throws: CriteriaError.invalidThreshold) {
-            try AcceptabilityCriteria(matrix: .threeByThree, threshold: 0, usesScore: false)
+    /// WO §3: 3단계/체크리스트 허용 임계값은 1·2 뿐. 3(direct)·0·4 등은 거부.
+    @Test func onlyLowAndMediumAllowedForRank() {
+        #expect(AcceptabilityCriteria.allowedThresholds(usesFrequencySeverity: false) == [1, 2])
+        for bad in [0, 3, 4] {
+            #expect(throws: CriteriaError.invalidThreshold) {
+                try AcceptabilityCriteria(matrix: .threeByThree, threshold: bad, usesScore: false)
+            }
         }
-        #expect(throws: CriteriaError.invalidThreshold) {
-            try AcceptabilityCriteria(matrix: .threeByThree, threshold: 4, usesScore: false)
+        #expect(throws: Never.self) {
+            _ = try AcceptabilityCriteria(matrix: .threeByThree, threshold: 1, usesScore: false)
+            _ = try AcceptabilityCriteria(matrix: .threeByThree, threshold: 2, usesScore: false)
         }
     }
 }

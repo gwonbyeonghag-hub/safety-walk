@@ -41,19 +41,22 @@ public struct CriteriaMatrixSnapshot: Equatable {
         self.bands = bands
     }
 
+    /// Value-copies a persisted snapshot from the live `RiskMatrixConfig` (WO §6 single source):
+    /// same scales + bands, with the config's open-ended `.max` top boundary NORMALIZED down to
+    /// the real maximum score so the snapshot has a concrete, complete range (no new abstraction).
+    public init(from config: RiskMatrixConfig) {
+        let maxScore = config.likelihoodScale * config.severityScale
+        self.likelihoodScale = config.likelihoodScale
+        self.severityScale = config.severityScale
+        self.bands = config.bands.map { Band(maxScore: min($0.maxScore, maxScore), level: $0.level) }
+    }
+
     /// Maximum possible raw score for this matrix (likelihood × severity at full scale).
     public var maxScore: Int { likelihoodScale * severityScale }
 
-    /// Default 3×3 (WO LEGAL-2b §5): 1~2 low, 3~4 medium, 5~9 high.
-    public static let threeByThree = CriteriaMatrixSnapshot(
-        likelihoodScale: 3,
-        severityScale: 3,
-        bands: [
-            Band(maxScore: 2, level: .low),
-            Band(maxScore: 4, level: .medium),
-            Band(maxScore: 9, level: .high),
-        ]
-    )
+    /// Default 3×3 (WO LEGAL-2b §5/§6): value-copied from `RiskMatrixConfig.threeByThree`
+    /// (1~2 low, 3~4 medium, 5~9 high) — never re-hardcoded here.
+    public static let threeByThree = CriteriaMatrixSnapshot(from: .threeByThree)
 
     /// Band for a raw score (first band whose `maxScore` the score does not exceed).
     public func band(forScore score: Int) -> RiskLevel {

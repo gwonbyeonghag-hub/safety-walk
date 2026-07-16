@@ -5,14 +5,21 @@ import SafetyWalkCore
 // (the planned "평가 시작" sheet and the immediate create form) plus the read-only locked display.
 // Wording is "사업장 설정 기준 이내/초과" only — never 허용/불허용/위반/준수 (앱은 법적 판정을 하지 않음).
 
-/// The two selectable "highest within-criteria" options for a method, mapped to the raw
-/// `acceptabilityThreshold` value the Core stores (WO §3):
-/// - 빈도×강도/JSA → raw score 2 (default) or 4
-/// - 3단계/체크리스트 → level rank 1 = 낮음만 (default) or 2 = 낮음·보통
+/// The selectable "highest within-criteria" options for a method — the VALUES come from Core's
+/// single allowed set (`AcceptabilityCriteria.allowedThresholds`, WO §3), the UI only maps each to
+/// its label: 빈도×강도/JSA → raw score 2/4; 3단계/체크리스트 → level rank 1(낮음만)/2(낮음·보통).
 func criteriaThresholdOptions(usesFrequencySeverity: Bool) -> [(value: Int, label: LocalizationKey)] {
-    usesFrequencySeverity
-        ? [(2, .raCriteriaScoreOption2), (4, .raCriteriaScoreOption4)]
-        : [(1, .raCriteriaLevelLow), (2, .raCriteriaLevelMedium)]
+    AcceptabilityCriteria.allowedThresholds(usesFrequencySeverity: usesFrequencySeverity).map { value in
+        (value, criteriaThresholdLabelKey(value, usesFrequencySeverity: usesFrequencySeverity))
+    }
+}
+
+private func criteriaThresholdLabelKey(_ value: Int, usesFrequencySeverity: Bool) -> LocalizationKey {
+    if usesFrequencySeverity {
+        return value == 4 ? .raCriteriaScoreOption4 : .raCriteriaScoreOption2
+    } else {
+        return value == 2 ? .raCriteriaLevelMedium : .raCriteriaLevelLow
+    }
 }
 
 extension CriteriaDecision {

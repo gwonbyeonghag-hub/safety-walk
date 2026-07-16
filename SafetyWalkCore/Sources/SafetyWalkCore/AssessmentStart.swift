@@ -27,12 +27,34 @@ public enum AssessmentStart {
         now: Date,
         in context: ModelContext
     ) throws -> AssessmentCriteria {
+        try start(assessment, criteria: criteria, now: now, in: context, commit: { try context.save() })
+    }
+
+    /// Testing seam for the commit step. Production always commits with `context.save()`; the
+    /// mutations and `context.rollback()` are real SwiftData operations either way. This overload
+    /// exists ONLY so a test can inject a throwing commit to exercise the rollback path — these
+    /// CloudKit-ready models carry no `@Attribute(.unique)`, so a real `save()` cannot be made to
+    /// throw catchably (disk failures abort rather than throw). Not part of the public API.
+    @discardableResult
+    static func start(
+        _ assessment: RiskAssessment,
+        criteria: AcceptabilityCriteria,
+        now: Date,
+        in context: ModelContext,
+        commit: () throws -> Void
+    ) throws -> AssessmentCriteria {
         guard assessment.status == .planned else { throw AssessmentStartError.notPlanned }
         guard assessment.criteria == nil else { throw AssessmentStartError.criteriaAlreadyLocked }
 
         // Value copy: encode the validated snapshot into the persisted blob (already validated on
         // the way into AcceptabilityCriteria, so encode is total here).
         let matrixData = try criteria.matrix.encoded()
+
+        // Captured so the in-memory assessment can be restored on failure — `context.rollback()`
+        // reverts the STORE but leaves the mutated instance dirty (a held reference would read a
+        // phantom .inProgress otherwise).
+        let priorAssessedAt = assessment.assessedAt
+        let priorUpdatedAt = assessment.updatedAt
 
         let ac = AssessmentCriteria(
             matrixData: matrixData,
@@ -47,9 +69,15 @@ public enum AssessmentStart {
         assessment.updatedAt = now
 
         do {
-            try context.save()
+            try commit()
         } catch {
             context.rollback()
+            // Restore the in-memory object to its pre-start state — atomic in memory as well as
+            // in the store, so a retry sees .planned + no criteria (WO §5 부분 상태 없음).
+            assessment.criteria = nil
+            assessment.status = .planned
+            assessment.assessedAt = priorAssessedAt
+            assessment.updatedAt = priorUpdatedAt
             throw error
         }
         return ac

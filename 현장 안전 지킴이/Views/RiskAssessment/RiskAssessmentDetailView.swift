@@ -219,14 +219,19 @@ struct RiskAssessmentDetailView: View {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                     // The 기준 이내/초과 SUGGESTION comes from the locked criteria (single Core source);
                     // it is a proposal only — nothing is recorded until the user taps 확인.
-                    let suggestion = decodedCriteria?.suggestion(
-                        likelihood: item.likelihood, severity: item.severity, riskLevel: item.riskLevel)
+                    let criteria = decodedCriteria
+                    let suggestion = criteria?.suggestion(for: item)
+                    // A decision counts as confirmed ONLY while it is CURRENT under the locked
+                    // criteria (§2); a stale/incomplete record is shown as unconfirmed so the user
+                    // can re-confirm.
+                    let isCurrent = criteria.map { item.hasCurrentCriteriaDecision(under: $0) } ?? false
                     ItemDetailRow(item: item,
                                   method: assessment.method,
                                   stepNumber: assessment.method == .jsa ? index + 1 : nil,
+                                  confirmedDecision: isCurrent ? item.criteriaDecision : nil,
                                   suggestion: suggestion,
-                                  canConfirm: assessment.status == .inProgress && item.criteriaDecision == nil,
-                                  onConfirm: { if let suggestion { confirmDecision(item, suggestion) } })
+                                  canConfirm: assessment.status == .inProgress && !isCurrent,
+                                  onConfirm: { confirmDecision(item) })
                 }
             }
         }
@@ -234,13 +239,15 @@ struct RiskAssessmentDetailView: View {
 
     // MARK: - Helpers
 
-    /// Records the user's confirmation of the 기준 이내/초과 decision (all three fields, atomically)
-    /// and persists it. Unlike the 2a participation edits this must not swallow errors — a failed
-    /// save rolls back and surfaces the localized alert (WO LEGAL-2b §5).
-    private func confirmDecision(_ item: RiskAssessmentItem, _ decision: CriteriaDecision) {
-        item.confirmCriteriaDecision(decision, at: Date(), by: assessment.assessorName)
-        assessment.updatedAt = Date()
+    /// Records the user's confirmation: the Core domain op computes + validates the suggestion from
+    /// the locked criteria and the item's current input, and writes the three fields together (§2)
+    /// — no arbitrary decision. A confirm/validation/save failure rolls back and surfaces the
+    /// localized alert (WO LEGAL-2b §2·§5).
+    private func confirmDecision(_ item: RiskAssessmentItem) {
+        guard let criteria = decodedCriteria else { showSaveError = true; return }
         do {
+            try item.confirmCriteriaDecision(under: criteria, at: Date(), by: assessment.assessorName)
+            assessment.updatedAt = Date()
             try modelContext.save()
         } catch {
             modelContext.rollback()
@@ -339,8 +346,9 @@ private struct ItemDetailRow: View {
     let item: RiskAssessmentItem
     let method: RiskAssessmentMethod
     let stepNumber: Int?   // 1-based JSA step number; nil for other methods
+    let confirmedDecision: CriteriaDecision?   // non-nil ONLY when a CURRENT confirmation exists (§2)
     let suggestion: CriteriaDecision?   // computed 기준 이내/초과 proposal (nil = 위험도 미입력)
-    let canConfirm: Bool                // inProgress + not yet confirmed
+    let canConfirm: Bool                // inProgress + not currently confirmed
     let onConfirm: () -> Void
 
     var body: some View {
@@ -414,7 +422,7 @@ private struct ItemDetailRow: View {
     /// suggestion + explicit 확인 button (≥44pt) while in progress. 위험도 미입력(suggestion nil)
     /// shows nothing — 미평가 stays 미평가, with no color or 이내/초과 text (WO LEGAL-2b §6).
     @ViewBuilder private var criteriaDecisionView: some View {
-        if let decision = item.criteriaDecision {
+        if let decision = confirmedDecision {
             HStack(spacing: 6) {
                 Image(systemName: decision.systemImage).font(.caption2)
                 Text(decision.localizedLabel).font(.caption2.weight(.semibold))

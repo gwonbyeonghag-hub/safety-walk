@@ -72,6 +72,9 @@ final class RiskAssessmentLegal2bUITests: XCTestCase {
                       "locked criteria section not shown after start")
         let confirm = app.buttons["ra_confirm_decision"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 10), "decision confirm button not shown")
+        // Incomplete (pre-confirm): shown as a 제안 with a 확인 button — NOT as a confirmed result.
+        XCTAssertFalse(app.staticTexts["사업장 설정 기준 초과"].exists,
+                       "an unconfirmed item must not display the decision as confirmed")
         snap(app, "2b_02_detail_suggestion")
 
         // Confirm → the recorded 기준 초과 decision appears and the confirm button is gone.
@@ -104,22 +107,25 @@ final class RiskAssessmentLegal2bUITests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 10), "planned row not shown")
         row.tap()
 
-        // Start → criteria sheet; switch to the "1~4 within" option, then confirm.
+        // Start → criteria sheet; switch to the "up to score 4" option, then confirm.
         let start = app.buttons["ra_start_assessment"]
         XCTAssertTrue(start.waitForExistence(timeout: 10), "start button not shown")
         start.tap()
         // The sheet's confirm button proves the criteria sheet is up.
         let confirmStart = app.buttons["ra_criteria_start_confirm"]
         XCTAssertTrue(confirmStart.waitForExistence(timeout: 10), "criteria selection sheet not shown")
-        // Inline-picker options are Buttons labelled by the option text (not staticTexts).
-        let option4 = app.buttons["1~4점 기준 이내 (6점부터 초과)"].firstMatch
-        if option4.waitForExistence(timeout: 5) { option4.tap() }
+        // Inline-picker options are Buttons labelled by the option text — it MUST exist (no soft skip).
+        let option4 = app.buttons["4점까지 기준 이내"].firstMatch
+        XCTAssertTrue(option4.waitForExistence(timeout: 5), "criteria option '4점까지 기준 이내' not shown")
+        option4.tap()
         snap(app, "2b_04_start_sheet_changed")
         confirmStart.tap()
 
-        // Detail is now inProgress with the locked criteria shown read-only.
+        // Detail is now inProgress and the LOCKED criteria actually reads the changed range.
         XCTAssertTrue(app.staticTexts["잠긴 기준"].waitForExistence(timeout: 10),
                       "locked criteria not shown after start")
+        XCTAssertTrue(app.staticTexts["4점까지 기준 이내"].waitForExistence(timeout: 10),
+                      "locked criteria should read '4점까지 기준 이내'")
         snap(app, "2b_05_detail_locked_criteria")
     }
 }
