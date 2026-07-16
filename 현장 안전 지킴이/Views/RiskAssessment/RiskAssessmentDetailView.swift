@@ -40,10 +40,7 @@ struct RiskAssessmentDetailView: View {
     private var decodedCriteria: AcceptabilityCriteria? {
         guard let c = assessment.criteria else { return nil }
         return try? AcceptabilityCriteria.decode(
-            matrixData: c.matrixData,
-            matrixFormatVersion: c.matrixFormatVersion,
-            threshold: c.acceptabilityThreshold,
-            usesFrequencySeverity: assessment.method.usesFrequencySeverity)
+            from: c, usesFrequencySeverity: assessment.method.usesFrequencySeverity)
     }
 
     var body: some View {

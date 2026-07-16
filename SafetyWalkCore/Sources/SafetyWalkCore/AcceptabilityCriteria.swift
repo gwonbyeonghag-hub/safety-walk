@@ -76,6 +76,15 @@ public struct AcceptabilityCriteria: Equatable {
         return try AcceptabilityCriteria(matrix: matrix, threshold: threshold, usesScore: usesFrequencySeverity)
     }
 
+    /// Decodes a locked `AssessmentCriteria` model for `method` (fail-closed). Single decode path
+    /// shared by the detail view, the locked-criteria display, and the readiness predicate.
+    public static func decode(from criteria: AssessmentCriteria, usesFrequencySeverity: Bool) throws -> AcceptabilityCriteria {
+        try decode(matrixData: criteria.matrixData,
+                   matrixFormatVersion: criteria.matrixFormatVersion,
+                   threshold: criteria.acceptabilityThreshold,
+                   usesFrequencySeverity: usesFrequencySeverity)
+    }
+
     /// SafetyWalk default criteria for a method: the 3×3 matrix with the WO default threshold
     /// (빈도×강도/JSA = 2, 3단계/체크리스트 = 1). The inputs are compile-time valid, so this
     /// never throws — it is the *construction* of a default, not error recovery.

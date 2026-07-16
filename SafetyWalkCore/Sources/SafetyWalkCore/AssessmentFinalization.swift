@@ -17,10 +17,7 @@ public enum AssessmentFinalization {
         guard assessment.status == .inProgress else { return false }
         guard let stored = assessment.criteria, stored.lockedAt != nil else { return false }
         guard let criteria = try? AcceptabilityCriteria.decode(
-            matrixData: stored.matrixData,
-            matrixFormatVersion: stored.matrixFormatVersion,
-            threshold: stored.acceptabilityThreshold,
-            usesFrequencySeverity: assessment.method.usesFrequencySeverity)
+            from: stored, usesFrequencySeverity: assessment.method.usesFrequencySeverity)
         else { return false }
         guard let items = assessment.items, !items.isEmpty else { return false }
         for item in items {

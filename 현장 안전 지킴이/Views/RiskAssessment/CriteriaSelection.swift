@@ -73,11 +73,7 @@ struct LockedCriteriaSection: View {
     let usesFrequencySeverity: Bool
 
     private var decoded: AcceptabilityCriteria? {
-        try? AcceptabilityCriteria.decode(
-            matrixData: criteria.matrixData,
-            matrixFormatVersion: criteria.matrixFormatVersion,
-            threshold: criteria.acceptabilityThreshold,
-            usesFrequencySeverity: usesFrequencySeverity)
+        try? AcceptabilityCriteria.decode(from: criteria, usesFrequencySeverity: usesFrequencySeverity)
     }
 
     private var thresholdLabel: String? {
