@@ -533,7 +533,6 @@
 "ra.action.edit" = "Edit Corrective Action";
 "ra.action.measureRequired" = "Enter a corrective measure";
 "ra.action.implementedAt" = "Implemented On";
-"ra.action.setImplementedAt" = "Record implementation date";
 "ra.action.evidencePhoto" = "Evidence Photo";
 "ra.action.effSection" = "Effectiveness Check";
 "ra.action.effResult" = "Effectiveness Result";

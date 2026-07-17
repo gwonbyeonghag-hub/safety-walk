@@ -72,6 +72,12 @@ public final class CorrectiveAction {
         isEffectivenessComplete && effectivenessResult == .effective
     }
 
+    /// 효과확인을 기록할 수 있는 상태 = 완료 + 이행일 + 개선후위험도. `CorrectiveActionEditing.confirmEffectiveness`
+    /// 의 전제와 편집 화면의 버튼 활성화 조건이 공유하는 단일 소스(중복 제거).
+    public var isReadyForEffectivenessCheck: Bool {
+        status == .completed && implementedAt != nil && postRiskLevel != nil
+    }
+
     /// 효과확인 불변조건 (SCHEMA_V3 §4.1): result·effectivenessConfirmedAt·confirmedBy 는
     /// **하나의 도메인 동작으로 함께 갱신** — 부분 갱신 금지. Core-only(`internal`): 전제 검증(이행일·
     /// 개선후위험도·확인자)과 원자 저장은 `CorrectiveActionEditing.confirmEffectiveness`가 담당하며,

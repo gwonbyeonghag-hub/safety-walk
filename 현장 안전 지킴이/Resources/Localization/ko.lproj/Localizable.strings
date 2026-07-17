@@ -533,7 +533,6 @@
 "ra.action.edit" = "개선조치 편집";
 "ra.action.measureRequired" = "감소대책을 입력하세요";
 "ra.action.implementedAt" = "이행일";
-"ra.action.setImplementedAt" = "이행일 기록";
 "ra.action.evidencePhoto" = "증거 사진";
 "ra.action.effSection" = "효과확인";
 "ra.action.effResult" = "효과확인 결과";

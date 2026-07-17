@@ -216,8 +216,7 @@ public enum CorrectiveActionEditing {
     ) throws {
         try requireEditable(assessment)
         try requireActionInAssessment(action, assessment)
-        guard action.status == .completed,
-              action.implementedAt != nil, action.postRiskLevel != nil else {
+        guard action.isReadyForEffectivenessCheck else {
             throw CorrectiveActionError.effectivenessPreconditionUnmet
         }
         guard !person.sw_isBlank else { throw CorrectiveActionError.emptyConfirmer }

@@ -79,7 +79,7 @@ final class CorrectiveActionEditorViewModel {
     // 효과확인은 저장된 완료 상태(이행일·개선후위험도 포함)에서만. 저장 전 draft가 아니라 action을 읽는다.
     var canConfirmEffectiveness: Bool {
         guard isEditable, let action else { return false }
-        return action.status == .completed && action.implementedAt != nil && action.postRiskLevel != nil
+        return action.isReadyForEffectivenessCheck
     }
     var recordedEffectiveness: EffectivenessResult? { action?.effectivenessResult }
     var recordedConfirmer: String? { action?.confirmedBy }

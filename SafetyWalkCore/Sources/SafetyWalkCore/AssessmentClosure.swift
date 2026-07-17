@@ -22,7 +22,7 @@ public enum AssessmentClosure {
         guard let items = assessment.items, !items.isEmpty else { return false }
         for item in items {
             guard item.riskLevel != nil, item.hasCurrentCriteriaDecision(under: criteria) else { return false }
-            guard item.criteriaDecision == .exceedsThreshold else { continue }
+            guard item.needsCorrectiveActionPlan else { continue }   // 기준 초과만 조치 필요
             let actions = item.correctiveActions ?? []
             guard !actions.isEmpty else { return false }          // 계획 없음 → 미종결
             for action in actions where !action.isEffectivelyResolved { return false }

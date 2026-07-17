@@ -3,15 +3,14 @@ import SafetyWalkCore
 
 /// depth-2 screen (pushed from `RiskAssessmentDetailView`): the 1:N 개선조치 for ONE item
 /// (WO LEGAL-2c). Reads the actions through the parent `item` relationship — no `@Query` — so
-/// add/edit/delete via the Core ops auto-refresh here. Rows push the depth-3 editor on the same
-/// NavigationStack (no nested stack, no new sheet). Editable while inProgress/finalized; a
-/// cancelled assessment is read-only (rows still open the editor read-only, but no add/delete).
+/// add/edit/delete auto-refresh here. Rows push the depth-3 editor on the same NavigationStack
+/// (no nested stack, no new sheet); this screen is purely navigation — every mutation (add / edit /
+/// delete) is orchestrated by `CorrectiveActionEditorViewModel`, so no persistence policy lives here
+/// (CLAUDE.md MVVM). Delete lives in the editor behind a confirmation. Editable while
+/// inProgress/finalized; a cancelled assessment is read-only (rows still open the editor read-only).
 struct CorrectiveActionListView: View {
     let item: RiskAssessmentItem
     let assessment: RiskAssessment
-
-    @Environment(\.modelContext) private var modelContext
-    @State private var showActionError = false
 
     /// Deterministic order (Core single source — CloudKit doesn't preserve to-many order).
     private var actions: [CorrectiveAction] { item.sortedCorrectiveActions }
@@ -49,7 +48,6 @@ struct CorrectiveActionListView: View {
                             CorrectiveActionRow(action: action)
                         }
                     }
-                    .onDelete(perform: deletePerform)
                 }
             } header: {
                 Text(itemTitle)
@@ -68,11 +66,6 @@ struct CorrectiveActionListView: View {
         }
         .navigationTitle(LocalizationKey.raActionSection.localized)
         .navigationBarTitleDisplayMode(.inline)
-        .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $showActionError) {
-            Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
-        } message: {
-            Text(LocalizationKey.raSaveFailedMessage.localized)
-        }
     }
 
     private var itemTitle: String {
@@ -80,25 +73,6 @@ struct CorrectiveActionListView: View {
         if !h.isEmpty { return h }
         let t = item.taskDescription.trimmingCharacters(in: .whitespaces)
         return t.isEmpty ? "—" : t
-    }
-
-    /// Swipe-to-delete only while editable (a typed optional so the `.onDelete` overload resolves).
-    private var deletePerform: ((IndexSet) -> Void)? {
-        guard isEditable else { return nil }
-        return { offsets in deleteActions(at: offsets) }
-    }
-
-    /// Capture the target actions BEFORE deleting (the sorted array recomputes as each is removed).
-    /// Each delete is the atomic Core op (store+memory restore on failure); a failure keeps the row.
-    private func deleteActions(at offsets: IndexSet) {
-        let targets = offsets.map { actions[$0] }
-        for action in targets {
-            do {
-                try CorrectiveActionEditing.remove(action, in: assessment, at: Date(), context: modelContext)
-            } catch {
-                showActionError = true
-            }
-        }
     }
 }
 

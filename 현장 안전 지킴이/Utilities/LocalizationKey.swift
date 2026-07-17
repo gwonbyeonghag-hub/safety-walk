@@ -386,7 +386,6 @@ enum LocalizationKey: String {
     case raActionEdit           = "ra.action.edit"
     case raActionMeasureRequired = "ra.action.measureRequired"
     case raActionImplementedAt  = "ra.action.implementedAt"
-    case raActionSetImplementedAt = "ra.action.setImplementedAt"
     case raActionEvidencePhoto  = "ra.action.evidencePhoto"
     case raActionEffSection     = "ra.action.effSection"
     case raActionEffResult      = "ra.action.effResult"
