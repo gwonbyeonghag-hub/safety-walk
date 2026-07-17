@@ -56,12 +56,12 @@ public enum CorrectiveActionEditing {
         commit: () throws -> Void
     ) throws -> CorrectiveAction {
         try requireEditable(assessment)
-        try requireMeasure(measure)
         guard (assessment.items ?? []).contains(where: { $0 === item }) else {
             throw CorrectiveActionError.itemNotInAssessment
         }
 
-        // Sealed create contract: always .notStarted, non-blank measure enforced by the init.
+        // Sealed create contract: always .notStarted, non-blank measure enforced by the throwing init
+        // (no separate requireMeasure here — the init is the single measure gate for creation).
         let action = try CorrectiveAction(item: item, measure: measure,
                                           responsibleName: responsibleName, dueDate: dueDate)
 
@@ -286,6 +286,11 @@ public extension RiskAssessmentItem {
     var hasRequiredCorrectiveActionPlan: Bool {
         guard needsCorrectiveActionPlan else { return true }
         return (correctiveActions ?? []).contains { !($0.measure ?? "").sw_isBlank }
+    }
+
+    /// 기준 초과인데 아직 개선조치 계획이 없는 상태 — 상세·목록 화면의 "계획 필요" 안내 단일 소스.
+    var isMissingRequiredCorrectiveActionPlan: Bool {
+        needsCorrectiveActionPlan && !hasRequiredCorrectiveActionPlan
     }
 
     /// 1:N 개선조치를 결정적 순서로 반환 — CloudKit은 to-many 순서를 보장하지 않고 스키마에 sortOrder가

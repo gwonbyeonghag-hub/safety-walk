@@ -137,12 +137,12 @@ final class CorrectiveActionEditorViewModel {
 
         do {
             if let action {
+                // Pass 이행일·개선후위험도 as-is — Core's applyFields normalizes them to nil for a
+                // non-completed status (single source for the "완료 전용 필드" rule).
                 try CorrectiveActionEditing.update(
                     action, in: assessment, measure: trimmedMeasure,
                     responsibleName: responsible.isEmpty ? nil : responsible, dueDate: due,
-                    status: status,
-                    implementedAt: status == .completed ? implementedAt : nil,
-                    postRiskLevel: status == .completed ? postRiskLevel : nil,
+                    status: status, implementedAt: implementedAt, postRiskLevel: postRiskLevel,
                     evidencePhotoData: photoData, at: Date(), context: context)
             } else {
                 // A new action is always .notStarted (no status/이행일/개선후위험도/사진 at creation).

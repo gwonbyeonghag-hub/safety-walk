@@ -19,9 +19,7 @@ struct CorrectiveActionListView: View {
     private var isEditable: Bool { assessment.allowsCorrectiveActionEditing }
 
     /// 기준 초과인데 아직 개선조치 계획이 없는 상태 — 안내 배너로 노출(색 단독 아님: 아이콘+문구).
-    private var planMissing: Bool {
-        item.needsCorrectiveActionPlan && !item.hasRequiredCorrectiveActionPlan
-    }
+    private var planMissing: Bool { item.isMissingRequiredCorrectiveActionPlan }
 
     var body: some View {
         List {
