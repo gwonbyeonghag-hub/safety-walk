@@ -43,6 +43,8 @@ struct CorrectiveActionListView: View {
                 } else {
                     ForEach(actions) { action in
                         NavigationLink {
+                            // The editor VIEW is a thin value (3 refs); its ViewModel is created
+                            // lazily in .onAppear, so no VM is built until the destination appears.
                             CorrectiveActionEditorView(assessment: assessment, item: item, action: action)
                         } label: {
                             CorrectiveActionRow(action: action)
@@ -84,7 +86,7 @@ private struct CorrectiveActionRow: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(action.measure?.isEmpty == false ? action.measure! : "—")
                 .font(.subheadline.weight(.medium))
-                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)   // long measure grows vertically (Dynamic Type)
             HStack(spacing: 10) {
                 Text(action.status.localizedLabel)
                     .font(.caption2)

@@ -205,7 +205,7 @@ final class RiskAssessmentViewModel {
             // The improvement fields moved off the item to CorrectiveAction (SCHEMA_V3 §4).
             // Persist whatever the user captured so nothing is silently dropped; the richer
             // corrective-action management UI (효과확인 등) is 2c.
-            if let action = makeCorrectiveAction(from: d, item: item) {
+            if let action = try makeCorrectiveAction(from: d, item: item) {
                 context.insert(action)
             }
             items.append(item)
@@ -220,9 +220,9 @@ final class RiskAssessmentViewModel {
     /// Builds a `CorrectiveAction` for the draft, or nil when there is no 감소대책(measure). WO
     /// LEGAL-2c: 최초 생성 조치는 항상 `.notStarted`(이행일·개선후위험도·효과확인 비어 있음) — 그 수명주기는
     /// 상세의 개선조치 편집 화면에서만 진행한다. 빈 조치는 만들지 않는다(빈 개선조치 저장 금지).
-    private func makeCorrectiveAction(from d: DraftItem, item: RiskAssessmentItem) -> CorrectiveAction? {
+    private func makeCorrectiveAction(from d: DraftItem, item: RiskAssessmentItem) throws -> CorrectiveAction? {
         guard let measure = d.reductionMeasure.trimmedOrNil else { return nil }
-        return CorrectiveAction(
+        return try CorrectiveAction(
             item: item,
             measure: measure,
             responsibleName: d.responsibleName.trimmedOrNil,

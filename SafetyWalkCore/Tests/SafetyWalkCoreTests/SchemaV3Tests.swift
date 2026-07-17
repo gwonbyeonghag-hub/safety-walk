@@ -43,7 +43,7 @@ struct SchemaV3RegistrationTests {
         let participant = RiskAssessmentParticipant(name: "김근로", role: .worker)
         participant.riskAssessment = ra
         ctx.insert(participant)
-        let action = CorrectiveAction(item: item, measure: "국소배기 설치")
+        let action = try CorrectiveAction(item: item, measure: "국소배기 설치")
         ctx.insert(action)
         try ctx.save()
 
@@ -111,19 +111,19 @@ struct SchemaV3ValidationTests {
 struct SchemaV3InvariantTests {
 
     /// isRequired is derived from the parent item's 초과 여부 — never stored (교정 #2).
-    @Test func correctiveActionIsRequiredDerivesFromDecision() {
+    @Test func correctiveActionIsRequiredDerivesFromDecision() throws {
         let exceed = RiskAssessmentItem(riskLevel: .high); exceed.criteriaDecision = .exceedsThreshold
-        #expect(CorrectiveAction(item: exceed).isRequired == true)
+        #expect(try CorrectiveAction(item: exceed, measure: "조치").isRequired == true)
         let within = RiskAssessmentItem(riskLevel: .low); within.criteriaDecision = .withinThreshold
-        #expect(CorrectiveAction(item: within).isRequired == false)
+        #expect(try CorrectiveAction(item: within, measure: "조치").isRequired == false)
         let unassessed = RiskAssessmentItem(riskLevel: .high)   // criteriaDecision nil = 미평가
-        #expect(CorrectiveAction(item: unassessed).isRequired == false)
+        #expect(try CorrectiveAction(item: unassessed, measure: "조치").isRequired == false)
     }
 
     /// 효과확인은 result·confirmedBy·effectivenessConfirmedAt 를 한 번에 갱신 — 부분 갱신 없음.
-    @Test func effectivenessConfirmUpdatesAllThreeFieldsAtomically() {
+    @Test func effectivenessConfirmUpdatesAllThreeFieldsAtomically() throws {
         let item = RiskAssessmentItem(riskLevel: .high)
-        let action = CorrectiveAction(item: item, measure: "가드 설치")
+        let action = try CorrectiveAction(item: item, measure: "가드 설치")
         #expect(action.isEffectivenessConfirmed == false)
         #expect(action.effectivenessResult == nil)
         #expect(action.confirmedBy == nil)

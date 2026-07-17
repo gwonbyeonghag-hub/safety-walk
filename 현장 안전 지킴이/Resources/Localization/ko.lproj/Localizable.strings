@@ -537,6 +537,7 @@
 "ra.action.effSection" = "효과확인";
 "ra.action.effResult" = "효과확인 결과";
 "ra.action.effConfirm" = "효과확인 기록";
+"ra.action.confirmerName" = "효과 확인자";
 "ra.action.effHint" = "이행일과 개선 후 위험성을 먼저 기록해야 효과확인을 할 수 있습니다.";
 "ra.action.effConfirmedFormat" = "효과 확인: %@";
 "ra.action.deleteConfirm" = "이 개선조치를 삭제할까요?";

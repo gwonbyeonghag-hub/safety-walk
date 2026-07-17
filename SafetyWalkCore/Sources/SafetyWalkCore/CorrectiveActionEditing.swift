@@ -61,14 +61,13 @@ public enum CorrectiveActionEditing {
             throw CorrectiveActionError.itemNotInAssessment
         }
 
-        // Always .notStarted (init default) — no 이행일·개선후위험도·효과확인 at creation.
-        let action = CorrectiveAction(item: item, measure: measure,
-                                      responsibleName: responsibleName, dueDate: dueDate)
+        // Sealed create contract: always .notStarted, non-blank measure enforced by the init.
+        let action = try CorrectiveAction(item: item, measure: measure,
+                                          responsibleName: responsibleName, dueDate: dueDate)
 
-        let priorActions = item.correctiveActions ?? []
         let priorUpdatedAt = assessment.updatedAt
         context.insert(action)
-        item.correctiveActions = priorActions + [action]
+        appendInPlace(action, to: item)            // in-place append (no array reassignment)
         assessment.updatedAt = date
 
         do {
@@ -77,8 +76,8 @@ public enum CorrectiveActionEditing {
             context.rollback()
             // `context.rollback()` reverts the STORE but leaves the in-memory relationship dirty,
             // and SwiftData re-syncs `item.correctiveActions` from the still-set `action.item` — so
-            // the phantom reappears. Detach the inverse first, then remove it from the array in
-            // place (array *replacement* doesn't stick while the inverse is still live).
+            // detach the inverse first, then remove it in place (array replacement doesn't stick
+            // while the inverse is still live).
             action.item = nil
             item.correctiveActions?.removeAll { $0 === action }
             assessment.updatedAt = priorUpdatedAt
@@ -172,9 +171,8 @@ public enum CorrectiveActionEditing {
         try requireActionInAssessment(action, assessment)
         guard let item = action.item else { throw CorrectiveActionError.actionNotInAssessment }
 
-        let priorActions = item.correctiveActions ?? []
         let priorUpdatedAt = assessment.updatedAt
-        item.correctiveActions = priorActions.filter { $0 !== action }
+        item.correctiveActions?.removeAll { $0 === action }   // in-place remove (no array reassignment)
         context.delete(action)
         assessment.updatedAt = date
 
@@ -182,10 +180,20 @@ public enum CorrectiveActionEditing {
             try commit()
         } catch {
             context.rollback()
-            item.correctiveActions = priorActions
+            // Re-attach the inverse and re-insert in place (rollback un-deletes the object but the
+            // in-memory relationship stays dirty).
             action.item = item
+            appendInPlace(action, to: item)
             assessment.updatedAt = priorUpdatedAt
             throw error
+        }
+    }
+
+    /// In-place append that tolerates SwiftData's inverse auto-sync (never duplicates the action).
+    private static func appendInPlace(_ action: CorrectiveAction, to item: RiskAssessmentItem) {
+        if item.correctiveActions == nil { item.correctiveActions = [] }
+        if !(item.correctiveActions ?? []).contains(where: { $0 === action }) {
+            item.correctiveActions?.append(action)
         }
     }
 

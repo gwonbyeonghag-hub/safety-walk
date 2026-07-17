@@ -149,7 +149,7 @@ enum SeedData {
         task: String, hazard: String, controls: String?,
         likelihood: Int? = nil, severity: Int? = nil, level: RiskLevel,
         measure: String? = nil, responsible: String? = nil, due: Date? = nil,
-        status: CorrectiveActionStatus = .notStarted, sortOrder: Int
+        sortOrder: Int
     ) -> RiskAssessmentItem {
         let it = RiskAssessmentItem(
             taskDescription: task, hazardDescription: hazard, currentControls: controls,
@@ -158,10 +158,10 @@ enum SeedData {
         // 초과여부 결정은 seedLockAndConfirm 에서 잠긴 기준 기반으로 확정한다(임의 주입 금지).
         it.riskAssessment = ra
         context.insert(it)
-        // WO LEGAL-2c 빈 개선조치 저장 금지: 감소대책(measure)이 있을 때만 조치를 만든다.
-        if let measure {
-            let action = CorrectiveAction(item: it, measure: measure,
-                                          responsibleName: responsible, dueDate: due, status: status)
+        // WO LEGAL-2c: 감소대책이 있을 때만, 봉인된 생성자(비공백 measure 필수)로 항상 .notStarted 조치를
+        // 만든다. 상태 다양성은 시작(AssessmentStart.start) 이후 CorrectiveActionEditing.update로 부여한다.
+        if let measure, let action = try? CorrectiveAction(item: it, measure: measure,
+                                                           responsibleName: responsible, dueDate: due) {
             context.insert(action)
         }
         return it
@@ -256,10 +256,17 @@ enum SeedData {
         ra.items = rows.enumerated().map { i, r in
             seedItem(context, ra: ra, task: r.0, hazard: r.1, controls: r.2, level: r.3,
                      measure: r.4, responsible: "안전관리자",
-                     due: at.addingTimeInterval(Double((i + 7) * 86400)),
-                     status: i % 2 == 0 ? .inProgress : .notStarted, sortOrder: i)
+                     due: at.addingTimeInterval(Double((i + 7) * 86400)), sortOrder: i)
         }
         seedLockAndConfirm(context, ra: ra, at: at)
+        // 상태 다양성(demo): 생성자 우회 없이 — 시작 후 Core op로 짝수 항목 조치를 .inProgress 로.
+        for it in (ra.items ?? []) where it.sortOrder % 2 == 0 {
+            if let action = it.correctiveActions?.first, let m = action.measure {
+                try? CorrectiveActionEditing.update(action, in: ra, measure: m, status: .inProgress,
+                                                    at: at, context: context)
+            }
+        }
+        try? context.save()
     }
 
     @MainActor

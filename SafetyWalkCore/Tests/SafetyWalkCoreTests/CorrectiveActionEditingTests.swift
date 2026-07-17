@@ -275,7 +275,7 @@ struct CorrectiveActionEditingTests {
     @Test func isEffectivenessCompleteRequiresCompletedStatus() throws {
         let ctx = try makeContext()
         let (_, item) = try startedAssessment(in: ctx)
-        let action = CorrectiveAction(item: item, measure: "난간")
+        let action = try CorrectiveAction(item: item, measure: "난간")
         action.status = .inProgress
         action.implementedAt = when
         action.postRiskLevel = .low
@@ -335,5 +335,57 @@ struct CorrectiveActionEditingTests {
         // store restored: both persist
         let fresh = ModelContext(ctx.container)
         #expect(try fresh.fetch(FetchDescriptor<CorrectiveAction>()).count == 2)
+    }
+
+    // MARK: - 생성 계약 (반송 3차): 공개 생성자로 빈/임의 상태 조치 생성 불가
+
+    @Test func constructorRejectsBlankMeasure() throws {
+        let item = RiskAssessmentItem()
+        #expect(throws: CorrectiveActionError.emptyMeasure) {
+            _ = try CorrectiveAction(item: item, measure: "   ")
+        }
+    }
+
+    /// 공개 생성자는 status·postRiskLevel 인자를 받지 않으므로 최초 조치는 항상 미착수·빈 완료필드.
+    @Test func constructorCreatesNotStartedEmpty() throws {
+        let item = RiskAssessmentItem()
+        let action = try CorrectiveAction(item: item, measure: "난간 설치", responsibleName: "김안전")
+        #expect(action.status == .notStarted)
+        #expect(action.implementedAt == nil)
+        #expect(action.postRiskLevel == nil)
+        #expect(action.effectivenessResult == nil)
+        #expect(action.measure == "난간 설치")
+        #expect(action.responsibleName == "김안전")
+    }
+
+    // MARK: - 손상 triplet 초기화 (반송 3차)
+
+    /// 완료→미완료 되돌림: effectivenessResult == nil 이라도 confirmedBy/confirmedAt 이 남은 손상
+    /// 상태면 세 필드를 모두 초기화한다 (초기화가 result≠nil 에 의존하지 않는다).
+    @Test func revertClearsCorruptTriplet() throws {
+        let ctx = try makeContext()
+        let (ra, item) = try startedAssessment(in: ctx)
+        let action = try completedAction(item, in: ra, in: ctx)
+        // Simulate a corrupt partial triplet: result nil but confirmer/time set.
+        action.confirmedBy = "김확인"
+        action.effectivenessConfirmedAt = when
+        #expect(action.effectivenessResult == nil)
+
+        try CorrectiveActionEditing.update(action, in: ra, measure: "난간 설치", status: .notStarted,
+                                           at: when.addingTimeInterval(10), context: ctx)
+        #expect(action.confirmedBy == nil)
+        #expect(action.effectivenessConfirmedAt == nil)
+        #expect(action.effectivenessResult == nil)
+    }
+
+    // MARK: - 확인자 (반송 3차): 평가자와 다른 이름 가능
+
+    @Test func confirmerCanDifferFromAssessor() throws {
+        let ctx = try makeContext()
+        let (ra, item) = try startedAssessment(in: ctx)   // assessorName "" by default
+        let action = try completedAction(item, in: ra, in: ctx)
+        try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective,
+                                                         by: "다른확인자", at: when, context: ctx)
+        #expect(action.confirmedBy == "다른확인자")
     }
 }

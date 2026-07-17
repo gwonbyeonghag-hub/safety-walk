@@ -52,8 +52,8 @@ final class ReportRenderingTests: XCTestCase {
             ctx.insert(item)
             // Improvement fields live on CorrectiveAction (SCHEMA_V3 §4); the report renders the
             // reduction/owner/status columns from the item's 1:N corrective actions (WO LEGAL-2c).
-            let action = CorrectiveAction(item: item, measure: "감소대책 항목 \(i + 1)",
-                                          responsibleName: "담당\(i + 1)", dueDate: Date())
+            let action = try CorrectiveAction(item: item, measure: "감소대책 항목 \(i + 1)",
+                                              responsibleName: "담당\(i + 1)", dueDate: Date())
             ctx.insert(action)
             items.append(item)
         }
@@ -80,7 +80,7 @@ final class ReportRenderingTests: XCTestCase {
                 currentControls: "LOTO; barricade exclusion zone \(i + 1)",
                 likelihood: l, severity: s, riskLevel: level, sortOrder: i)
             ctx.insert(item)
-            let action = CorrectiveAction(item: item, measure: "Add spotter; PPE check \(i + 1)")
+            let action = try CorrectiveAction(item: item, measure: "Add spotter; PPE check \(i + 1)")
             ctx.insert(action)
             items.append(item)
         }

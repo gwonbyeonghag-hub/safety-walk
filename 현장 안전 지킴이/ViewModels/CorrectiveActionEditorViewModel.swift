@@ -25,6 +25,8 @@ final class CorrectiveActionEditorViewModel {
     var implementedAt: Date                // used only when status == .completed
     var postRiskLevel: RiskLevel?
     var effResultChoice: EffectivenessResult
+    /// 효과 확인자 — 평가자와 다를 수 있으며 사용자가 수정한 값이 실제 `confirmedBy`가 된다.
+    var confirmerName: String
 
     // Photo: a newly picked image (not yet compressed) OR the action's saved photo, or removed.
     var pickedImage: UIImage?
@@ -35,12 +37,16 @@ final class CorrectiveActionEditorViewModel {
     var showSaveError = false
     var showCompressError = false
 
-    private let photoStorage = PhotoStorageService()
+    /// Injected evidence-photo encoder (resize + JPEG). Defaults to `PhotoStorageService`; tests
+    /// inject a stub to assert success/failure and CALL COUNT (new photo → 1, unchanged → 0).
+    private let encode: (UIImage) throws -> Data
 
-    init(assessment: RiskAssessment, item: RiskAssessmentItem, action: CorrectiveAction?) {
+    init(assessment: RiskAssessment, item: RiskAssessmentItem, action: CorrectiveAction?,
+         encode: @escaping (UIImage) throws -> Data = { try PhotoStorageService().data(from: $0) }) {
         self.assessment = assessment
         self.item = item
         self.action = action
+        self.encode = encode
         self.measure = action?.measure ?? ""
         self.responsibleName = action?.responsibleName ?? ""
         self.hasDueDate = action?.dueDate != nil
@@ -49,6 +55,8 @@ final class CorrectiveActionEditorViewModel {
         self.implementedAt = action?.implementedAt ?? Date()
         self.postRiskLevel = action?.postRiskLevel
         self.effResultChoice = action?.effectivenessResult ?? .effective
+        // 기존 조치는 기존 확인자, 신규 확인은 평가자 이름을 편의상 prefill (사용자 수정 가능).
+        self.confirmerName = action?.confirmedBy ?? assessment.assessorName
         self.existingPhotoData = action?.evidencePhotoData
     }
 
@@ -81,6 +89,11 @@ final class CorrectiveActionEditorViewModel {
         guard isEditable, let action else { return false }
         return action.isReadyForEffectivenessCheck
     }
+    /// The 효과확인 record button is enabled only when the action is ready AND the confirmer is non-blank
+    /// (빈 확인자는 UI에서도 차단 — Core 도 emptyConfirmer 로 거부).
+    var canRecordEffectiveness: Bool {
+        canConfirmEffectiveness && !confirmerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
     var recordedEffectiveness: EffectivenessResult? { action?.effectivenessResult }
     var recordedConfirmer: String? { action?.confirmedBy }
 
@@ -100,9 +113,9 @@ final class CorrectiveActionEditorViewModel {
     /// (resize ≤1024px + JPEG); an unchanged existing photo is passed through WITHOUT re-compressing;
     /// a removed photo yields nil. Throws `PhotoStorageError.compressionFailed` on compression failure.
     private func resolvedPhotoData() throws -> Data? {
-        if let pickedImage { return try photoStorage.data(from: pickedImage) }
+        if let pickedImage { return try encode(pickedImage) }   // compress ONLY the new photo
         if photoRemoved { return nil }
-        return existingPhotoData
+        return existingPhotoData                                // unchanged → no re-compress
     }
 
     // MARK: - Persistence (atomic Core ops)
@@ -152,7 +165,8 @@ final class CorrectiveActionEditorViewModel {
         do {
             try CorrectiveActionEditing.confirmEffectiveness(
                 action, in: assessment, result: effResultChoice,
-                by: assessment.assessorName, at: Date(), context: context)
+                by: confirmerName.trimmingCharacters(in: .whitespacesAndNewlines),
+                at: Date(), context: context)
             return true
         } catch {
             showSaveError = true

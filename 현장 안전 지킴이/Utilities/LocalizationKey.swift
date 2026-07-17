@@ -390,6 +390,7 @@ enum LocalizationKey: String {
     case raActionEffSection     = "ra.action.effSection"
     case raActionEffResult      = "ra.action.effResult"
     case raActionEffConfirm     = "ra.action.effConfirm"
+    case raActionConfirmerName  = "ra.action.confirmerName"
     case raActionEffHint        = "ra.action.effHint"
     case raActionEffConfirmedFmt = "ra.action.effConfirmedFormat"
     case raActionDeleteConfirm  = "ra.action.deleteConfirm"

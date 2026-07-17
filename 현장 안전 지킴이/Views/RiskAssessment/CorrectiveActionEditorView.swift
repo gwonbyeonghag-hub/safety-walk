@@ -3,25 +3,50 @@ import SafetyWalkCore
 import PhotosUI
 
 /// depth-3 editor (pushed from `CorrectiveActionListView`): create or edit ONE 개선조치, plus the
-/// separate 효과확인 step (WO LEGAL-2c). Thin over `CorrectiveActionEditorViewModel`, which owns all
-/// save/delete/효과확인 orchestration + photo compression (CLAUDE.md MVVM). Status drives the UI: a
-/// new action captures only 감소대책·담당·기한 (always .notStarted); the 이행일·개선후위험도·사진·효과확인
-/// lifecycle appears only once an existing action is marked 완료, so status and 이행일 can't contradict.
-/// A cancelled assessment renders read-only.
+/// separate 효과확인 step (WO LEGAL-2c). A THIN wrapper that defers the ViewModel until the destination
+/// actually appears — so a closure-based `NavigationLink` in the list never builds a ViewModel per
+/// visible row (목적지의 VM 생성은 탭 이후 onAppear 에서만). The real form is `CorrectiveActionEditorForm`.
 struct CorrectiveActionEditorView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
+    private let assessment: RiskAssessment
+    private let item: RiskAssessmentItem
+    private let action: CorrectiveAction?
 
-    @State private var vm: CorrectiveActionEditorViewModel
-    @State private var pickerItem: PhotosPickerItem?
-    @State private var showDeleteConfirm = false
-
-    let needsPlan: Bool
+    @State private var vm: CorrectiveActionEditorViewModel?
 
     init(assessment: RiskAssessment, item: RiskAssessmentItem, action: CorrectiveAction?) {
-        _vm = State(initialValue: CorrectiveActionEditorViewModel(assessment: assessment, item: item, action: action))
-        self.needsPlan = item.needsCorrectiveActionPlan
+        self.assessment = assessment
+        self.item = item
+        self.action = action
     }
+
+    var body: some View {
+        Group {
+            if let vm {
+                CorrectiveActionEditorForm(vm: vm, needsPlan: item.needsCorrectiveActionPlan)
+            } else {
+                Color.clear
+            }
+        }
+        .onAppear {
+            if vm == nil {
+                vm = CorrectiveActionEditorViewModel(assessment: assessment, item: item, action: action)
+            }
+        }
+    }
+}
+
+/// The editor form itself — thin over `CorrectiveActionEditorViewModel` (owns save/delete/효과확인 +
+/// photo compression, CLAUDE.md MVVM). Status drives the UI: a new action captures only 감소대책·담당·
+/// 기한 (always .notStarted); 이행일·개선후위험도·사진·효과확인 appear only once an existing action is
+/// marked 완료, so status and 이행일 can't contradict. A cancelled assessment renders read-only.
+private struct CorrectiveActionEditorForm: View {
+    @Bindable var vm: CorrectiveActionEditorViewModel
+    let needsPlan: Bool
+
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @State private var pickerItem: PhotosPickerItem?
+    @State private var showDeleteConfirm = false
 
     var body: some View {
         Form {
@@ -125,14 +150,30 @@ struct CorrectiveActionEditorView: View {
         Section(LocalizationKey.raActionImplementedAt.localized) {
             DatePicker(LocalizationKey.raActionImplementedAt.localized,
                        selection: $vm.implementedAt, displayedComponents: .date)
-            Picker(LocalizationKey.raItemPostRiskLevel.localized, selection: $vm.postRiskLevel) {
-                Text(LocalizationKey.raRiskUnassessed.localized).tag(RiskLevel?.none)
-                ForEach(RiskLevel.allCases, id: \.self) { level in
-                    Text(level.localizedLabel).tag(RiskLevel?.some(level))
-                }
-            }
+            postRiskRow
             photoRow
         }
+    }
+
+    /// 개선 후 위험도 — a Menu whose value is a `RiskChip` (color + text together, never color alone).
+    private var postRiskRow: some View {
+        Menu {
+            Button(LocalizationKey.raRiskUnassessed.localized) { vm.postRiskLevel = nil }
+            ForEach(RiskLevel.allCases, id: \.self) { level in
+                Button(level.localizedLabel) { vm.postRiskLevel = level }
+            }
+        } label: {
+            HStack {
+                Text(LocalizationKey.raItemPostRiskLevel.localized).foregroundStyle(.primary)
+                Spacer()
+                if let pr = vm.postRiskLevel {
+                    RiskChip(level: pr)
+                } else {
+                    Text(LocalizationKey.raRiskUnassessed.localized).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .accessibilityIdentifier("ra_action_postrisk")
     }
 
     @ViewBuilder private var photoRow: some View {
@@ -179,6 +220,8 @@ struct CorrectiveActionEditorView: View {
                 }
             }
             if vm.canConfirmEffectiveness {
+                TextField(LocalizationKey.raActionConfirmerName.localized, text: $vm.confirmerName)
+                    .accessibilityIdentifier("ra_action_confirmer")
                 Picker(LocalizationKey.raActionEffResult.localized, selection: $vm.effResultChoice) {
                     ForEach(EffectivenessResult.allCases) { r in
                         Text(r.localizedLabel).tag(r)
@@ -187,6 +230,7 @@ struct CorrectiveActionEditorView: View {
                 Button(LocalizationKey.raActionEffConfirm.localized) {
                     vm.confirmEffectiveness(context: modelContext)
                 }
+                .disabled(!vm.canRecordEffectiveness)   // 빈 확인자 차단(UI) — Core도 emptyConfirmer 거부
                 .accessibilityIdentifier("ra_action_confirm_effectiveness")
             } else if vm.isEditable, vm.recordedEffectiveness == nil {
                 Text(LocalizationKey.raActionEffHint.localized)

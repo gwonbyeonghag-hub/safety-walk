@@ -436,7 +436,7 @@
 "ra.item.score" = "Risk Score";
 "ra.item.riskLevel" = "Risk Level";
 "ra.item.reductionMeasure" = "Reduction Measure";
-"ra.item.postRiskLevel" = "Risk After Measures";
+"ra.item.postRiskLevel" = "Post-measure Risk";
 "ra.item.responsible" = "Responsible";
 "ra.item.dueDate" = "Due Date";
 "ra.item.setDueDate" = "Set due date";
@@ -537,6 +537,7 @@
 "ra.action.effSection" = "Effectiveness Check";
 "ra.action.effResult" = "Effectiveness Result";
 "ra.action.effConfirm" = "Record Effectiveness";
+"ra.action.confirmerName" = "Effectiveness Confirmer";
 "ra.action.effHint" = "Record the implementation date and post-improvement risk before confirming effectiveness.";
 "ra.action.effConfirmedFormat" = "Effectiveness confirmed by %@";
 "ra.action.deleteConfirm" = "Delete this corrective action?";
