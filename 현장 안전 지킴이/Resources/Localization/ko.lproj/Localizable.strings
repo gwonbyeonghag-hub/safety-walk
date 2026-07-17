@@ -540,6 +540,9 @@
 "ra.action.effConfirm" = "효과확인 기록";
 "ra.action.effHint" = "이행일과 개선 후 위험성을 먼저 기록해야 효과확인을 할 수 있습니다.";
 "ra.action.effConfirmedFormat" = "효과 확인: %@";
+"ra.action.deleteConfirm" = "이 개선조치를 삭제할까요?";
+"ra.action.photoFailedTitle" = "사진 오류";
+"ra.action.photoFailedMessage" = "사진을 처리하지 못했습니다. 다시 시도하세요.";
 "ra.effectiveness.effective" = "효과 있음";
 "ra.effectiveness.partial" = "부분 효과";
 "ra.effectiveness.ineffective" = "효과 없음";

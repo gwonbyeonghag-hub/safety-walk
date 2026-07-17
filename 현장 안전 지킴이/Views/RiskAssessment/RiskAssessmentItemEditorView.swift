@@ -55,6 +55,8 @@ struct RiskAssessmentItemEditorView: View {
                     }
                 }
 
+                // LEGAL-2c: 최초 작성은 감소대책·담당·기한만. 상태 선택은 없앤다(최초 조치는 항상 미착수);
+                // 상태·이행일·개선후위험도·효과확인은 상세의 개선조치 편집 화면에서 진행한다.
                 Section {
                     LabeledField(LocalizationKey.raItemReduction.localized, text: $draft.reductionMeasure)
                     LabeledField(LocalizationKey.raItemResponsible.localized, text: $draft.responsibleName)
@@ -62,11 +64,6 @@ struct RiskAssessmentItemEditorView: View {
                     if draft.hasDueDate {
                         DatePicker(LocalizationKey.raItemDueDate.localized,
                                    selection: $draft.dueDate, displayedComponents: .date)
-                    }
-                    Picker(LocalizationKey.raItemStatus.localized, selection: $draft.status) {
-                        ForEach(CorrectiveActionStatus.allCases, id: \.self) { s in
-                            Text(s.localizedLabel).tag(s)
-                        }
                     }
                 }
             }

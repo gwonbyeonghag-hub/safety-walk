@@ -3,109 +3,83 @@ import SafetyWalkCore
 import PhotosUI
 
 /// depth-3 editor (pushed from `CorrectiveActionListView`): create or edit ONE 개선조치, plus the
-/// separate 효과확인 step (WO LEGAL-2c). All writes go through the atomic Core ops
-/// (`CorrectiveActionEditing`), which validate (빈 조치 차단), persist with a store+memory restore on
-/// failure, and reset the 효과확인 when a substantive field changes. The evidence photo lives in
-/// local state and is written to the model ONLY on save (사진은 확정 저장 시에만 반영). A cancelled
-/// assessment renders read-only. Effectiveness needs its 이행일·개선후위험도 preconditions persisted,
-/// so it is offered on an existing action whose implementation is already recorded.
+/// separate 효과확인 step (WO LEGAL-2c). Thin over `CorrectiveActionEditorViewModel`, which owns all
+/// save/delete/효과확인 orchestration + photo compression (CLAUDE.md MVVM). Status drives the UI: a
+/// new action captures only 감소대책·담당·기한 (always .notStarted); the 이행일·개선후위험도·사진·효과확인
+/// lifecycle appears only once an existing action is marked 완료, so status and 이행일 can't contradict.
+/// A cancelled assessment renders read-only.
 struct CorrectiveActionEditorView: View {
-    let assessment: RiskAssessment
-    let item: RiskAssessmentItem
-    let action: CorrectiveAction?          // nil = new
-
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    // Editable fields
-    @State private var measure: String
-    @State private var responsibleName: String
-    @State private var hasDueDate: Bool
-    @State private var dueDate: Date
-    @State private var status: CorrectiveActionStatus
-    @State private var hasImplementedAt: Bool
-    @State private var implementedAt: Date
-    @State private var postRiskLevel: RiskLevel?
-    @State private var photoData: Data?
-
-    // Photo picker
+    @State private var vm: CorrectiveActionEditorViewModel
     @State private var pickerItem: PhotosPickerItem?
-    // 효과확인
-    @State private var effResultChoice: EffectivenessResult
-    // Error surfacing (LEGAL-0: screen stays up on failure)
-    @State private var showSaveError = false
-    @State private var showPhotoError = false
+    @State private var showDeleteConfirm = false
+
+    let needsPlan: Bool
 
     init(assessment: RiskAssessment, item: RiskAssessmentItem, action: CorrectiveAction?) {
-        self.assessment = assessment
-        self.item = item
-        self.action = action
-        _measure = State(initialValue: action?.measure ?? "")
-        _responsibleName = State(initialValue: action?.responsibleName ?? "")
-        _hasDueDate = State(initialValue: action?.dueDate != nil)
-        _dueDate = State(initialValue: action?.dueDate ?? Date())
-        _status = State(initialValue: action?.status ?? .notStarted)
-        _hasImplementedAt = State(initialValue: action?.implementedAt != nil)
-        _implementedAt = State(initialValue: action?.implementedAt ?? Date())
-        _postRiskLevel = State(initialValue: action?.postRiskLevel)
-        _photoData = State(initialValue: action?.evidencePhotoData)
-        _effResultChoice = State(initialValue: action?.effectivenessResult ?? .effective)
-    }
-
-    /// 개선조치는 finalized 후에도 수정 가능; cancelled(및 planned)는 읽기 전용.
-    private var isEditable: Bool { assessment.allowsCorrectiveActionEditing }
-
-    private var canSave: Bool {
-        isEditable && !measure.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        _vm = State(initialValue: CorrectiveActionEditorViewModel(assessment: assessment, item: item, action: action))
+        self.needsPlan = item.needsCorrectiveActionPlan
     }
 
     var body: some View {
         Form {
             planSection
             fieldsSection
-            implementationSection
-            effectivenessSection
-            if action != nil, isEditable { deleteSection }
+            if !vm.isNew { statusSection }
+            if vm.showsCompletedFields { completionSection }
+            if !vm.isNew { effectivenessSection }
+            if !vm.isNew, vm.isEditable { deleteSection }
         }
-        .disabled(!isEditable)
-        .navigationTitle((action == nil ? LocalizationKey.raActionNew : LocalizationKey.raActionEdit).localized)
+        .disabled(!vm.isEditable)
+        .navigationTitle((vm.isNew ? LocalizationKey.raActionNew : LocalizationKey.raActionEdit).localized)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if isEditable {
+            if vm.isEditable {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(LocalizationKey.commonSave.localized) { save() }
-                        .disabled(!canSave)
-                        .accessibilityIdentifier("ra_action_save")
+                    Button(LocalizationKey.commonSave.localized) {
+                        if vm.save(context: modelContext) { dismiss() }
+                    }
+                    .disabled(!vm.canSave)
+                    .accessibilityIdentifier("ra_action_save")
                 }
             }
         }
         .onChange(of: pickerItem) { _, newItem in
             guard let newItem else { return }
             Task {
-                if let data = try? await newItem.loadTransferable(type: Data.self) {
-                    photoData = data
-                } else {
-                    showPhotoError = true
+                guard let data = try? await newItem.loadTransferable(type: Data.self),
+                      let image = UIImage(data: data) else {
+                    vm.showCompressError = true    // decode failure surfaces like a photo failure
+                    return
                 }
+                vm.setPickedImage(image)
             }
         }
-        .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $showSaveError) {
+        .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $vm.showSaveError) {
             Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
         } message: {
             Text(LocalizationKey.raSaveFailedMessage.localized)
         }
-        .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $showPhotoError) {
+        .alert(LocalizationKey.raActionPhotoFailedTitle.localized, isPresented: $vm.showCompressError) {
             Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
         } message: {
-            Text(LocalizationKey.raSaveFailedMessage.localized)
+            Text(LocalizationKey.raActionPhotoFailedMessage.localized)
+        }
+        .confirmationDialog(LocalizationKey.raActionDeleteConfirm.localized,
+                            isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button(LocalizationKey.commonDelete.localized, role: .destructive) {
+                if vm.delete(context: modelContext) { dismiss() }
+            }
+            Button(LocalizationKey.commonCancel.localized, role: .cancel) { }
         }
     }
 
     // MARK: - Sections
 
-    /// Reminds the user this item exceeds the criteria (context for why a 개선조치 is required).
     @ViewBuilder private var planSection: some View {
-        if item.needsCorrectiveActionPlan {
+        if needsPlan {
             Section {
                 Label(LocalizationKey.raActionPlanRequired.localized, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
@@ -119,35 +93,39 @@ struct CorrectiveActionEditorView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(LocalizationKey.raItemReduction.localized)
                     .font(.caption).foregroundStyle(.secondary)
-                TextField(LocalizationKey.raItemReduction.localized, text: $measure, axis: .vertical)
+                TextField(LocalizationKey.raItemReduction.localized, text: $vm.measure, axis: .vertical)
                     .lineLimit(1...4)
                     .accessibilityIdentifier("ra_action_measure")
-                if measure.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if vm.measure.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text(LocalizationKey.raActionMeasureRequired.localized)
                         .font(.caption2).foregroundStyle(.red)
                 }
             }
-            TextField(LocalizationKey.raItemResponsible.localized, text: $responsibleName)
-            Toggle(LocalizationKey.raItemSetDueDate.localized, isOn: $hasDueDate)
-            if hasDueDate {
-                DatePicker(LocalizationKey.raItemDueDate.localized, selection: $dueDate, displayedComponents: .date)
-            }
-            Picker(LocalizationKey.raItemStatus.localized, selection: $status) {
-                ForEach(CorrectiveActionStatus.allCases, id: \.self) { s in
-                    Text(s.localizedLabel).tag(s)
-                }
+            TextField(LocalizationKey.raItemResponsible.localized, text: $vm.responsibleName)
+            Toggle(LocalizationKey.raItemSetDueDate.localized, isOn: $vm.hasDueDate)
+            if vm.hasDueDate {
+                DatePicker(LocalizationKey.raItemDueDate.localized, selection: $vm.dueDate, displayedComponents: .date)
             }
         }
     }
 
-    private var implementationSection: some View {
-        Section(LocalizationKey.raActionImplementedAt.localized) {
-            Toggle(LocalizationKey.raActionSetImplementedAt.localized, isOn: $hasImplementedAt)
-            if hasImplementedAt {
-                DatePicker(LocalizationKey.raActionImplementedAt.localized,
-                           selection: $implementedAt, displayedComponents: .date)
+    private var statusSection: some View {
+        Section {
+            Picker(LocalizationKey.raItemStatus.localized, selection: $vm.status) {
+                ForEach(CorrectiveActionStatus.allCases, id: \.self) { s in
+                    Text(s.localizedLabel).tag(s)
+                }
             }
-            Picker(LocalizationKey.raItemPostRiskLevel.localized, selection: $postRiskLevel) {
+            .accessibilityIdentifier("ra_action_status")
+        }
+    }
+
+    /// 완료 상태에서만: 이행일(기본 오늘)·개선후위험도·증거사진. 상태와 이행일이 모순될 수 없다.
+    private var completionSection: some View {
+        Section(LocalizationKey.raActionImplementedAt.localized) {
+            DatePicker(LocalizationKey.raActionImplementedAt.localized,
+                       selection: $vm.implementedAt, displayedComponents: .date)
+            Picker(LocalizationKey.raItemPostRiskLevel.localized, selection: $vm.postRiskLevel) {
                 Text(LocalizationKey.raRiskUnassessed.localized).tag(RiskLevel?.none)
                 ForEach(RiskLevel.allCases, id: \.self) { level in
                     Text(level.localizedLabel).tag(RiskLevel?.some(level))
@@ -158,125 +136,71 @@ struct CorrectiveActionEditorView: View {
     }
 
     @ViewBuilder private var photoRow: some View {
-        if let data = photoData, let uiImage = UIImage(data: data) {
+        if let image = vm.displayPhoto {
             HStack {
-                Image(uiImage: uiImage)
+                Image(uiImage: image)
                     .resizable().scaledToFill()
                     .frame(width: 44, height: 44)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .accessibilityHidden(true)   // the adjacent label names it
+                    .accessibilityHidden(true)
                 Text(LocalizationKey.raActionEvidencePhoto.localized)
                     .font(.subheadline)
                 Spacer()
-                if isEditable {
-                    Button(role: .destructive) { photoData = nil; pickerItem = nil } label: {
-                        Image(systemName: "trash").foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.borderless)
+                Button(role: .destructive) { vm.removePhoto() } label: {
+                    Image(systemName: "trash")
+                        .frame(width: 44, height: 44)          // ≥44×44pt touch target
+                        .foregroundStyle(.secondary)
                 }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(LocalizationKey.commonDelete.localized)
             }
         }
-        if isEditable {
-            PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
-                Label(photoData == nil ? LocalizationKey.checklistAttachPhoto.localized
-                                       : LocalizationKey.checklistReplacePhoto.localized,
-                      systemImage: photoData == nil ? "camera" : "arrow.triangle.2.circlepath")
-                    .frame(minHeight: 44, alignment: .leading)
-            }
-            .accessibilityIdentifier("ra_action_photo_picker")
+        PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
+            Label(vm.hasPhoto ? LocalizationKey.checklistReplacePhoto.localized
+                              : LocalizationKey.checklistAttachPhoto.localized,
+                  systemImage: vm.hasPhoto ? "arrow.triangle.2.circlepath" : "camera")
+                .frame(minHeight: 44, alignment: .leading)
         }
+        .accessibilityIdentifier("ra_action_photo_picker")
     }
 
-    /// 효과확인 — offered only on an EXISTING action; the 이행일·개선후위험도 preconditions must already
-    /// be persisted (the Core op enforces them, so the button is gated on the saved action's state).
+    /// 효과확인 — 존재하는 조치에서만. 저장된 완료 상태(이행일·개선후위험도)일 때만 기록 버튼이 활성화된다.
     @ViewBuilder private var effectivenessSection: some View {
-        if let action {
-            Section(LocalizationKey.raActionEffSection.localized) {
-                if let result = action.effectivenessResult {
-                    HStack {
-                        Label(result.localizedLabel, systemImage: result.systemImage)
-                            .font(.subheadline)
-                        Spacer()
-                    }
-                    if let by = action.confirmedBy, !by.isEmpty {
-                        Text(String(format: LocalizationKey.raActionEffConfirmedFmt.localized, by))
-                            .font(.caption).foregroundStyle(.secondary)
+        Section(LocalizationKey.raActionEffSection.localized) {
+            if let result = vm.recordedEffectiveness {
+                HStack {
+                    Label(result.localizedLabel, systemImage: result.systemImage)
+                        .font(.subheadline)
+                    Spacer()
+                }
+                if let by = vm.recordedConfirmer, !by.isEmpty {
+                    Text(String(format: LocalizationKey.raActionEffConfirmedFmt.localized, by))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            if vm.canConfirmEffectiveness {
+                Picker(LocalizationKey.raActionEffResult.localized, selection: $vm.effResultChoice) {
+                    ForEach(EffectivenessResult.allCases) { r in
+                        Text(r.localizedLabel).tag(r)
                     }
                 }
-                if isEditable {
-                    if action.implementedAt != nil && action.postRiskLevel != nil {
-                        Picker(LocalizationKey.raActionEffResult.localized, selection: $effResultChoice) {
-                            ForEach(EffectivenessResult.allCases) { r in
-                                Text(r.localizedLabel).tag(r)
-                            }
-                        }
-                        Button(LocalizationKey.raActionEffConfirm.localized) { confirmEffectiveness() }
-                            .accessibilityIdentifier("ra_action_confirm_effectiveness")
-                    } else {
-                        Text(LocalizationKey.raActionEffHint.localized)
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
+                Button(LocalizationKey.raActionEffConfirm.localized) {
+                    vm.confirmEffectiveness(context: modelContext)
                 }
+                .accessibilityIdentifier("ra_action_confirm_effectiveness")
+            } else if vm.isEditable, vm.recordedEffectiveness == nil {
+                Text(LocalizationKey.raActionEffHint.localized)
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
     }
 
     private var deleteSection: some View {
         Section {
-            Button(role: .destructive) { deleteAction() } label: {
+            Button(role: .destructive) { showDeleteConfirm = true } label: {
                 Label(LocalizationKey.commonDelete.localized, systemImage: "trash")
             }
             .accessibilityIdentifier("ra_action_delete")
-        }
-    }
-
-    // MARK: - Actions (all via the atomic Core ops)
-
-    private func save() {
-        let trimmedMeasure = measure.trimmingCharacters(in: .whitespacesAndNewlines)
-        let responsible = responsibleName.trimmingCharacters(in: .whitespacesAndNewlines)
-        do {
-            if let action {
-                try CorrectiveActionEditing.update(
-                    action, in: assessment, measure: trimmedMeasure,
-                    responsibleName: responsible.isEmpty ? nil : responsible,
-                    dueDate: hasDueDate ? dueDate : nil, status: status,
-                    implementedAt: hasImplementedAt ? implementedAt : nil,
-                    postRiskLevel: postRiskLevel, evidencePhotoData: photoData,
-                    at: Date(), context: modelContext)
-            } else {
-                try CorrectiveActionEditing.add(
-                    to: item, in: assessment, measure: trimmedMeasure,
-                    responsibleName: responsible.isEmpty ? nil : responsible,
-                    dueDate: hasDueDate ? dueDate : nil, status: status,
-                    implementedAt: hasImplementedAt ? implementedAt : nil,
-                    postRiskLevel: postRiskLevel, evidencePhotoData: photoData,
-                    at: Date(), context: modelContext)
-            }
-            dismiss()
-        } catch {
-            showSaveError = true
-        }
-    }
-
-    private func confirmEffectiveness() {
-        guard let action else { return }
-        do {
-            try CorrectiveActionEditing.confirmEffectiveness(
-                action, in: assessment, result: effResultChoice,
-                by: assessment.assessorName, at: Date(), context: modelContext)
-        } catch {
-            showSaveError = true
-        }
-    }
-
-    private func deleteAction() {
-        guard let action else { return }
-        do {
-            try CorrectiveActionEditing.remove(action, in: assessment, at: Date(), context: modelContext)
-            dismiss()
-        } catch {
-            showSaveError = true
         }
     }
 }

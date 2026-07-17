@@ -14,6 +14,7 @@ struct RiskAssessmentCreateView: View {
     @State private var editorItem: RiskAssessmentViewModel.DraftItem?
     @State private var showInspectionPicker = false
     @State private var showSaveError = false
+    @State private var saveErrorMessage = LocalizationKey.raSaveFailedMessage.localized
 
     var body: some View {
         NavigationStack {
@@ -68,11 +69,16 @@ struct RiskAssessmentCreateView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(LocalizationKey.commonSave.localized) {
                         // LEGAL-0: never dismiss on a silent failure — save() throws,
-                        // and we only leave the screen once it actually persisted.
+                        // and we only leave the screen once it actually persisted. LEGAL-2c:
+                        // a partial 개선조치 (담당/기한 without 감소대책) gets a specific validation message.
                         do {
                             try viewModel.save(context: modelContext)
                             dismiss()
+                        } catch RiskAssessmentViewModel.SaveError.incompleteAction {
+                            saveErrorMessage = LocalizationKey.raActionMeasureRequired.localized
+                            showSaveError = true
                         } catch {
+                            saveErrorMessage = LocalizationKey.raSaveFailedMessage.localized
                             showSaveError = true
                         }
                     }
@@ -82,7 +88,7 @@ struct RiskAssessmentCreateView: View {
             .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $showSaveError) {
                 Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
             } message: {
-                Text(LocalizationKey.raSaveFailedMessage.localized)
+                Text(saveErrorMessage)
             }
             .sheet(item: $editorItem) { draft in
                 RiskAssessmentItemEditorView(

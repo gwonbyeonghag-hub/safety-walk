@@ -56,12 +56,14 @@ public final class CorrectiveAction {
         effectivenessResult != nil
     }
 
-    /// 효과확인 완료 = 이행일·개선후위험도·확인자 기록 + 결과 확정 (LEGAL_2_ARCH §1.1). result≠nil 만으로는
-    /// "확인만"이고, 완료는 이행 근거(이행일·개선후위험도)와 확인자까지 갖춰야 한다.
+    /// 효과확인 완료 = **완료 상태**에서 이행일·개선후위험도·확인자·확인시각·결과를 모두 갖춤
+    /// (LEGAL_2_ARCH §1.1). 완료가 아닌데 효과확인 필드가 남아 있는 손상 레코드는 절대 완료로 읽지 않는다.
     public var isEffectivenessComplete: Bool {
-        implementedAt != nil
+        status == .completed
+            && implementedAt != nil
             && postRiskLevel != nil
             && effectivenessResult != nil
+            && effectivenessConfirmedAt != nil
             && !(confirmedBy ?? "").sw_isBlank
     }
 
@@ -86,27 +88,33 @@ public final class CorrectiveAction {
 
     // MARK: - Core-only mutation (WO LEGAL-2c — routed through CorrectiveActionEditing)
 
-    /// Applies edited fields. If a SUBSTANTIVE field (measure/status/implementedAt/postRiskLevel)
-    /// changes while a 효과확인 was recorded, the 효과확인 triplet is reset (효과확인 무효화) — the prior
-    /// confirmation was about the old measure/result and is now stale. responsibleName·dueDate·
-    /// evidence are non-substantive (they don't change what was done or its effect).
+    /// Applies edited fields under the STATUS-DRIVEN lifecycle:
+    /// - 이행일·개선후위험도는 **.completed 전용** — 상태가 완료가 아니면 nil로 정규화한다(상태와 이행일이
+    ///   모순된 값을 만들 수 없다). 완료를 벗어나면 두 필드가 함께 초기화된다.
+    /// - 효과확인은 **완료를 벗어나거나** 실질 필드(measure/status/이행일/개선후위험도)가 바뀌면 초기화된다
+    ///   (효과확인 무효화). responsibleName·dueDate·evidence는 비실질(효과확인 유지).
+    /// `.completed` 인데 `implementedAt`이 없는 조합은 op(`CorrectiveActionEditing.update`)가 먼저 막는다.
     func applyFields(
         measure: String?, responsibleName: String?, dueDate: Date?,
         status: CorrectiveActionStatus, implementedAt: Date?,
         postRiskLevel: RiskLevel?, evidencePhotoData: Data?
     ) {
+        let normImplementedAt = (status == .completed) ? implementedAt : nil
+        let normPostRiskLevel = (status == .completed) ? postRiskLevel : nil
         let substantiveChanged = self.measure != measure
             || self.status != status
-            || self.implementedAt != implementedAt
-            || self.postRiskLevel != postRiskLevel
+            || self.implementedAt != normImplementedAt
+            || self.postRiskLevel != normPostRiskLevel
         self.measure = measure
         self.responsibleName = responsibleName
         self.dueDate = dueDate
         self.status = status
-        self.implementedAt = implementedAt
-        self.postRiskLevel = postRiskLevel
+        self.implementedAt = normImplementedAt
+        self.postRiskLevel = normPostRiskLevel
         self.evidencePhotoData = evidencePhotoData
-        if substantiveChanged && isEffectivenessConfirmed { resetEffectiveness() }
+        if isEffectivenessConfirmed && (status != .completed || substantiveChanged) {
+            resetEffectiveness()
+        }
     }
 
     /// Clears the 효과확인 triplet (Core-only) — back to 미확인.

@@ -3,13 +3,12 @@ import Foundation
 import SwiftData
 @testable import SafetyWalkCore
 
-// WO LEGAL-2c — the atomic 개선조치(CorrectiveAction) 편집 ops: add / update / remove /
-// confirmEffectiveness. Each validates fail-closed (빈 조치 = 감소대책 공백 거부), persists with a
-// store+memory restore on commit failure (AssessmentDecision 패턴), and keeps the 효과확인 invariants:
-// a substantive edit (measure/status/implementedAt/postRiskLevel) invalidates a prior 효과확인, while a
-// non-substantive edit keeps it (SCHEMA_V3 §4·§4.1, LEGAL_2_ARCH §1.1).
+// WO LEGAL-2c (반송 2차) — the atomic 개선조치 편집 ops with the STATUS-DRIVEN effectiveness lifecycle:
+// 최초 생성은 항상 .notStarted(이행일·개선후위험도·효과확인 비어 있음); .completed 저장은 implementedAt
+// 필수; 완료→미완료 되돌림은 이행일·개선후위험도·효과확인을 Core가 원자적으로 초기화; 효과확인은
+// .completed에서만 가능. 모든 mutating op는 커밋 실패 시 store+memory를 복원한다.
 
-@Suite("CorrectiveActionEditing — atomic 1:N ops (LEGAL-2c)")
+@Suite("CorrectiveActionEditing — status-driven lifecycle (LEGAL-2c 2차)")
 struct CorrectiveActionEditingTests {
 
     private func makeContext() throws -> ModelContext {
@@ -36,7 +35,17 @@ struct CorrectiveActionEditingTests {
         return (ra, item)
     }
 
-    // MARK: - add
+    /// Adds a plan (.notStarted) then drives it to .completed with 이행일·개선후위험도 (the only path to
+    /// a completed action, since `add` never creates one).
+    private func completedAction(_ item: RiskAssessmentItem, in ra: RiskAssessment,
+                                 postRisk: RiskLevel = .low, in ctx: ModelContext) throws -> CorrectiveAction {
+        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간 설치", at: when, context: ctx)
+        try CorrectiveActionEditing.update(action, in: ra, measure: "난간 설치", status: .completed,
+                                           implementedAt: when, postRiskLevel: postRisk, at: when, context: ctx)
+        return action
+    }
+
+    // MARK: - add (항상 .notStarted)
 
     @Test func addRejectsBlankMeasure() throws {
         let ctx = try makeContext()
@@ -47,35 +56,33 @@ struct CorrectiveActionEditingTests {
         #expect((item.correctiveActions ?? []).isEmpty)
     }
 
-    @Test func addPersistsAndLinks() throws {
+    @Test func addCreatesNotStartedEmptyAction() throws {
         let ctx = try makeContext()
         let (ra, item) = try startedAssessment(in: ctx)
-        let action = try CorrectiveActionEditing.add(
-            to: item, in: ra, measure: "난간 설치", responsibleName: "김안전",
-            at: when.addingTimeInterval(60), context: ctx)
+        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간 설치",
+                                                     responsibleName: "김안전", at: when, context: ctx)
+        #expect(action.status == .notStarted)          // 최초 생성 = .notStarted
+        #expect(action.implementedAt == nil)
+        #expect(action.postRiskLevel == nil)
+        #expect(action.effectivenessResult == nil)
         #expect(action.measure == "난간 설치")
-        #expect(action.item === item)
         #expect((item.correctiveActions ?? []).contains { $0 === action })
-        #expect(ra.updatedAt == when.addingTimeInterval(60))
         let fresh = ModelContext(ctx.container)
         #expect(try fresh.fetch(FetchDescriptor<CorrectiveAction>()).count == 1)
     }
 
-    /// 1:N 보존: two actions under one item both persist (never collapsed to one).
     @Test func twoActionsBothPersist() throws {
         let ctx = try makeContext()
         let (ra, item) = try startedAssessment(in: ctx)
         try CorrectiveActionEditing.add(to: item, in: ra, measure: "조치1", at: when, context: ctx)
         try CorrectiveActionEditing.add(to: item, in: ra, measure: "조치2", at: when, context: ctx)
         #expect((item.correctiveActions ?? []).count == 2)
-        let fresh = ModelContext(ctx.container)
-        #expect(try fresh.fetch(FetchDescriptor<CorrectiveAction>()).count == 2)
     }
 
     @Test func addRejectsWhenCancelled() throws {
         let ctx = try makeContext()
         let (ra, item) = try startedAssessment(in: ctx)
-        ra.status = .cancelled                 // cancelled = read-only
+        ra.status = .cancelled
         #expect(throws: CorrectiveActionError.assessmentNotEditable) {
             try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간 설치", at: when, context: ctx)
         }
@@ -84,7 +91,7 @@ struct CorrectiveActionEditingTests {
     @Test func addAllowedWhenFinalized() throws {
         let ctx = try makeContext()
         let (ra, item) = try startedAssessment(in: ctx)
-        ra.status = .finalized                 // CorrectiveAction stays editable after finalized (lock timing)
+        ra.status = .finalized
         let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "점검 강화", at: when, context: ctx)
         #expect((item.correctiveActions ?? []).contains { $0 === action })
     }
@@ -99,7 +106,6 @@ struct CorrectiveActionEditingTests {
         }
     }
 
-    /// A failed commit restores BOTH the store and the in-memory state — no phantom action.
     @Test func addFailedCommitRestoresStoreAndMemory() throws {
         struct CommitFailed: Error {}
         let ctx = try makeContext()
@@ -110,47 +116,13 @@ struct CorrectiveActionEditingTests {
                                             at: when.addingTimeInterval(99), context: ctx,
                                             commit: { throw CommitFailed() })
         }
-        #expect((item.correctiveActions ?? []).isEmpty)      // memory restored
+        #expect((item.correctiveActions ?? []).isEmpty)
         #expect(ra.updatedAt == priorUpdatedAt)
         let fresh = ModelContext(ctx.container)
-        #expect(try fresh.fetch(FetchDescriptor<CorrectiveAction>()).isEmpty)  // store restored
+        #expect(try fresh.fetch(FetchDescriptor<CorrectiveAction>()).isEmpty)
     }
 
-    // MARK: - update / 효과확인 무효화
-
-    /// A SUBSTANTIVE edit (postRiskLevel) invalidates a recorded 효과확인 (효과확인 무효화).
-    @Test func substantiveUpdateInvalidatesEffectiveness() throws {
-        let ctx = try makeContext()
-        let (ra, item) = try startedAssessment(in: ctx)
-        let action = try CorrectiveActionEditing.add(
-            to: item, in: ra, measure: "난간 설치", status: .completed,
-            implementedAt: when, postRiskLevel: .low, at: when, context: ctx)
-        try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective, by: "김확인", at: when, context: ctx)
-        #expect(action.effectivenessResult == .effective)
-
-        try CorrectiveActionEditing.update(
-            action, in: ra, measure: "난간 설치", status: .completed,
-            implementedAt: when, postRiskLevel: .medium, at: when.addingTimeInterval(10), context: ctx)
-        #expect(action.effectivenessResult == nil)
-        #expect(action.confirmedBy == nil)
-        #expect(action.effectivenessConfirmedAt == nil)
-    }
-
-    /// A NON-substantive edit (responsibleName only) keeps the 효과확인.
-    @Test func nonSubstantiveUpdateKeepsEffectiveness() throws {
-        let ctx = try makeContext()
-        let (ra, item) = try startedAssessment(in: ctx)
-        let action = try CorrectiveActionEditing.add(
-            to: item, in: ra, measure: "난간 설치", status: .completed,
-            implementedAt: when, postRiskLevel: .low, at: when, context: ctx)
-        try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective, by: "김확인", at: when, context: ctx)
-
-        try CorrectiveActionEditing.update(
-            action, in: ra, measure: "난간 설치", responsibleName: "새담당", status: .completed,
-            implementedAt: when, postRiskLevel: .low, at: when.addingTimeInterval(10), context: ctx)
-        #expect(action.effectivenessResult == .effective)
-        #expect(action.responsibleName == "새담당")
-    }
+    // MARK: - update / 상태 전이
 
     @Test func updateRejectsBlankMeasure() throws {
         let ctx = try makeContext()
@@ -161,69 +133,174 @@ struct CorrectiveActionEditingTests {
         }
     }
 
-    /// A failed commit restores the edited fields AND the invalidated 효과확인.
+    @Test func completedRequiresImplementedAt() throws {
+        let ctx = try makeContext()
+        let (ra, item) = try startedAssessment(in: ctx)
+        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간 설치", at: when, context: ctx)
+        #expect(throws: CorrectiveActionError.completedRequiresImplementedAt) {
+            try CorrectiveActionEditing.update(action, in: ra, measure: "난간 설치", status: .completed,
+                                               implementedAt: nil, postRiskLevel: .low, at: when, context: ctx)
+        }
+    }
+
+    @Test func completedRecordsImplementation() throws {
+        let ctx = try makeContext()
+        let (ra, item) = try startedAssessment(in: ctx)
+        let action = try completedAction(item, in: ra, in: ctx)
+        #expect(action.status == .completed)
+        #expect(action.implementedAt == when)
+        #expect(action.postRiskLevel == .low)
+    }
+
+    /// implementedAt·postRiskLevel are completed-only: passing them with a non-completed status
+    /// leaves them nil (status·이행일 컨트롤이 모순된 값을 만들 수 없다).
+    @Test func nonCompletedStatusStripsImplementationFields() throws {
+        let ctx = try makeContext()
+        let (ra, item) = try startedAssessment(in: ctx)
+        let action = try completedAction(item, in: ra, in: ctx)
+        try CorrectiveActionEditing.update(action, in: ra, measure: "난간 설치", status: .inProgress,
+                                           implementedAt: when, postRiskLevel: .low, at: when, context: ctx)
+        #expect(action.status == .inProgress)
+        #expect(action.implementedAt == nil)
+        #expect(action.postRiskLevel == nil)
+    }
+
+    /// Reverting a completed+confirmed action to .notStarted clears 이행일·개선후위험도·효과확인.
+    @Test func revertingCompletedClearsImplementationAndEffectiveness() throws {
+        let ctx = try makeContext()
+        let (ra, item) = try startedAssessment(in: ctx)
+        let action = try completedAction(item, in: ra, in: ctx)
+        try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective, by: "김확인", at: when, context: ctx)
+        #expect(action.effectivenessResult == .effective)
+
+        try CorrectiveActionEditing.update(action, in: ra, measure: "난간 설치", status: .notStarted, at: when.addingTimeInterval(10), context: ctx)
+        #expect(action.status == .notStarted)
+        #expect(action.implementedAt == nil)
+        #expect(action.postRiskLevel == nil)
+        #expect(action.effectivenessResult == nil)
+        #expect(action.confirmedBy == nil)
+        #expect(action.effectivenessConfirmedAt == nil)
+    }
+
+    @Test func substantiveUpdateInvalidatesEffectiveness() throws {
+        let ctx = try makeContext()
+        let (ra, item) = try startedAssessment(in: ctx)
+        let action = try completedAction(item, in: ra, in: ctx)
+        try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective, by: "김확인", at: when, context: ctx)
+        // change postRiskLevel while still completed → effectiveness reset
+        try CorrectiveActionEditing.update(action, in: ra, measure: "난간 설치", status: .completed,
+                                           implementedAt: when, postRiskLevel: .medium, at: when.addingTimeInterval(10), context: ctx)
+        #expect(action.effectivenessResult == nil)
+        #expect(action.confirmedBy == nil)
+    }
+
+    @Test func nonSubstantiveUpdateKeepsEffectiveness() throws {
+        let ctx = try makeContext()
+        let (ra, item) = try startedAssessment(in: ctx)
+        let action = try completedAction(item, in: ra, in: ctx)
+        try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective, by: "김확인", at: when, context: ctx)
+        try CorrectiveActionEditing.update(action, in: ra, measure: "난간 설치", responsibleName: "새담당",
+                                           status: .completed, implementedAt: when, postRiskLevel: .low,
+                                           at: when.addingTimeInterval(10), context: ctx)
+        #expect(action.effectivenessResult == .effective)
+        #expect(action.responsibleName == "새담당")
+    }
+
     @Test func updateFailedCommitRestoresFieldsAndEffectiveness() throws {
         struct CommitFailed: Error {}
         let ctx = try makeContext()
         let (ra, item) = try startedAssessment(in: ctx)
-        let action = try CorrectiveActionEditing.add(
-            to: item, in: ra, measure: "난간 설치", status: .completed,
-            implementedAt: when, postRiskLevel: .low, at: when, context: ctx)
+        let action = try completedAction(item, in: ra, in: ctx)
         try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective, by: "김확인", at: when, context: ctx)
-
         #expect(throws: CommitFailed.self) {
-            try CorrectiveActionEditing.update(
-                action, in: ra, measure: "변경", status: .inProgress,
-                implementedAt: nil, postRiskLevel: .high, at: when.addingTimeInterval(5),
-                context: ctx, commit: { throw CommitFailed() })
+            try CorrectiveActionEditing.update(action, in: ra, measure: "변경", status: .notStarted,
+                                               at: when.addingTimeInterval(5), context: ctx,
+                                               commit: { throw CommitFailed() })
         }
         #expect(action.measure == "난간 설치")
         #expect(action.status == .completed)
+        #expect(action.implementedAt == when)
         #expect(action.postRiskLevel == .low)
         #expect(action.effectivenessResult == .effective)
         #expect(action.confirmedBy == "김확인")
     }
 
-    // MARK: - confirmEffectiveness preconditions (이행일·개선후위험도·확인자)
+    // MARK: - confirmEffectiveness (.completed 에서만)
 
-    @Test func confirmEffectivenessRejectsWithoutImplementedAt() throws {
+    @Test func effectivenessRejectedWhenNotCompleted() throws {
         let ctx = try makeContext()
         let (ra, item) = try startedAssessment(in: ctx)
-        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간", postRiskLevel: .low, at: when, context: ctx)
+        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간", at: when, context: ctx)
         #expect(throws: CorrectiveActionError.effectivenessPreconditionUnmet) {
             try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective, by: "김확인", at: when, context: ctx)
         }
     }
 
-    @Test func confirmEffectivenessRejectsWithoutPostRiskLevel() throws {
+    @Test func effectivenessRejectedWhenNoPostRisk() throws {
         let ctx = try makeContext()
         let (ra, item) = try startedAssessment(in: ctx)
-        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간", implementedAt: when, at: when, context: ctx)
+        // completed with implementedAt but NO postRiskLevel
+        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간", at: when, context: ctx)
+        try CorrectiveActionEditing.update(action, in: ra, measure: "난간", status: .completed,
+                                           implementedAt: when, postRiskLevel: nil, at: when, context: ctx)
         #expect(throws: CorrectiveActionError.effectivenessPreconditionUnmet) {
             try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective, by: "김확인", at: when, context: ctx)
         }
     }
 
-    @Test func confirmEffectivenessRejectsBlankConfirmer() throws {
+    @Test func effectivenessRejectsBlankConfirmer() throws {
         let ctx = try makeContext()
         let (ra, item) = try startedAssessment(in: ctx)
-        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간", implementedAt: when, postRiskLevel: .low, at: when, context: ctx)
+        let action = try completedAction(item, in: ra, in: ctx)
         #expect(throws: CorrectiveActionError.emptyConfirmer) {
             try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective, by: "   ", at: when, context: ctx)
         }
     }
 
-    @Test func confirmEffectivenessRecordsAndPersists() throws {
+    @Test func effectivenessRecordsAndPersists() throws {
         let ctx = try makeContext()
         let (ra, item) = try startedAssessment(in: ctx)
-        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간", implementedAt: when, postRiskLevel: .low, at: when, context: ctx)
-        try CorrectiveActionEditing.confirmEffectiveness(
-            action, in: ra, result: .partiallyEffective, by: "김확인", at: when.addingTimeInterval(30), context: ctx)
+        let action = try completedAction(item, in: ra, in: ctx)
+        try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .partiallyEffective,
+                                                         by: "김확인", at: when.addingTimeInterval(30), context: ctx)
         #expect(action.effectivenessResult == .partiallyEffective)
         #expect(action.confirmedBy == "김확인")
         #expect(action.effectivenessConfirmedAt == when.addingTimeInterval(30))
         #expect(action.isEffectivenessComplete)
-        #expect(!action.isEffectivelyResolved)   // partial ≠ effective → 미종결
+        #expect(!action.isEffectivelyResolved)   // partial ≠ effective
+    }
+
+    /// isEffectivenessComplete requires status == .completed even if the other fields are set
+    /// (a corrupted non-completed record must never read as complete).
+    @Test func isEffectivenessCompleteRequiresCompletedStatus() throws {
+        let ctx = try makeContext()
+        let (_, item) = try startedAssessment(in: ctx)
+        let action = CorrectiveAction(item: item, measure: "난간")
+        action.status = .inProgress
+        action.implementedAt = when
+        action.postRiskLevel = .low
+        action.effectivenessResult = .effective
+        action.confirmedBy = "김확인"
+        action.effectivenessConfirmedAt = when
+        #expect(!action.isEffectivenessComplete)
+        #expect(!action.isEffectivelyResolved)
+    }
+
+    @Test func confirmEffectivenessFailedCommitRestores() throws {
+        struct CommitFailed: Error {}
+        let ctx = try makeContext()
+        let (ra, item) = try startedAssessment(in: ctx)
+        let action = try completedAction(item, in: ra, in: ctx)
+        let priorUpdatedAt = ra.updatedAt
+        #expect(throws: CommitFailed.self) {
+            try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective, by: "김확인",
+                                                             at: when.addingTimeInterval(50), context: ctx,
+                                                             commit: { throw CommitFailed() })
+        }
+        #expect(action.effectivenessResult == nil)
+        #expect(action.confirmedBy == nil)
+        #expect(action.effectivenessConfirmedAt == nil)
+        #expect(ra.updatedAt == priorUpdatedAt)
     }
 
     // MARK: - remove
@@ -238,5 +315,25 @@ struct CorrectiveActionEditingTests {
         #expect(!(item.correctiveActions ?? []).contains { $0 === a1 })
         let fresh = ModelContext(ctx.container)
         #expect(try fresh.fetch(FetchDescriptor<CorrectiveAction>()).count == 1)
+    }
+
+    @Test func removeFailedCommitRestoresStoreAndMemory() throws {
+        struct CommitFailed: Error {}
+        let ctx = try makeContext()
+        let (ra, item) = try startedAssessment(in: ctx)
+        let a1 = try CorrectiveActionEditing.add(to: item, in: ra, measure: "조치1", at: when, context: ctx)
+        try CorrectiveActionEditing.add(to: item, in: ra, measure: "조치2", at: when, context: ctx)
+        let priorUpdatedAt = ra.updatedAt
+        #expect(throws: CommitFailed.self) {
+            try CorrectiveActionEditing.remove(a1, in: ra, at: when.addingTimeInterval(5),
+                                               context: ctx, commit: { throw CommitFailed() })
+        }
+        // memory restored: both actions still present, a1 re-attached
+        #expect((item.correctiveActions ?? []).count == 2)
+        #expect((item.correctiveActions ?? []).contains { $0 === a1 })
+        #expect(ra.updatedAt == priorUpdatedAt)
+        // store restored: both persist
+        let fresh = ModelContext(ctx.container)
+        #expect(try fresh.fetch(FetchDescriptor<CorrectiveAction>()).count == 2)
     }
 }

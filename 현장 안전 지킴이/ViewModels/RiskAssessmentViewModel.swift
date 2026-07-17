@@ -56,11 +56,11 @@ final class RiskAssessmentViewModel {
         // to directRiskLevel; the user taps to confirm (LEGAL-0: 자동 확정 금지).
         var suggestedLevel: RiskLevel?
         var reductionMeasure = ""       // 감소대책
-        var postRiskLevel: RiskLevel?   // 개선 후 위험성
         var responsibleName = ""        // 담당
         var hasDueDate = false
         var dueDate = Date()
-        var status: CorrectiveActionStatus = .notStarted
+        // LEGAL-2c: 최초 작성 조치는 항상 .notStarted — 상태·이행일·개선후위험도·효과확인은 상세의
+        // 개선조치 편집 화면에서만 다룬다. (그래서 여기엔 status/postRiskLevel 필드가 없다.)
         var linkedHazardId: UUID?       // carried over when seeded from a checklist item
     }
 
@@ -144,9 +144,17 @@ final class RiskAssessmentViewModel {
     enum SaveError: Error {
         case incompleteItem   // a draft item has no resolved 위험성 수준 (defence-in-depth; canSave gates this)
         case missingSite      // SCHEMA_V3 §4.1: RiskAssessment requires a site (canSave gates this)
+        case incompleteAction // LEGAL-2c: 개선조치 필드(담당/기한)만 있고 감소대책이 비어 있음
     }
 
     func save(context: ModelContext) throws {
+        // LEGAL-2c 방어 guard: 담당/기한 등 개선조치 필드만 입력하고 감소대책이 비면 전체 저장을 차단한다
+        // (빈 감소대책의 부분 조치를 조용히 버리지 않고, 저장 자체를 막아 사용자에게 알린다).
+        for d in draftItems {
+            let hasMeasure = d.reductionMeasure.trimmedOrNil != nil
+            let hasOtherActionData = d.responsibleName.trimmedOrNil != nil || d.hasDueDate
+            if !hasMeasure, hasOtherActionData { throw SaveError.incompleteAction }
+        }
         // LEGAL-0 방어 guard: resolve every level BEFORE touching the context, so an
         // unassessed item aborts the save without leaving partial inserts. The normal
         // path is already gated by `canSave`; this makes 미평가 저장 impossible.
@@ -209,18 +217,16 @@ final class RiskAssessmentViewModel {
         try AssessmentStart.start(assessment, criteria: criteria, now: Date(), in: context)
     }
 
-    /// Builds a `CorrectiveAction` for the draft's improvement fields, or nil when there is no
-    /// 감소대책(measure). WO LEGAL-2c 빈 개선조치 저장 금지: 감소대책 없는 조치는 만들지 않는다
-    /// (measure = the corrective action's defining content — the same rule the 2c edit ops enforce).
+    /// Builds a `CorrectiveAction` for the draft, or nil when there is no 감소대책(measure). WO
+    /// LEGAL-2c: 최초 생성 조치는 항상 `.notStarted`(이행일·개선후위험도·효과확인 비어 있음) — 그 수명주기는
+    /// 상세의 개선조치 편집 화면에서만 진행한다. 빈 조치는 만들지 않는다(빈 개선조치 저장 금지).
     private func makeCorrectiveAction(from d: DraftItem, item: RiskAssessmentItem) -> CorrectiveAction? {
         guard let measure = d.reductionMeasure.trimmedOrNil else { return nil }
         return CorrectiveAction(
             item: item,
             measure: measure,
             responsibleName: d.responsibleName.trimmedOrNil,
-            dueDate: d.hasDueDate ? d.dueDate : nil,
-            status: d.status,
-            postRiskLevel: d.postRiskLevel
+            dueDate: d.hasDueDate ? d.dueDate : nil
         )
     }
 }

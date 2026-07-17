@@ -3,12 +3,11 @@ import Foundation
 import SwiftData
 @testable import SafetyWalkCore
 
-// WO LEGAL-2c — 종결(closed) 파생 + 필수 개선조치 계획 규칙 (LEGAL_2_ARCH §1.1). closed 는 저장 상태가
-// 아니라 파생: finalized AND 모든 기준 초과 항목이 ≥1 개선조치 + 각 조치가 이행·효과확인(effective) 완료.
-// 부분 효과·효과 없음 → 미종결. 기준 초과 0건이면 finalized 즉시 종결. (2c는 finalize 전환을 소유하지 않으므로
-// 테스트는 파생만 검증하고 status는 직접 설정한다.)
+// WO LEGAL-2c (반송 2차) — 종결(closed) 파생 + 필수 계획. closed 는 파생: finalized AND 잠긴 기준을
+// decode해 모든 항목이 CURRENT한 결정을 갖고(스냅샷 누락·손상·불완전·stale이면 fail-closed), 모든 기준
+// 초과 항목이 ≥1 개선조치 + 각 조치가 효과 있음(effective)으로 효과확인 완료. 부분·없음·미완료 → 미종결.
 
-@Suite("AssessmentClosure — closed 파생 + 필수 계획 (LEGAL-2c)")
+@Suite("AssessmentClosure — closed 파생 (fail-closed) + 필수 계획 (LEGAL-2c 2차)")
 struct AssessmentClosureTests {
 
     private func makeContext() throws -> ModelContext {
@@ -30,7 +29,7 @@ struct AssessmentClosureTests {
         return ra
     }
 
-    /// Adds a confirmed item: (2,2)→4→medium is 기준 초과; (1,1)→1→low is 기준 이내.
+    /// (2,2)→4→medium = 기준 초과; (1,1)→1→low = 기준 이내. Confirmed under the locked criteria.
     @discardableResult
     private func addItem(_ ra: RiskAssessment, likelihood: Int, severity: Int, level: RiskLevel,
                          in ctx: ModelContext) throws -> RiskAssessmentItem {
@@ -43,10 +42,12 @@ struct AssessmentClosureTests {
         return item
     }
 
+    /// Plan → completed(이행일·개선후위험도) → 효과확인 with `result`.
     private func addEffectiveAction(_ item: RiskAssessmentItem, in ra: RiskAssessment,
                                     result: EffectivenessResult, in ctx: ModelContext) throws {
-        let action = try CorrectiveActionEditing.add(
-            to: item, in: ra, measure: "난간 설치", implementedAt: when, postRiskLevel: .low, at: when, context: ctx)
+        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간 설치", at: when, context: ctx)
+        try CorrectiveActionEditing.update(action, in: ra, measure: "난간 설치", status: .completed,
+                                           implementedAt: when, postRiskLevel: .low, at: when, context: ctx)
         try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: result, by: "김확인", at: when, context: ctx)
     }
 
@@ -73,10 +74,10 @@ struct AssessmentClosureTests {
         let ra = try startedAssessment(in: ctx)
         let item = try addItem(ra, likelihood: 1, severity: 1, level: .low, in: ctx)
         #expect(item.criteriaDecision == .withinThreshold)
-        #expect(item.hasRequiredCorrectiveActionPlan)   // 초과 아님 → 계획 불필요
+        #expect(item.hasRequiredCorrectiveActionPlan)
     }
 
-    // MARK: - closed 파생
+    // MARK: - closed 파생 (핵심)
 
     @Test func notFinalizedIsNotClosed() throws {
         let ctx = try makeContext()
@@ -91,7 +92,7 @@ struct AssessmentClosureTests {
         let ra = try startedAssessment(in: ctx)
         try addItem(ra, likelihood: 1, severity: 1, level: .low, in: ctx)   // 기준 이내만
         ra.status = .finalized
-        #expect(AssessmentClosure.isClosed(ra))   // 기준 초과 0건 → 즉시 종결
+        #expect(AssessmentClosure.isClosed(ra))
     }
 
     @Test func finalizedExceedsAllEffectiveIsClosed() throws {
@@ -109,7 +110,7 @@ struct AssessmentClosureTests {
         let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
         try addEffectiveAction(item, in: ra, result: .partiallyEffective, in: ctx)
         ra.status = .finalized
-        #expect(!AssessmentClosure.isClosed(ra))   // 부분 효과 → 미종결
+        #expect(!AssessmentClosure.isClosed(ra))
     }
 
     @Test func ineffectiveIsNotClosed() throws {
@@ -118,13 +119,13 @@ struct AssessmentClosureTests {
         let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
         try addEffectiveAction(item, in: ra, result: .ineffective, in: ctx)
         ra.status = .finalized
-        #expect(!AssessmentClosure.isClosed(ra))   // 효과 없음 → 미종결
+        #expect(!AssessmentClosure.isClosed(ra))
     }
 
     @Test func exceedsWithZeroActionsIsNotClosed() throws {
         let ctx = try makeContext()
         let ra = try startedAssessment(in: ctx)
-        try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)   // 초과인데 조치 없음
+        try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
         ra.status = .finalized
         #expect(!AssessmentClosure.isClosed(ra))
     }
@@ -133,9 +134,70 @@ struct AssessmentClosureTests {
         let ctx = try makeContext()
         let ra = try startedAssessment(in: ctx)
         let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
-        try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간 설치",
-                                        implementedAt: when, postRiskLevel: .low, at: when, context: ctx)
+        try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간 설치", at: when, context: ctx)  // .notStarted
         ra.status = .finalized
-        #expect(!AssessmentClosure.isClosed(ra))   // 효과확인 미완료 → 미종결
+        #expect(!AssessmentClosure.isClosed(ra))
+    }
+
+    /// A completed-only effectiveness record that has been corrupted to a non-completed status must
+    /// never count as resolved (손상된 효과확인 필드 → 미종결).
+    @Test func notCompletedCorruptEffectivenessIsNotClosed() throws {
+        let ctx = try makeContext()
+        let ra = try startedAssessment(in: ctx)
+        let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
+        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간 설치", at: when, context: ctx)
+        action.status = .inProgress
+        action.implementedAt = when
+        action.postRiskLevel = .low
+        action.effectivenessResult = .effective
+        action.confirmedBy = "김확인"
+        action.effectivenessConfirmedAt = when
+        ra.status = .finalized
+        #expect(!AssessmentClosure.isClosed(ra))
+    }
+
+    // MARK: - fail-closed (현재 결정 검증)
+
+    @Test func missingCriteriaIsNotClosed() throws {
+        let ctx = try makeContext()
+        let ra = try startedAssessment(in: ctx)
+        let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
+        try addEffectiveAction(item, in: ra, result: .effective, in: ctx)
+        ra.status = .finalized
+        ra.criteria = nil
+        #expect(!AssessmentClosure.isClosed(ra))
+    }
+
+    @Test func corruptCriteriaIsNotClosed() throws {
+        let ctx = try makeContext()
+        let ra = try startedAssessment(in: ctx)
+        let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
+        try addEffectiveAction(item, in: ra, result: .effective, in: ctx)
+        ra.status = .finalized
+        ra.criteria?.matrixData = Data("garbage".utf8)   // fail-closed decode
+        #expect(!AssessmentClosure.isClosed(ra))
+    }
+
+    @Test func incompleteConfirmationIsNotClosed() throws {
+        let ctx = try makeContext()
+        let ra = try startedAssessment(in: ctx)
+        let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
+        try addEffectiveAction(item, in: ra, result: .effective, in: ctx)
+        ra.status = .finalized
+        item.decisionConfirmedBy = nil   // incomplete confirmation
+        #expect(!AssessmentClosure.isClosed(ra))
+    }
+
+    @Test func staleDecisionIsNotClosed() throws {
+        let ctx = try makeContext()
+        let ra = try startedAssessment(in: ctx)
+        let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
+        try addEffectiveAction(item, in: ra, result: .effective, in: ctx)
+        ra.status = .finalized
+        // Risk input drops to within (1×1=1) but the stored decision is still exceeds → stale.
+        item.likelihood = 1
+        item.severity = 1
+        item.riskLevel = .low
+        #expect(!AssessmentClosure.isClosed(ra))
     }
 }

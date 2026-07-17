@@ -8,7 +8,8 @@ public enum CorrectiveActionError: Error, Equatable {
     case assessmentNotEditable           // 평가가 inProgress/finalized 아님 (planned/cancelled=편집 불가)
     case itemNotInAssessment             // 항목이 해당 평가 소유 아님
     case actionNotInAssessment           // 조치가 해당 평가의 항목 소유 아님
-    case effectivenessPreconditionUnmet  // 효과확인 전제(이행일·개선후위험도) 미충족
+    case completedRequiresImplementedAt  // .completed 저장에는 이행일 필수
+    case effectivenessPreconditionUnmet  // 효과확인 전제(완료 상태·이행일·개선후위험도) 미충족
     case emptyConfirmer                  // 효과 확인자 공백
 }
 
@@ -24,7 +25,9 @@ public enum CorrectiveActionEditing {
 
     // MARK: - add
 
-    /// Adds a new corrective action to `item`. Requires a non-blank `measure` (빈 조치 차단).
+    /// Adds a new corrective action to `item`. Requires a non-blank `measure` (빈 조치 차단). A new
+    /// action is ALWAYS `.notStarted` with empty 이행일·개선후위험도·효과확인 — the completed lifecycle
+    /// (이행일·개선후위험도·효과확인) is reached only later through `update`/`confirmEffectiveness`.
     @discardableResult
     public static func add(
         to item: RiskAssessmentItem,
@@ -32,17 +35,11 @@ public enum CorrectiveActionEditing {
         measure: String,
         responsibleName: String? = nil,
         dueDate: Date? = nil,
-        status: CorrectiveActionStatus = .notStarted,
-        implementedAt: Date? = nil,
-        postRiskLevel: RiskLevel? = nil,
-        evidencePhotoData: Data? = nil,
         at date: Date,
         context: ModelContext
     ) throws -> CorrectiveAction {
         try add(to: item, in: assessment, measure: measure, responsibleName: responsibleName,
-                dueDate: dueDate, status: status, implementedAt: implementedAt,
-                postRiskLevel: postRiskLevel, evidencePhotoData: evidencePhotoData,
-                at: date, context: context, commit: { try context.save() })
+                dueDate: dueDate, at: date, context: context, commit: { try context.save() })
     }
 
     /// Testing seam for the commit step (see `AssessmentDecision` for the rationale — these
@@ -54,10 +51,6 @@ public enum CorrectiveActionEditing {
         measure: String,
         responsibleName: String? = nil,
         dueDate: Date? = nil,
-        status: CorrectiveActionStatus = .notStarted,
-        implementedAt: Date? = nil,
-        postRiskLevel: RiskLevel? = nil,
-        evidencePhotoData: Data? = nil,
         at date: Date,
         context: ModelContext,
         commit: () throws -> Void
@@ -68,10 +61,9 @@ public enum CorrectiveActionEditing {
             throw CorrectiveActionError.itemNotInAssessment
         }
 
+        // Always .notStarted (init default) — no 이행일·개선후위험도·효과확인 at creation.
         let action = CorrectiveAction(item: item, measure: measure,
-                                      responsibleName: responsibleName, dueDate: dueDate,
-                                      status: status, postRiskLevel: postRiskLevel)
-        action.applyImplementation(implementedAt: implementedAt, evidencePhotoData: evidencePhotoData)
+                                      responsibleName: responsibleName, dueDate: dueDate)
 
         let priorActions = item.correctiveActions ?? []
         let priorUpdatedAt = assessment.updatedAt
@@ -135,6 +127,10 @@ public enum CorrectiveActionEditing {
         try requireEditable(assessment)
         try requireMeasure(measure)
         try requireActionInAssessment(action, assessment)
+        // .completed 저장에는 이행일 필수 (상태·이행일 모순 차단). applyFields가 이후 완료-전용 필드를 정규화.
+        if status == .completed, implementedAt == nil {
+            throw CorrectiveActionError.completedRequiresImplementedAt
+        }
 
         let prior = action.snapshotFields()
         let priorUpdatedAt = assessment.updatedAt
@@ -195,8 +191,8 @@ public enum CorrectiveActionEditing {
 
     // MARK: - confirmEffectiveness
 
-    /// Records the 효과확인 result atomically (이행일·개선후위험도·확인자 전제 필수). Persists with a
-    /// store+memory restore on commit failure.
+    /// Records the 효과확인 result atomically. Precondition: 조치가 **완료(.completed)** 상태이고 이행일·
+    /// 개선후위험도가 기록돼 있으며 확인자가 비어 있지 않아야 한다. Persists with a store+memory restore.
     public static func confirmEffectiveness(
         _ action: CorrectiveAction,
         in assessment: RiskAssessment,
@@ -220,7 +216,8 @@ public enum CorrectiveActionEditing {
     ) throws {
         try requireEditable(assessment)
         try requireActionInAssessment(action, assessment)
-        guard action.implementedAt != nil, action.postRiskLevel != nil else {
+        guard action.status == .completed,
+              action.implementedAt != nil, action.postRiskLevel != nil else {
             throw CorrectiveActionError.effectivenessPreconditionUnmet
         }
         guard !person.sw_isBlank else { throw CorrectiveActionError.emptyConfirmer }
@@ -259,15 +256,6 @@ public enum CorrectiveActionEditing {
               (assessment.items ?? []).contains(where: { $0 === item }) else {
             throw CorrectiveActionError.actionNotInAssessment
         }
-    }
-}
-
-private extension CorrectiveAction {
-    /// Sets the two fields the create init doesn't take (Core-only) — used only when building a
-    /// brand-new action inside `add`, so there is never a prior 효과확인 to invalidate.
-    func applyImplementation(implementedAt: Date?, evidencePhotoData: Data?) {
-        self.implementedAt = implementedAt
-        self.evidencePhotoData = evidencePhotoData
     }
 }
 
