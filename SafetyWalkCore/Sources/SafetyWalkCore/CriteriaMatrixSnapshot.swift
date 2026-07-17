@@ -65,6 +65,23 @@ public struct CriteriaMatrixSnapshot: Equatable {
         return bands.last?.level ?? .high
     }
 
+    /// The in-range raw score for likelihood × severity, or nil if either input is missing, outside
+    /// `1...scale`, or the product overflows (WO P1-3). This is the SINGLE range-check source shared
+    /// by `AcceptabilityCriteria` and the item risk-input mutation op — so the check never diverges.
+    public func inRangeScore(likelihood: Int?, severity: Int?) -> Int? {
+        guard let l = likelihood, let s = severity,
+              (1...likelihoodScale).contains(l),
+              (1...severityScale).contains(s) else { return nil }
+        let (score, overflow) = l.multipliedReportingOverflow(by: s)
+        return overflow ? nil : score
+    }
+
+    /// The band for an in-range likelihood × severity, or nil when out of range/overflow — so a
+    /// range-invalid input never gets an auto-assigned risk level (nil=미평가).
+    public func inRangeBand(likelihood: Int?, severity: Int?) -> RiskLevel? {
+        inRangeScore(likelihood: likelihood, severity: severity).map(band(forScore:))
+    }
+
     // MARK: - Format v1 wire
 
     /// Self-describing wire form; `formatVersion` is written into the blob AND checked against

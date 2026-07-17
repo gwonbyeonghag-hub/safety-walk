@@ -49,14 +49,10 @@ public struct AcceptabilityCriteria: Equatable {
         }
     }
 
-    /// Fail-closed raw score for in-range likelihood×severity, or nil if either input is out of the
-    /// matrix scale or the product overflows (WO P1-3). The pure numeric proposal entry point.
+    /// Fail-closed raw score for in-range likelihood×severity (delegates to the matrix — the single
+    /// range-check source, WO P1-3). The pure numeric proposal entry point.
     func inRangeScore(likelihood: Int?, severity: Int?) -> Int? {
-        guard let l = likelihood, let s = severity,
-              (1...matrix.likelihoodScale).contains(l),
-              (1...matrix.severityScale).contains(s) else { return nil }
-        let (score, overflow) = l.multipliedReportingOverflow(by: s)
-        return overflow ? nil : score
+        matrix.inRangeScore(likelihood: likelihood, severity: severity)
     }
 
     /// 기준 이내/초과 SUGGESTION, or `nil` when the risk is 미입력 or out of range (제안 없음).

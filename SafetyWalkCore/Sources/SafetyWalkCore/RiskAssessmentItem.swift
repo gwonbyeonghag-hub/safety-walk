@@ -84,13 +84,9 @@ public final class RiskAssessmentItem {
     /// confirmation triplet is reset — even when the resulting band is the same (WO P1-2: any risk
     /// change invalidates the prior confirmation). Identical input is a no-op (keeps confirmation).
     public func updateFrequencySeverityInput(likelihood newL: Int?, severity newS: Int?, using matrix: CriteriaMatrixSnapshot) {
-        let newLevel: RiskLevel?
-        if let l = newL, let s = newS {
-            let (score, overflow) = l.multipliedReportingOverflow(by: s)
-            newLevel = overflow ? nil : matrix.band(forScore: score)
-        } else {
-            newLevel = nil
-        }
+        // Out-of-range / overflow inputs get NO risk level (nil=미평가, never auto-Low) — the same
+        // range check the suggestion path uses, so the two never diverge (WO P1-3 · 최종 반송).
+        let newLevel = matrix.inRangeBand(likelihood: newL, severity: newS)
         guard likelihood != newL || severity != newS || riskLevel != newLevel else { return }
         likelihood = newL
         severity = newS
