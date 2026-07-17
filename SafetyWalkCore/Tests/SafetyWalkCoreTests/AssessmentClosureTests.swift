@@ -58,7 +58,7 @@ struct AssessmentClosureTests {
         let ra = try startedAssessment(in: ctx)
         let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
         #expect(item.criteriaDecision == .exceedsThreshold)
-        #expect(!item.hasRequiredCorrectiveActionPlan)
+        #expect(!CorrectiveActionPolicy.hasRequiredCorrectiveActionPlan(item))
     }
 
     @Test func exceedsItemWithMeasureActionHasPlan() throws {
@@ -66,7 +66,7 @@ struct AssessmentClosureTests {
         let ra = try startedAssessment(in: ctx)
         let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
         try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간 설치", at: when, context: ctx)
-        #expect(item.hasRequiredCorrectiveActionPlan)
+        #expect(CorrectiveActionPolicy.hasRequiredCorrectiveActionPlan(item))
     }
 
     @Test func withinItemNeedsNoPlan() throws {
@@ -74,7 +74,7 @@ struct AssessmentClosureTests {
         let ra = try startedAssessment(in: ctx)
         let item = try addItem(ra, likelihood: 1, severity: 1, level: .low, in: ctx)
         #expect(item.criteriaDecision == .withinThreshold)
-        #expect(item.hasRequiredCorrectiveActionPlan)
+        #expect(CorrectiveActionPolicy.hasRequiredCorrectiveActionPlan(item))
     }
 
     // MARK: - closed 파생 (핵심)

@@ -126,23 +126,23 @@ public enum CorrectiveActionEditing {
         try requireEditable(assessment)
         try requireMeasure(measure)
         try requireActionInAssessment(action, assessment)
-        // .completed 저장에는 이행일 필수 (상태·이행일 모순 차단). applyFields가 이후 완료-전용 필드를 정규화.
+        // .completed 저장에는 이행일 필수 (상태·이행일 모순 차단). Policy.apply가 이후 완료-전용 필드를 정규화.
         if status == .completed, implementedAt == nil {
             throw CorrectiveActionError.completedRequiresImplementedAt
         }
 
-        let prior = action.snapshotFields()
+        let prior = CorrectiveActionPolicy.snapshot(action)
         let priorUpdatedAt = assessment.updatedAt
-        action.applyFields(measure: measure, responsibleName: responsibleName, dueDate: dueDate,
-                           status: status, implementedAt: implementedAt,
-                           postRiskLevel: postRiskLevel, evidencePhotoData: evidencePhotoData)
+        CorrectiveActionPolicy.apply(to: action, measure: measure, responsibleName: responsibleName,
+                                     dueDate: dueDate, status: status, implementedAt: implementedAt,
+                                     postRiskLevel: postRiskLevel, evidencePhotoData: evidencePhotoData)
         assessment.updatedAt = date
 
         do {
             try commit()
         } catch {
             context.rollback()
-            action.restoreFields(prior)
+            CorrectiveActionPolicy.restore(action, prior)
             assessment.updatedAt = priorUpdatedAt
             throw error
         }
@@ -224,7 +224,7 @@ public enum CorrectiveActionEditing {
     ) throws {
         try requireEditable(assessment)
         try requireActionInAssessment(action, assessment)
-        guard action.isReadyForEffectivenessCheck else {
+        guard CorrectiveActionPolicy.isReadyForEffectivenessCheck(action) else {
             throw CorrectiveActionError.effectivenessPreconditionUnmet
         }
         guard !person.sw_isBlank else { throw CorrectiveActionError.emptyConfirmer }
@@ -233,14 +233,14 @@ public enum CorrectiveActionEditing {
         let priorBy = action.confirmedBy
         let priorAt = action.effectivenessConfirmedAt
         let priorUpdatedAt = assessment.updatedAt
-        action.confirmEffectiveness(result: result, by: person, at: date)
+        CorrectiveActionPolicy.applyEffectiveness(to: action, result: result, by: person, at: date)
         assessment.updatedAt = date
 
         do {
             try commit()
         } catch {
             context.rollback()
-            action.restoreEffectiveness(result: priorResult, by: priorBy, at: priorAt)
+            CorrectiveActionPolicy.restoreEffectiveness(action, result: priorResult, by: priorBy, at: priorAt)
             assessment.updatedAt = priorUpdatedAt
             throw error
         }
@@ -249,7 +249,7 @@ public enum CorrectiveActionEditing {
     // MARK: - Guards
 
     private static func requireEditable(_ assessment: RiskAssessment) throws {
-        guard assessment.allowsCorrectiveActionEditing else {
+        guard CorrectiveActionPolicy.allowsCorrectiveActionEditing(assessment) else {
             throw CorrectiveActionError.assessmentNotEditable
         }
     }
@@ -263,39 +263,5 @@ public enum CorrectiveActionEditing {
               (assessment.items ?? []).contains(where: { $0 === item }) else {
             throw CorrectiveActionError.actionNotInAssessment
         }
-    }
-}
-
-public extension RiskAssessment {
-
-    /// 개선조치 편집 가능 상태 — inProgress에서 계획하고 finalized 후에도 수정 가능(LEGAL_2_ARCH §1);
-    /// planned/cancelled는 불가. Core op와 두 화면이 공유하는 단일 규칙(상태 3중 중복 제거).
-    var allowsCorrectiveActionEditing: Bool {
-        status == .inProgress || status == .finalized
-    }
-}
-
-public extension RiskAssessmentItem {
-
-    /// 기준 초과 항목인가 — 초과면 개선조치 계획이 필수(LEGAL_2_ARCH §1.1).
-    var needsCorrectiveActionPlan: Bool {
-        criteriaDecision == .exceedsThreshold
-    }
-
-    /// 초과 항목이면 ≥1 개선조치(감소대책 비어있지 않은)가 있어야 계획 충족. 초과가 아니면 항상 충족.
-    var hasRequiredCorrectiveActionPlan: Bool {
-        guard needsCorrectiveActionPlan else { return true }
-        return (correctiveActions ?? []).contains { !($0.measure ?? "").sw_isBlank }
-    }
-
-    /// 기준 초과인데 아직 개선조치 계획이 없는 상태 — 상세·목록 화면의 "계획 필요" 안내 단일 소스.
-    var isMissingRequiredCorrectiveActionPlan: Bool {
-        needsCorrectiveActionPlan && !hasRequiredCorrectiveActionPlan
-    }
-
-    /// 1:N 개선조치를 결정적 순서로 반환 — CloudKit은 to-many 순서를 보장하지 않고 스키마에 sortOrder가
-    /// 없으므로(동결) `id` 기준으로 안정 정렬한다. 화면·리포트가 같은 순서를 쓰도록 하는 단일 소스.
-    var sortedCorrectiveActions: [CorrectiveAction] {
-        (correctiveActions ?? []).sorted { $0.id.uuidString < $1.id.uuidString }
     }
 }

@@ -266,8 +266,8 @@ struct CorrectiveActionEditingTests {
         #expect(action.effectivenessResult == .partiallyEffective)
         #expect(action.confirmedBy == "김확인")
         #expect(action.effectivenessConfirmedAt == when.addingTimeInterval(30))
-        #expect(action.isEffectivenessComplete)
-        #expect(!action.isEffectivelyResolved)   // partial ≠ effective
+        #expect(CorrectiveActionPolicy.isEffectivenessComplete(action))
+        #expect(!CorrectiveActionPolicy.isEffectivelyResolved(action))   // partial ≠ effective
     }
 
     /// isEffectivenessComplete requires status == .completed even if the other fields are set
@@ -282,8 +282,8 @@ struct CorrectiveActionEditingTests {
         action.effectivenessResult = .effective
         action.confirmedBy = "김확인"
         action.effectivenessConfirmedAt = when
-        #expect(!action.isEffectivenessComplete)
-        #expect(!action.isEffectivelyResolved)
+        #expect(!CorrectiveActionPolicy.isEffectivenessComplete(action))
+        #expect(!CorrectiveActionPolicy.isEffectivelyResolved(action))
     }
 
     @Test func confirmEffectivenessFailedCommitRestores() throws {

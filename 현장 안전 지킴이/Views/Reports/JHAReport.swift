@@ -22,8 +22,12 @@ enum JHAReport {
         let dateText = (assessment.assessedAt ?? assessment.createdAt).formatted(date: .abbreviated, time: .omitted)
         let subtitle = assessment.siteName.isEmpty ? dateText : "\(assessment.siteName) · \(dateText)"
 
+        // WO LEGAL-2c 반송 4차 P1: one block per corrective action (recommended control) so the whole
+        // 1:N set paginates instead of being crammed into a single merged, clippable controls cell.
         var blocks: [AnyView] = [AnyView(headerGrid(assessment))]
-        blocks += items.enumerated().map { AnyView(row(step: $0.offset + 1, item: $0.element, method: assessment.method)) }
+        for (offset, item) in items.enumerated() {
+            blocks += rowBlocks(step: offset + 1, item: item, method: assessment.method)
+        }
         blocks.append(AnyView(ReportDisclaimer()))
 
         return ReportRenderer.renderPDF(
@@ -66,7 +70,23 @@ enum JHAReport {
             .frame(width: width, alignment: .leading)
     }
 
-    private static func row(step: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod) -> some View {
+    /// Width of the leading columns (Step·Job Step·Hazards) — a recommended-control row spans this with
+    /// a clear spacer so its measure sits under the Controls header (mirrors RiskAssessmentReport.leadingWidth).
+    private static let leadingWidth = Col.step + Col.task + Col.hazards
+
+    /// One job step → its item row plus one page-placeable row per corrective action (recommended
+    /// control). The controls column reads top-to-bottom: the step's own controls, then each measure —
+    /// so every action in the 1:N set is preserved and can flow onto the next page instead of clipping.
+    private static func rowBlocks(step: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod) -> [AnyView] {
+        let actions = CorrectiveActionPolicy.sortedCorrectiveActions(item)
+        var blocks: [AnyView] = [AnyView(itemRow(step: step, item: item, method: method, isItemEnd: actions.isEmpty))]
+        for (i, action) in actions.enumerated() {
+            blocks.append(AnyView(actionRow(action: action, isItemEnd: i == actions.count - 1)))
+        }
+        return blocks
+    }
+
+    private static func itemRow(step: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod, isItemEnd: Bool) -> some View {
         HStack(spacing: 0) {
             Text("\(step)")
                 .font(.system(size: 9, weight: .bold)).monospacedDigit()
@@ -75,7 +95,7 @@ enum JHAReport {
                 .frame(width: Col.step, alignment: .center)
             cell(item.taskDescription, Col.task)
             cell(item.hazardDescription, Col.hazards)
-            cell(joinControls(item), Col.controls)
+            cell(item.currentControls ?? "", Col.controls)   // step's own controls; measures follow as rows
             VStack(spacing: 2) {
                 if let level = item.riskLevel {
                     ReportRiskBand(level: level)
@@ -94,17 +114,22 @@ enum JHAReport {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottom) {
-            Rectangle().fill(.black.opacity(0.12)).frame(height: 0.5)
+            Rectangle().fill(.black.opacity(isItemEnd ? 0.12 : 0.06)).frame(height: 0.5)
         }
     }
 
-    /// Current safety controls + ALL corrective-action measures (recommended controls), combined.
-    /// WO LEGAL-2c: every action in the 1:N set is preserved — never just the primary one.
-    private static func joinControls(_ item: RiskAssessmentItem) -> String {
-        var parts: [String] = []
-        if let controls = item.currentControls, !controls.isEmpty { parts.append(controls) }
-        parts += item.sortedCorrectiveActions.compactMap { $0.measure?.isEmpty == false ? $0.measure : nil }
-        return parts.joined(separator: "\n")
+    /// A recommended-control row: one corrective action's measure in the Controls column, aligned under
+    /// its header via a clear leading spacer; step/task/hazards/risk are blank (continuation of the step).
+    private static func actionRow(action: CorrectiveAction, isItemEnd: Bool) -> some View {
+        HStack(spacing: 0) {
+            Color.clear.frame(width: leadingWidth, height: 1)
+            cell(action.measure ?? "", Col.controls)
+            Color.clear.frame(width: Col.risk, height: 1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(.black.opacity(isItemEnd ? 0.12 : 0.06)).frame(height: 0.5)
+        }
     }
 
     private static func cell(_ string: String, _ width: CGFloat) -> some View {

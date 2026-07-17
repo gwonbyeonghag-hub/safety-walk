@@ -113,28 +113,28 @@ struct SchemaV3InvariantTests {
     /// isRequired is derived from the parent item's 초과 여부 — never stored (교정 #2).
     @Test func correctiveActionIsRequiredDerivesFromDecision() throws {
         let exceed = RiskAssessmentItem(riskLevel: .high); exceed.criteriaDecision = .exceedsThreshold
-        #expect(try CorrectiveAction(item: exceed, measure: "조치").isRequired == true)
+        #expect(CorrectiveActionPolicy.isRequired(try CorrectiveAction(item: exceed, measure: "조치")) == true)
         let within = RiskAssessmentItem(riskLevel: .low); within.criteriaDecision = .withinThreshold
-        #expect(try CorrectiveAction(item: within, measure: "조치").isRequired == false)
+        #expect(CorrectiveActionPolicy.isRequired(try CorrectiveAction(item: within, measure: "조치")) == false)
         let unassessed = RiskAssessmentItem(riskLevel: .high)   // criteriaDecision nil = 미평가
-        #expect(try CorrectiveAction(item: unassessed, measure: "조치").isRequired == false)
+        #expect(CorrectiveActionPolicy.isRequired(try CorrectiveAction(item: unassessed, measure: "조치")) == false)
     }
 
     /// 효과확인은 result·confirmedBy·effectivenessConfirmedAt 를 한 번에 갱신 — 부분 갱신 없음.
     @Test func effectivenessConfirmUpdatesAllThreeFieldsAtomically() throws {
         let item = RiskAssessmentItem(riskLevel: .high)
         let action = try CorrectiveAction(item: item, measure: "가드 설치")
-        #expect(action.isEffectivenessConfirmed == false)
+        #expect(CorrectiveActionPolicy.isEffectivenessConfirmed(action) == false)
         #expect(action.effectivenessResult == nil)
         #expect(action.confirmedBy == nil)
         #expect(action.effectivenessConfirmedAt == nil)
 
         let when = Date()
-        action.confirmEffectiveness(result: .effective, by: "이관리", at: when)
+        CorrectiveActionPolicy.applyEffectiveness(to: action, result: .effective, by: "이관리", at: when)
         #expect(action.effectivenessResult == .effective)
         #expect(action.confirmedBy == "이관리")
         #expect(action.effectivenessConfirmedAt == when)
-        #expect(action.isEffectivenessConfirmed == true)
+        #expect(CorrectiveActionPolicy.isEffectivenessConfirmed(action) == true)
     }
 
     /// nil=미평가: an item is 평가완료 only with a 위험도 AND a COMPLETE confirmation — decision +

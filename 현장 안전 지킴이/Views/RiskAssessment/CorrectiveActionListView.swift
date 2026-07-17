@@ -13,13 +13,13 @@ struct CorrectiveActionListView: View {
     let assessment: RiskAssessment
 
     /// Deterministic order (Core single source — CloudKit doesn't preserve to-many order).
-    private var actions: [CorrectiveAction] { item.sortedCorrectiveActions }
+    private var actions: [CorrectiveAction] { CorrectiveActionPolicy.sortedCorrectiveActions(item) }
 
     /// 개선조치는 finalized 후에도 수정 가능; cancelled(및 planned)는 읽기 전용 (LEGAL_2_ARCH §1).
-    private var isEditable: Bool { assessment.allowsCorrectiveActionEditing }
+    private var isEditable: Bool { CorrectiveActionPolicy.allowsCorrectiveActionEditing(assessment) }
 
     /// 기준 초과인데 아직 개선조치 계획이 없는 상태 — 안내 배너로 노출(색 단독 아님: 아이콘+문구).
-    private var planMissing: Bool { item.isMissingRequiredCorrectiveActionPlan }
+    private var planMissing: Bool { CorrectiveActionPolicy.isMissingRequiredCorrectiveActionPlan(item) }
 
     var body: some View {
         List {
@@ -72,7 +72,7 @@ struct CorrectiveActionListView: View {
         let h = item.hazardDescription.trimmingCharacters(in: .whitespaces)
         if !h.isEmpty { return h }
         let t = item.taskDescription.trimmingCharacters(in: .whitespaces)
-        return t.isEmpty ? "—" : t
+        return t.isEmpty ? LocalizationKey.raNotRecorded.localized : t   // P3: no literal "—"
     }
 }
 
@@ -82,7 +82,7 @@ private struct CorrectiveActionRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(action.measure?.isEmpty == false ? action.measure! : "—")
+            Text(action.measure?.isEmpty == false ? action.measure! : LocalizationKey.raNotRecorded.localized)
                 .font(.subheadline.weight(.medium))
                 .fixedSize(horizontal: false, vertical: true)   // long measure grows vertically (Dynamic Type)
             HStack(spacing: 10) {

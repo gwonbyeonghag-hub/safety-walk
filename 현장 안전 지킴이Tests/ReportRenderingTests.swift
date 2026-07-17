@@ -1,6 +1,7 @@
 import XCTest
 import SwiftData
 import UIKit
+import PDFKit
 import SafetyWalkCore
 @testable import 현장_안전_지킴이
 
@@ -129,6 +130,93 @@ final class ReportRenderingTests: XCTestCase {
             "inspection report URL nil")
         let pages = attachPages(url, name: "inspection")
         XCTAssertGreaterThanOrEqual(pages, 2, "27 items + photos + hazards should paginate to ≥2 pages")
+    }
+
+    // MARK: - WO LEGAL-2c 반송 4차 P1: 1:N 개선조치가 페이지에 걸쳐 잘리지 않고 모두 보존되는지
+
+    /// Extracts the selectable text of every page (PDFKit) so we can assert no action was clipped.
+    private func extractText(_ url: URL) -> String {
+        guard let doc = PDFDocument(url: url) else { return "" }
+        return (0..<doc.pageCount).compactMap { doc.page(at: $0)?.string }.joined(separator: "\n")
+    }
+
+    /// One item carrying many corrective actions must paginate across pages with EVERY action
+    /// preserved — the whole 1:N set can't be trapped in a single unsplittable block.
+    func testRiskAssessmentReportPreservesEveryActionAcrossPages() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                        siteId: UUID(), siteName: "○○건설 1현장", assessorName: "홍길동")
+        ctx.insert(assessment)
+        let item = RiskAssessmentItem(
+            taskDescription: "고소 작업 — 외부 비계 설치",
+            hazardDescription: "추락·낙하물 위험",
+            currentControls: "안전난간 설치",
+            likelihood: 3, severity: 3, riskLevel: .high, sortOrder: 0)
+        ctx.insert(item)
+
+        var markers: [String] = []
+        for i in 0..<28 {
+            let marker = String(format: "MRK%02d", i)
+            markers.append(marker)
+            let action = try CorrectiveAction(
+                item: item,
+                measure: "감소대책 안전대 착용 및 안전난간 보강 점검 실시 [\(marker)]",
+                responsibleName: "담당\(i)", dueDate: Date())
+            ctx.insert(action)
+        }
+        assessment.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(RiskAssessmentReport.pdfURL(for: assessment), "report URL nil")
+        let pages = attachPages(url, name: "risk_actions_overflow")
+        XCTAssertGreaterThanOrEqual(pages, 2, "one item with \(markers.count) actions must span ≥2 A4 pages")
+
+        let text = extractText(url)
+        XCTAssertTrue(text.contains(markers.first!), "sanity: first action must render (text extraction works)")
+        let missing = markers.filter { !text.contains($0) }
+        XCTAssertTrue(missing.isEmpty, "no action may be truncated — missing: \(missing)")
+        for m in markers {
+            XCTAssertEqual(text.components(separatedBy: m).count - 1, 1, "\(m) must appear exactly once (no duplication)")
+        }
+    }
+
+    /// Same guarantee for the JHA sheet — actions must not be collapsed into one merged controls cell.
+    func testJHAReportPreservesEveryActionAcrossPages() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .jsa,
+                                        siteId: UUID(), siteName: "Plant A — Line 2", assessorName: "J. Park")
+        ctx.insert(assessment)
+        let item = RiskAssessmentItem(
+            taskDescription: "Erect exterior scaffold at height",
+            hazardDescription: "Fall / falling-object hazard",
+            currentControls: "Guardrail installed",
+            likelihood: 3, severity: 3, riskLevel: .high, sortOrder: 0)
+        ctx.insert(item)
+
+        var markers: [String] = []
+        for i in 0..<28 {
+            let marker = String(format: "MRK%02d", i)
+            markers.append(marker)
+            let action = try CorrectiveAction(
+                item: item,
+                measure: "Add spotter, verify anchor points and inspect PPE before work [\(marker)]",
+                responsibleName: "Owner \(i)")
+            ctx.insert(action)
+        }
+        assessment.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(JHAReport.pdfURL(for: assessment), "JHA URL nil")
+        let pages = attachPages(url, name: "jha_actions_overflow")
+        XCTAssertGreaterThanOrEqual(pages, 2, "one step with \(markers.count) actions must span ≥2 Letter pages")
+
+        let text = extractText(url)
+        XCTAssertTrue(text.contains(markers.first!), "sanity: first action must render (text extraction works)")
+        let missing = markers.filter { !text.contains($0) }
+        XCTAssertTrue(missing.isEmpty, "no action may be truncated — missing: \(missing)")
+        for m in markers {
+            XCTAssertEqual(text.components(separatedBy: m).count - 1, 1, "\(m) must appear exactly once (no duplication)")
+        }
     }
 
     private func dummyImage() -> UIImage {

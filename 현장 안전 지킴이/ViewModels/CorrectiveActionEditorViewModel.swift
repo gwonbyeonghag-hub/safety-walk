@@ -63,7 +63,7 @@ final class CorrectiveActionEditorViewModel {
     // MARK: - Derived UI state
 
     var isNew: Bool { action == nil }
-    var isEditable: Bool { assessment.allowsCorrectiveActionEditing }
+    var isEditable: Bool { CorrectiveActionPolicy.allowsCorrectiveActionEditing(assessment) }
 
     /// 이행일·개선후위험도·사진·효과확인은 완료 상태에서만 (상태·이행일 모순 차단). 최초 작성(new)은 항상
     /// 미착수라 완료-전용 필드를 아예 노출하지 않는다.
@@ -87,7 +87,7 @@ final class CorrectiveActionEditorViewModel {
     // 효과확인은 저장된 완료 상태(이행일·개선후위험도 포함)에서만. 저장 전 draft가 아니라 action을 읽는다.
     var canConfirmEffectiveness: Bool {
         guard isEditable, let action else { return false }
-        return action.isReadyForEffectivenessCheck
+        return CorrectiveActionPolicy.isReadyForEffectivenessCheck(action)
     }
     /// The 효과확인 record button is enabled only when the action is ready AND the confirmer is non-blank
     /// (빈 확인자는 UI에서도 차단 — Core 도 emptyConfirmer 로 거부).
@@ -137,7 +137,7 @@ final class CorrectiveActionEditorViewModel {
 
         do {
             if let action {
-                // Pass 이행일·개선후위험도 as-is — Core's applyFields normalizes them to nil for a
+                // Pass 이행일·개선후위험도 as-is — Core's CorrectiveActionPolicy.apply normalizes them to nil for a
                 // non-completed status (single source for the "완료 전용 필드" rule).
                 try CorrectiveActionEditing.update(
                     action, in: assessment, measure: trimmedMeasure,

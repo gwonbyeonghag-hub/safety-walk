@@ -24,7 +24,7 @@ public enum AssessmentFinalization {
         for item in items {
             guard item.riskLevel != nil,
                   item.hasCurrentCriteriaDecision(under: criteria),
-                  item.hasRequiredCorrectiveActionPlan
+                  CorrectiveActionPolicy.hasRequiredCorrectiveActionPlan(item)
             else { return false }
         }
         return true

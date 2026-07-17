@@ -244,7 +244,7 @@ struct RiskAssessmentDetailView: View {
             CorrectiveActionListView(item: item, assessment: assessment)
         } label: {
             let count = (item.correctiveActions ?? []).count
-            let planMissing = item.isMissingRequiredCorrectiveActionPlan
+            let planMissing = CorrectiveActionPolicy.isMissingRequiredCorrectiveActionPlan(item)
             HStack(spacing: 6) {
                 Image(systemName: planMissing ? "exclamationmark.triangle.fill" : "wrench.and.screwdriver")
                     .font(.caption)

@@ -22,7 +22,7 @@ struct CorrectiveActionEditorView: View {
     var body: some View {
         Group {
             if let vm {
-                CorrectiveActionEditorForm(vm: vm, needsPlan: item.needsCorrectiveActionPlan)
+                CorrectiveActionEditorForm(vm: vm, needsPlan: CorrectiveActionPolicy.needsCorrectiveActionPlan(item))
             } else {
                 Color.clear
             }

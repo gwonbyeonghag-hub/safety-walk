@@ -25,8 +25,12 @@ enum RiskAssessmentReport {
         let dateText = (assessment.assessedAt ?? assessment.createdAt).formatted(date: .abbreviated, time: .omitted)
         let subtitle = assessment.siteName.isEmpty ? dateText : "\(assessment.siteName) · \(dateText)"
 
+        // WO LEGAL-2c 반송 4차 P1: emit ONE block per corrective action (not one block per item) so a
+        // long 1:N set is paginated across pages instead of clipped inside a single unsplittable row.
         var blocks: [AnyView] = [AnyView(headerGrid(assessment))]
-        blocks += items.enumerated().map { AnyView(row(index: $0.offset + 1, item: $0.element, method: assessment.method)) }
+        for (offset, item) in items.enumerated() {
+            blocks += rowBlocks(index: offset + 1, item: item, method: assessment.method)
+        }
         blocks.append(AnyView(ReportDisclaimer()))
 
         return ReportRenderer.renderPDF(
@@ -73,47 +77,58 @@ enum RiskAssessmentReport {
             .frame(width: width, alignment: .leading)
     }
 
-    private static func row(index: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod) -> some View {
-        HStack(alignment: .top, spacing: 0) {
-            cell("\(index)", Col.no)
-            cell(item.taskDescription, Col.task)
-            cell(item.hazardDescription, Col.hazard)
-            cell(item.currentControls ?? "", Col.controls)
-            riskCell(item: item, method: method)
-            // WO LEGAL-2c: preserve ALL 1:N 개선조치 — one aligned sub-row per action across the
-            // reduction/owner/status columns (never collapse to a single primary action).
-            actionColumns(item)
+    /// Width of the item columns (No·Task·Hazard·Controls·Risk) — a continuation row spans this with a
+    /// clear spacer so the reduction/owner/status columns stay aligned under their headers.
+    private static let leadingWidth = Col.no + Col.task + Col.hazard + Col.controls + Col.risk
+
+    /// One item → 1..N page-placeable row blocks: the item info prints once on the first row, and each
+    /// corrective action gets its own block (deterministic order). Zero actions → a single item row.
+    /// The item-info columns are blank on continuation rows; the heavy separator marks the item's end.
+    private static func rowBlocks(index: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod) -> [AnyView] {
+        let actions = CorrectiveActionPolicy.sortedCorrectiveActions(item)
+        guard !actions.isEmpty else {
+            return [AnyView(rowBlock(index: index, item: item, method: method,
+                                     action: nil, showsItemInfo: true, isItemEnd: true))]
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(.black.opacity(0.12)).frame(height: 0.5)
+        return actions.enumerated().map { i, action in
+            AnyView(rowBlock(index: index, item: item, method: method,
+                             action: action, showsItemInfo: i == 0, isItemEnd: i == actions.count - 1))
         }
     }
 
-    /// The reduction · owner · status columns, stacked one sub-row per corrective action so every
-    /// action in the 1:N set is preserved and the three fields stay aligned per action.
-    private static func actionColumns(_ item: RiskAssessmentItem) -> some View {
-        let actions = item.sortedCorrectiveActions
-        return VStack(spacing: 0) {
-            if actions.isEmpty {
-                HStack(alignment: .top, spacing: 0) {
-                    cell("", Col.reduction)
-                    ownerSubCell(nil)
-                    cell("", Col.status)
-                }
+    /// A full-width row: item columns (first row) or a clear spacer (continuation), then the one
+    /// action's reduction·owner·status. `isItemEnd` draws the item separator; inner rows draw a hairline.
+    private static func rowBlock(index: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod,
+                                 action: CorrectiveAction?, showsItemInfo: Bool, isItemEnd: Bool) -> some View {
+        HStack(alignment: .top, spacing: 0) {
+            if showsItemInfo {
+                cell("\(index)", Col.no)
+                cell(item.taskDescription, Col.task)
+                cell(item.hazardDescription, Col.hazard)
+                cell(item.currentControls ?? "", Col.controls)
+                riskCell(item: item, method: method)
             } else {
-                ForEach(actions) { a in
-                    HStack(alignment: .top, spacing: 0) {
-                        cell(a.measure ?? "", Col.reduction)
-                        ownerSubCell(a)
-                        cell(a.status.localizedLabel, Col.status)
-                    }
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(.black.opacity(0.06)).frame(height: 0.5)
-                    }
-                }
+                Color.clear.frame(width: leadingWidth, height: 1)
             }
+            actionCell(action?.measure, Col.reduction)                                  // 감소대책 (P3: 빈 셀 → 미기록)
+            ownerSubCell(action)                                                         // 담당·기한 (P3: 빈 담당 → 미기록)
+            actionCell(action.map { $0.status.localizedLabel }, Col.status)             // 상태
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(.black.opacity(isItemEnd ? 0.12 : 0.06)).frame(height: 0.5)
+        }
+    }
+
+    /// An action-column cell: like `cell` but an empty/absent value renders the shared 미기록 label
+    /// (WO LEGAL-2c 반송 4차 P3 — no literal "—" on the changed action paths).
+    private static func actionCell(_ text: String?, _ width: CGFloat) -> some View {
+        Text(text?.isEmpty == false ? text! : LocalizationKey.raNotRecorded.localized)
+            .font(.system(size: 7.5))
+            .foregroundStyle(.black)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 3).padding(.vertical, 4)
+            .frame(width: width, alignment: .leading)
     }
 
     private static func cell(_ string: String, _ width: CGFloat) -> some View {
@@ -144,10 +159,10 @@ enum RiskAssessmentReport {
         .frame(width: Col.risk, alignment: .center)
     }
 
-    /// One action's 담당·기한 cell (nil = the no-actions placeholder row).
+    /// One action's 담당·기한 cell (nil = the no-actions placeholder row). P3: empty owner → 미기록.
     private static func ownerSubCell(_ action: CorrectiveAction?) -> some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(action?.responsibleName?.isEmpty == false ? action!.responsibleName! : "—")
+            Text(action?.responsibleName?.isEmpty == false ? action!.responsibleName! : LocalizationKey.raNotRecorded.localized)
                 .font(.system(size: 7))
             if let due = action?.dueDate {
                 Text(due.formatted(date: .numeric, time: .omitted))
