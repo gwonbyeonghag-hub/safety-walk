@@ -63,7 +63,7 @@ public enum CorrectiveActionEditing {
         commit: () throws -> Void
     ) throws -> CorrectiveAction {
         try requireEditable(assessment)
-        guard !measure.sw_isBlank else { throw CorrectiveActionError.emptyMeasure }
+        try requireMeasure(measure)
         guard (assessment.items ?? []).contains(where: { $0 === item }) else {
             throw CorrectiveActionError.itemNotInAssessment
         }
@@ -133,7 +133,7 @@ public enum CorrectiveActionEditing {
         commit: () throws -> Void
     ) throws {
         try requireEditable(assessment)
-        guard !measure.sw_isBlank else { throw CorrectiveActionError.emptyMeasure }
+        try requireMeasure(measure)
         try requireActionInAssessment(action, assessment)
 
         let prior = action.snapshotFields()
@@ -245,9 +245,13 @@ public enum CorrectiveActionEditing {
     // MARK: - Guards
 
     private static func requireEditable(_ assessment: RiskAssessment) throws {
-        guard assessment.status == .inProgress || assessment.status == .finalized else {
+        guard assessment.allowsCorrectiveActionEditing else {
             throw CorrectiveActionError.assessmentNotEditable
         }
+    }
+
+    private static func requireMeasure(_ measure: String) throws {
+        guard !measure.sw_isBlank else { throw CorrectiveActionError.emptyMeasure }
     }
 
     private static func requireActionInAssessment(_ action: CorrectiveAction, _ assessment: RiskAssessment) throws {
@@ -264,6 +268,15 @@ private extension CorrectiveAction {
     func applyImplementation(implementedAt: Date?, evidencePhotoData: Data?) {
         self.implementedAt = implementedAt
         self.evidencePhotoData = evidencePhotoData
+    }
+}
+
+public extension RiskAssessment {
+
+    /// 개선조치 편집 가능 상태 — inProgress에서 계획하고 finalized 후에도 수정 가능(LEGAL_2_ARCH §1);
+    /// planned/cancelled는 불가. Core op와 두 화면이 공유하는 단일 규칙(상태 3중 중복 제거).
+    var allowsCorrectiveActionEditing: Bool {
+        status == .inProgress || status == .finalized
     }
 }
 

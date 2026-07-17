@@ -53,9 +53,7 @@ struct CorrectiveActionEditorView: View {
     }
 
     /// 개선조치는 finalized 후에도 수정 가능; cancelled(및 planned)는 읽기 전용.
-    private var isEditable: Bool {
-        assessment.status == .inProgress || assessment.status == .finalized
-    }
+    private var isEditable: Bool { assessment.allowsCorrectiveActionEditing }
 
     private var canSave: Bool {
         isEditable && !measure.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

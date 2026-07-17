@@ -17,9 +17,7 @@ struct CorrectiveActionListView: View {
     private var actions: [CorrectiveAction] { item.sortedCorrectiveActions }
 
     /// 개선조치는 finalized 후에도 수정 가능; cancelled(및 planned)는 읽기 전용 (LEGAL_2_ARCH §1).
-    private var isEditable: Bool {
-        assessment.status == .inProgress || assessment.status == .finalized
-    }
+    private var isEditable: Bool { assessment.allowsCorrectiveActionEditing }
 
     /// 기준 초과인데 아직 개선조치 계획이 없는 상태 — 안내 배너로 노출(색 단독 아님: 아이콘+문구).
     private var planMissing: Bool {

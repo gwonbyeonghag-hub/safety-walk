@@ -30,6 +30,8 @@ Use these names consistently — do not invent synonyms.
 | High | 높음 | Hazard poses serious or immediate risk. Color: red. |
 | Corrective Action | 시정 조치 | The remediation action required to address a hazard. |
 | Corrective Action Status | 시정 조치 상태 | Current state of the corrective action: Not Started, In Progress, or Completed. |
+| Corrective Action (위험성평가) | 개선조치 | The `CorrectiveAction` model — 1:N remediation actions under a risk-assessment item (measure·담당·기한·상태·이행일·개선 후 위험성·효과확인). Owner-decided term in LEGAL_2_ARCH; distinct from a Hazard's 시정 조치. |
+| Effectiveness Result | 효과확인 결과 | The user's record of an 개선조치's effect: Effective (효과 있음) / Partially Effective (부분 효과) / Ineffective (효과 없음). A record, not a legal judgment. |
 | Not Started | 미착수 | No corrective action has been taken yet. Default state. |
 | In Progress | 진행중 | Corrective action is underway. |
 | Completed | 완료 | Corrective action has been finished. |

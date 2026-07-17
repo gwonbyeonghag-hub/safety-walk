@@ -70,16 +70,11 @@ public final class CorrectiveAction {
         isEffectivenessComplete && effectivenessResult == .effective
     }
 
-    /// 빈 개선조치 저장 금지 (WO LEGAL-2c): 감소대책(measure)이 공백이면 저장 불가. LEGAL-0의
-    /// save()-throws / SCHEMA_V3 §4.1 "insert 전 검증 실패 시 저장 금지" 패턴 확장.
-    public func validate() throws {
-        guard !(measure ?? "").sw_isBlank else { throw CorrectiveActionError.emptyMeasure }
-    }
-
     /// 효과확인 불변조건 (SCHEMA_V3 §4.1): result·effectivenessConfirmedAt·confirmedBy 는
-    /// **하나의 도메인 동작으로 함께 갱신** — 부분 갱신 금지. 개별 setter 대신 항상 이 함수로.
-    /// (전제 검증·원자 저장은 `CorrectiveActionEditing.confirmEffectiveness` 가 담당.)
-    public func confirmEffectiveness(
+    /// **하나의 도메인 동작으로 함께 갱신** — 부분 갱신 금지. Core-only(`internal`): 전제 검증(이행일·
+    /// 개선후위험도·확인자)과 원자 저장은 `CorrectiveActionEditing.confirmEffectiveness`가 담당하며,
+    /// 앱 코드가 이 setter를 직접 호출해 전제를 우회하는 것을 막는다.
+    func confirmEffectiveness(
         result: EffectivenessResult,
         by confirmedBy: String,
         at date: Date = Date()
