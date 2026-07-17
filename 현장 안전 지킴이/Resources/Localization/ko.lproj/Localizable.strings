@@ -522,6 +522,28 @@
 "ra.decision.confirm" = "확인";
 "ra.decision.confirmedByFormat" = "확인: %@";
 
+/* 개선조치 — WO LEGAL-2c */
+"ra.action.section" = "개선조치";
+"ra.action.countFormat" = "개선조치 %d건";
+"ra.action.planRequired" = "기준 초과 — 개선조치 필요";
+"ra.action.none" = "개선조치 없음";
+"ra.action.empty" = "등록된 개선조치가 없습니다";
+"ra.action.add" = "개선조치 추가";
+"ra.action.new" = "새 개선조치";
+"ra.action.edit" = "개선조치 편집";
+"ra.action.measureRequired" = "감소대책을 입력하세요";
+"ra.action.implementedAt" = "이행일";
+"ra.action.setImplementedAt" = "이행일 기록";
+"ra.action.evidencePhoto" = "증거 사진";
+"ra.action.effSection" = "효과확인";
+"ra.action.effResult" = "효과확인 결과";
+"ra.action.effConfirm" = "효과확인 기록";
+"ra.action.effHint" = "이행일과 개선 후 위험성을 먼저 기록해야 효과확인을 할 수 있습니다.";
+"ra.action.effConfirmedFormat" = "효과 확인: %@";
+"ra.effectiveness.effective" = "효과 있음";
+"ra.effectiveness.partial" = "부분 효과";
+"ra.effectiveness.ineffective" = "효과 없음";
+
 /* Reports — WO-5b */
 "report.ra.title" = "위험성평가표";
 "report.no" = "번호";

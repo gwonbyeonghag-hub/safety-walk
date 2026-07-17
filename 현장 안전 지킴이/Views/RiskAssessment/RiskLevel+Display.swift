@@ -59,3 +59,24 @@ extension CorrectiveActionStatus {
         }
     }
 }
+
+extension EffectivenessResult {
+    /// 효과확인 결과 라벨 (WO LEGAL-2c). "효과 있음/부분 효과/효과 없음" — 판정이 아니라 사용자 기록.
+    var localizedLabel: String {
+        switch self {
+        case .effective:          return LocalizationKey.raEffEffective.localized
+        case .partiallyEffective: return LocalizationKey.raEffPartial.localized
+        case .ineffective:        return LocalizationKey.raEffIneffective.localized
+        }
+    }
+
+    /// Neutral icon — effectiveness is a separate axis from the risk ramp, so it never borrows the
+    /// warm risk colors (meaning comes from icon + text, not color alone — DESIGN_DIRECTION).
+    var systemImage: String {
+        switch self {
+        case .effective:          return "checkmark.seal"
+        case .partiallyEffective: return "circle.lefthalf.filled"
+        case .ineffective:        return "xmark.seal"
+        }
+    }
+}

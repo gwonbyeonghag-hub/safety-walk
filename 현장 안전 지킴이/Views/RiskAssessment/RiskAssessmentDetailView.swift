@@ -230,9 +230,37 @@ struct RiskAssessmentDetailView: View {
                                   suggestion: suggestion,
                                   canConfirm: assessment.status == .inProgress && !isCurrent,
                                   onConfirm: { confirmDecision(item) })
+                    // WO LEGAL-2c: push the item's 1:N 개선조치 management (depth-2). The summary
+                    // flags a 기준 초과 item still missing its required plan.
+                    correctiveActionLink(for: item)
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func correctiveActionLink(for item: RiskAssessmentItem) -> some View {
+        NavigationLink {
+            CorrectiveActionListView(item: item, assessment: assessment)
+        } label: {
+            let count = (item.correctiveActions ?? []).count
+            let planMissing = item.needsCorrectiveActionPlan && !item.hasRequiredCorrectiveActionPlan
+            HStack(spacing: 6) {
+                Image(systemName: planMissing ? "exclamationmark.triangle.fill" : "wrench.and.screwdriver")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if planMissing {
+                    Text(LocalizationKey.raActionPlanRequired.localized)
+                } else if count > 0 {
+                    Text(String(format: LocalizationKey.raActionCountFmt.localized, count))
+                } else {
+                    Text(LocalizationKey.raActionNone.localized)
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .accessibilityIdentifier("ra_item_actions_link")
     }
 
     // MARK: - Helpers
@@ -389,26 +417,8 @@ private struct ItemDetailRow: View {
 
             criteriaDecisionView
 
-            // Improvement fields now live on CorrectiveAction (SCHEMA_V3 §4); read the item's
-            // primary action for the interim single-action display.
-            let action = item.primaryCorrectiveAction
-            if let reduction = action?.measure, !reduction.isEmpty {
-                detailLine(LocalizationKey.raItemReduction.localized, reduction)
-            }
-            if let responsible = action?.responsibleName, !responsible.isEmpty {
-                detailLine(LocalizationKey.raItemResponsible.localized, responsible)
-            }
-            if let due = action?.dueDate {
-                detailLine(LocalizationKey.raItemDueDate.localized,
-                           due.formatted(date: .abbreviated, time: .omitted))
-            }
-
-            HStack(spacing: 6) {
-                Text(LocalizationKey.raItemStatus.localized)
-                    .font(.caption2).foregroundStyle(.secondary)
-                Text((action?.status ?? .notStarted).localizedLabel)
-                    .font(.caption2.weight(.medium))
-            }
+            // The item's 1:N 개선조치 (measure/담당/기한/상태/효과확인) are managed on the pushed
+            // CorrectiveActionListView (WO LEGAL-2c) — reached via correctiveActionLink below the row.
         }
         .padding(.vertical, 4)
     }
@@ -441,17 +451,6 @@ private struct ItemDetailRow: View {
                     .accessibilityIdentifier("ra_confirm_decision")
             }
             .foregroundStyle(.secondary)
-        }
-    }
-
-    private func detailLine(_ label: String, _ value: String) -> some View {
-        HStack(alignment: .top, spacing: 6) {
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.caption2)
-                .foregroundStyle(.primary)
         }
     }
 }

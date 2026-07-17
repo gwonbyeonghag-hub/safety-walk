@@ -375,6 +375,28 @@ enum LocalizationKey: String {
     case raDecisionConfirm      = "ra.decision.confirm"
     case raDecisionConfirmedFmt = "ra.decision.confirmedByFormat"
 
+    // MARK: - 개선조치 (WO LEGAL-2c)
+    case raActionSection        = "ra.action.section"
+    case raActionCountFmt       = "ra.action.countFormat"
+    case raActionPlanRequired   = "ra.action.planRequired"
+    case raActionNone           = "ra.action.none"
+    case raActionEmpty          = "ra.action.empty"
+    case raActionAdd            = "ra.action.add"
+    case raActionNew            = "ra.action.new"
+    case raActionEdit           = "ra.action.edit"
+    case raActionMeasureRequired = "ra.action.measureRequired"
+    case raActionImplementedAt  = "ra.action.implementedAt"
+    case raActionSetImplementedAt = "ra.action.setImplementedAt"
+    case raActionEvidencePhoto  = "ra.action.evidencePhoto"
+    case raActionEffSection     = "ra.action.effSection"
+    case raActionEffResult      = "ra.action.effResult"
+    case raActionEffConfirm     = "ra.action.effConfirm"
+    case raActionEffHint        = "ra.action.effHint"
+    case raActionEffConfirmedFmt = "ra.action.effConfirmedFormat"
+    case raEffEffective         = "ra.effectiveness.effective"
+    case raEffPartial           = "ra.effectiveness.partial"
+    case raEffIneffective       = "ra.effectiveness.ineffective"
+
     // MARK: - Reports (WO-5b)
     case reportRaTitle          = "report.ra.title"
     case reportNo               = "report.no"

@@ -522,6 +522,28 @@
 "ra.decision.confirm" = "Confirm";
 "ra.decision.confirmedByFormat" = "Confirmed by %@";
 
+/* Corrective actions — WO LEGAL-2c */
+"ra.action.section" = "Corrective Actions";
+"ra.action.countFormat" = "%d corrective action(s)";
+"ra.action.planRequired" = "Exceeds criteria — corrective action required";
+"ra.action.none" = "No corrective actions";
+"ra.action.empty" = "No corrective actions yet";
+"ra.action.add" = "Add Corrective Action";
+"ra.action.new" = "New Corrective Action";
+"ra.action.edit" = "Edit Corrective Action";
+"ra.action.measureRequired" = "Enter a corrective measure";
+"ra.action.implementedAt" = "Implemented On";
+"ra.action.setImplementedAt" = "Record implementation date";
+"ra.action.evidencePhoto" = "Evidence Photo";
+"ra.action.effSection" = "Effectiveness Check";
+"ra.action.effResult" = "Effectiveness Result";
+"ra.action.effConfirm" = "Record Effectiveness";
+"ra.action.effHint" = "Record the implementation date and post-improvement risk before confirming effectiveness.";
+"ra.action.effConfirmedFormat" = "Effectiveness confirmed by %@";
+"ra.effectiveness.effective" = "Effective";
+"ra.effectiveness.partial" = "Partially Effective";
+"ra.effectiveness.ineffective" = "Ineffective";
+
 /* Reports — WO-5b */
 "report.ra.title" = "Risk Assessment Sheet";
 "report.no" = "No.";

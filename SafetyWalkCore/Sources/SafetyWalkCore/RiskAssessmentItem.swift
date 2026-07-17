@@ -67,13 +67,6 @@ public final class RiskAssessmentItem {
         return true
     }
 
-    /// Interim single-action bridge: the item's corrective action, if any. The V3 create flow
-    /// records one `CorrectiveAction` per item (measure/담당/기한/status); detail and the PDF
-    /// reports read it back through here until the full 2c corrective-action UI lands.
-    public var primaryCorrectiveAction: CorrectiveAction? {
-        correctiveActions?.first
-    }
-
     // 기준 이내/초과 CONFIRMATION is a Core domain operation that computes + validates the
     // suggestion from the locked criteria and the item's current input — see the
     // `confirmCriteriaDecision(under:at:by:)` / `hasCurrentCriteriaDecision(under:)` extension in

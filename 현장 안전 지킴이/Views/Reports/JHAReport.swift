@@ -98,11 +98,13 @@ enum JHAReport {
         }
     }
 
-    /// Current safety controls + the reduction measure (recommended controls), combined.
+    /// Current safety controls + ALL corrective-action measures (recommended controls), combined.
+    /// WO LEGAL-2c: every action in the 1:N set is preserved — never just the primary one.
     private static func joinControls(_ item: RiskAssessmentItem) -> String {
-        [item.currentControls, item.primaryCorrectiveAction?.measure]
-            .compactMap { $0?.isEmpty == false ? $0 : nil }
-            .joined(separator: "\n")
+        var parts: [String] = []
+        if let controls = item.currentControls, !controls.isEmpty { parts.append(controls) }
+        parts += item.sortedCorrectiveActions.compactMap { $0.measure?.isEmpty == false ? $0.measure : nil }
+        return parts.joined(separator: "\n")
     }
 
     private static func cell(_ string: String, _ width: CGFloat) -> some View {

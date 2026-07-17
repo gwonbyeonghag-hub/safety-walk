@@ -74,19 +74,45 @@ enum RiskAssessmentReport {
     }
 
     private static func row(index: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod) -> some View {
-        HStack(spacing: 0) {
+        HStack(alignment: .top, spacing: 0) {
             cell("\(index)", Col.no)
             cell(item.taskDescription, Col.task)
             cell(item.hazardDescription, Col.hazard)
             cell(item.currentControls ?? "", Col.controls)
             riskCell(item: item, method: method)
-            cell(item.primaryCorrectiveAction?.measure ?? "", Col.reduction)
-            ownerCell(item)
-            cell((item.primaryCorrectiveAction?.status ?? .notStarted).localizedLabel, Col.status)
+            // WO LEGAL-2c: preserve ALL 1:N 개선조치 — one aligned sub-row per action across the
+            // reduction/owner/status columns (never collapse to a single primary action).
+            actionColumns(item)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottom) {
             Rectangle().fill(.black.opacity(0.12)).frame(height: 0.5)
+        }
+    }
+
+    /// The reduction · owner · status columns, stacked one sub-row per corrective action so every
+    /// action in the 1:N set is preserved and the three fields stay aligned per action.
+    private static func actionColumns(_ item: RiskAssessmentItem) -> some View {
+        let actions = item.sortedCorrectiveActions
+        return VStack(spacing: 0) {
+            if actions.isEmpty {
+                HStack(alignment: .top, spacing: 0) {
+                    cell("", Col.reduction)
+                    ownerSubCell(nil)
+                    cell("", Col.status)
+                }
+            } else {
+                ForEach(actions) { a in
+                    HStack(alignment: .top, spacing: 0) {
+                        cell(a.measure ?? "", Col.reduction)
+                        ownerSubCell(a)
+                        cell(a.status.localizedLabel, Col.status)
+                    }
+                    .overlay(alignment: .bottom) {
+                        Rectangle().fill(.black.opacity(0.06)).frame(height: 0.5)
+                    }
+                }
+            }
         }
     }
 
@@ -118,10 +144,10 @@ enum RiskAssessmentReport {
         .frame(width: Col.risk, alignment: .center)
     }
 
-    private static func ownerCell(_ item: RiskAssessmentItem) -> some View {
-        let action = item.primaryCorrectiveAction
-        return VStack(alignment: .leading, spacing: 1) {
-            Text((action?.responsibleName?.isEmpty == false ? action!.responsibleName! : "—"))
+    /// One action's 담당·기한 cell (nil = the no-actions placeholder row).
+    private static func ownerSubCell(_ action: CorrectiveAction?) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(action?.responsibleName?.isEmpty == false ? action!.responsibleName! : "—")
                 .font(.system(size: 7))
             if let due = action?.dueDate {
                 Text(due.formatted(date: .numeric, time: .omitted))

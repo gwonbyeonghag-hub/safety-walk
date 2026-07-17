@@ -279,4 +279,10 @@ public extension RiskAssessmentItem {
         guard needsCorrectiveActionPlan else { return true }
         return (correctiveActions ?? []).contains { !($0.measure ?? "").sw_isBlank }
     }
+
+    /// 1:N 개선조치를 결정적 순서로 반환 — CloudKit은 to-many 순서를 보장하지 않고 스키마에 sortOrder가
+    /// 없으므로(동결) `id` 기준으로 안정 정렬한다. 화면·리포트가 같은 순서를 쓰도록 하는 단일 소스.
+    var sortedCorrectiveActions: [CorrectiveAction] {
+        (correctiveActions ?? []).sorted { $0.id.uuidString < $1.id.uuidString }
+    }
 }
