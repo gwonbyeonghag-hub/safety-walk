@@ -12,7 +12,8 @@ public enum AssessmentFinalization {
     /// - at least one item,
     /// - every item has its risk input AND a CURRENT confirmation: three decision fields present
     ///   and the stored decision still equals the suggestion recomputed from the current input
-    ///   (a stale decision after a risk/criteria change makes it not ready).
+    ///   (a stale decision after a risk/criteria change makes it not ready),
+    /// - every 기준 초과 item has a 개선조치 계획 (≥1 measure-bearing corrective action) — WO LEGAL-2c.
     public static func isReadyToFinalize(_ assessment: RiskAssessment) -> Bool {
         guard assessment.status == .inProgress else { return false }
         guard let stored = assessment.criteria, stored.lockedAt != nil else { return false }
@@ -22,7 +23,8 @@ public enum AssessmentFinalization {
         guard let items = assessment.items, !items.isEmpty else { return false }
         for item in items {
             guard item.riskLevel != nil,
-                  item.hasCurrentCriteriaDecision(under: criteria)
+                  item.hasCurrentCriteriaDecision(under: criteria),
+                  item.hasRequiredCorrectiveActionPlan
             else { return false }
         }
         return true

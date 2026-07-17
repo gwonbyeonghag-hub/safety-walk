@@ -209,19 +209,16 @@ final class RiskAssessmentViewModel {
         try AssessmentStart.start(assessment, criteria: criteria, now: Date(), in: context)
     }
 
-    /// Builds a `CorrectiveAction` for the draft's improvement fields, or nil when the user
-    /// entered none — so an empty action is never persisted (SCHEMA_V3 §4.1 빈 모델 차단).
+    /// Builds a `CorrectiveAction` for the draft's improvement fields, or nil when there is no
+    /// 감소대책(measure). WO LEGAL-2c 빈 개선조치 저장 금지: 감소대책 없는 조치는 만들지 않는다
+    /// (measure = the corrective action's defining content — the same rule the 2c edit ops enforce).
     private func makeCorrectiveAction(from d: DraftItem, item: RiskAssessmentItem) -> CorrectiveAction? {
-        let measure = d.reductionMeasure.trimmedOrNil
-        let responsible = d.responsibleName.trimmedOrNil
-        let due = d.hasDueDate ? d.dueDate : nil
-        guard measure != nil || responsible != nil || due != nil
-                || d.postRiskLevel != nil || d.status != .notStarted else { return nil }
+        guard let measure = d.reductionMeasure.trimmedOrNil else { return nil }
         return CorrectiveAction(
             item: item,
             measure: measure,
-            responsibleName: responsible,
-            dueDate: due,
+            responsibleName: d.responsibleName.trimmedOrNil,
+            dueDate: d.hasDueDate ? d.dueDate : nil,
             status: d.status,
             postRiskLevel: d.postRiskLevel
         )

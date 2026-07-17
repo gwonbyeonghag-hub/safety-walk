@@ -31,6 +31,10 @@ struct AssessmentFinalizeReadyTests {
         item.riskAssessment = ra
         try item.confirmCriteriaDecision(under: criteria, at: when, by: "홍길동")
         ctx.insert(item)
+        // LEGAL-2c: a 기준 초과 item requires ≥1 개선조치 계획 to be finalize-ready.
+        let action = CorrectiveAction(item: item, measure: "난간 설치")
+        ctx.insert(action)
+        item.correctiveActions = [action]
         ra.items = [item]
         try ctx.save()
         return ra
@@ -64,6 +68,14 @@ struct AssessmentFinalizeReadyTests {
         let ctx = try makeContext()
         let ra = try readyAssessment(in: ctx)
         ra.items?.first?.riskLevel = nil
+        #expect(!AssessmentFinalization.isReadyToFinalize(ra))
+    }
+
+    /// LEGAL-2c: a 기준 초과 item with no 개선조치 계획 is not finalize-ready.
+    @Test func exceedsItemWithoutPlanIsNotReady() throws {
+        let ctx = try makeContext()
+        let ra = try readyAssessment(in: ctx)
+        ra.items?.first?.correctiveActions = []   // remove the plan → exceeds item now lacks 개선조치
         #expect(!AssessmentFinalization.isReadyToFinalize(ra))
     }
 

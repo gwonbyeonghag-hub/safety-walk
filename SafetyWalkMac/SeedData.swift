@@ -158,7 +158,8 @@ enum SeedData {
         // 초과여부 결정은 seedLockAndConfirm 에서 잠긴 기준 기반으로 확정한다(임의 주입 금지).
         it.riskAssessment = ra
         context.insert(it)
-        if measure != nil || responsible != nil || due != nil || status != .notStarted {
+        // WO LEGAL-2c 빈 개선조치 저장 금지: 감소대책(measure)이 있을 때만 조치를 만든다.
+        if let measure {
             let action = CorrectiveAction(item: it, measure: measure,
                                           responsibleName: responsible, dueDate: due, status: status)
             context.insert(action)
