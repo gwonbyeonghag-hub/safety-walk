@@ -80,3 +80,34 @@ extension EffectivenessResult {
         }
     }
 }
+
+extension SharingPhase {
+    /// 사전(일정) / 사후(결과) — WO LEGAL-2d. 시점은 진입점에서 결정되며 사용자가 뒤바꾸지 못한다.
+    var localizedLabel: String {
+        switch self {
+        case .pre:  return LocalizationKey.raSharingPre.localized
+        case .post: return LocalizationKey.raSharingPost.localized
+        }
+    }
+}
+
+extension SharingMethod {
+    /// 비TBM 공유 방법 4종. TBM 공유는 SafetyBriefing 이 증명하므로 여기에 없다(LEGAL_2_ARCH §3).
+    var localizedLabel: String {
+        switch self {
+        case .education:  return LocalizationKey.raSharingMethodEducation.localized
+        case .posting:    return LocalizationKey.raSharingMethodPosting.localized
+        case .written:    return LocalizationKey.raSharingMethodWritten.localized
+        case .electronic: return LocalizationKey.raSharingMethodElectronic.localized
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .education:  return "person.2.wave.2"
+        case .posting:    return "pin"
+        case .written:    return "doc.text"
+        case .electronic: return "paperplane"
+        }
+    }
+}

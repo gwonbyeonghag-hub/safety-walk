@@ -98,8 +98,12 @@ struct SchemaV3ValidationTests {
         #expect(throws: Never.self) {
             try RiskAssessmentProgram(siteId: UUID(), siteName: "현장", jurisdiction: .kr).validate()
         }
+        // WO LEGAL-2d: the data init is Core-internal (외부 생성은 SharingEventRecording.record 만) —
+        // reachable here only via @testable. 생성 계약이 target·contentSnapshot·ownerName까지 요구하므로
+        // 업무상 빈 공유 기록은 애초에 구성되지 않는다.
         #expect(throws: Never.self) {
-            try SharingEvent(phase: .pre, method: .education, sharedAt: Date()).validate()
+            try SharingEvent(phase: .pre, method: .education, sharedAt: Date(),
+                             target: "전 근로자", contentSnapshot: "{}", ownerName: "홍길동").validate()
         }
         #expect(throws: Never.self) {
             try SafetyBriefing(siteId: UUID(), siteName: "현장").validate()

@@ -6,6 +6,7 @@ import SwiftData
 public enum AssessmentStartError: Error, Equatable {
     case notPlanned            // 재시작 금지 — only a `.planned` assessment may be started
     case criteriaAlreadyLocked // 잠긴 기준 재작성 금지 — the assessment already owns a criteria
+    case missingCurrentPreSharing // KR 관할: 현재 일정과 일치하는 사전 공유 기록 없음 (WO LEGAL-2d §4)
 }
 
 /// The single 평가 시작 (planned → inProgress) rule, shared by both UI entry paths — the planned
@@ -45,6 +46,11 @@ public enum AssessmentStart {
     ) throws -> AssessmentCriteria {
         guard assessment.status == .planned else { throw AssessmentStartError.notPlanned }
         guard assessment.criteria == nil else { throw AssessmentStartError.criteriaAlreadyLocked }
+        // KR 관할에서만: 시행규칙 제37조의3 사전 일정 공유가 시작의 전제. 일정이 바뀌어 이전 사전 공유가
+        // stale 이면 다시 공유해야 한다. US·관할 미설정에는 이 게이트를 강제하지 않는다(WO LEGAL-2d §4).
+        guard SharingEventPolicy.satisfiesPreSharingGate(assessment) else {
+            throw AssessmentStartError.missingCurrentPreSharing
+        }
 
         // Value copy: encode the validated snapshot into the persisted blob (already validated on
         // the way into AcceptabilityCriteria, so encode is total here).

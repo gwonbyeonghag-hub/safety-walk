@@ -71,6 +71,9 @@ struct RiskAssessmentsBrowseView: View {
                 }
             }
 
+            // 공유 이력 — 조회 전용(WO LEGAL-2d). 생성·확정은 iOS 현장 도구가 담당한다.
+            MacSharingHistoryCard(assessment: ra)
+
             ReportDisclaimerInline()
         }
     }

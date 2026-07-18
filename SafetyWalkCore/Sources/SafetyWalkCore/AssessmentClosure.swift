@@ -27,6 +27,10 @@ public enum AssessmentClosure {
             guard !actions.isEmpty else { return false }          // 계획 없음 → 미종결
             for action in actions where !CorrectiveActionPolicy.isEffectivelyResolved(action) { return false }
         }
+        // KR 관할 추가 조건(WO LEGAL-2d §4): 현재 평가·조치 상태와 일치하는 **사후 공유 기록**이 있어야
+        // 종결로 파생한다 — 개선조치가 바뀌면 이전 사후 공유는 현재 상태 공유가 아니므로 다시 미종결.
+        // US·관할 미설정의 기존 종결 규칙에는 이 조건을 강제하지 않는다.
+        guard SharingEventPolicy.satisfiesPostSharingGate(assessment) else { return false }
         return true
     }
 }

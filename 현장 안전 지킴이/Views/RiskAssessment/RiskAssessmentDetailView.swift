@@ -14,6 +14,10 @@ struct RiskAssessmentDetailView: View {
     @State private var participantSheet: ParticipantSheet?
     @State private var showStartSheet = false
     @State private var showSaveError = false
+    /// 공유 기록 시트의 시점 — 진입점(planned=사전 / finalized=사후)이 정하며 시트 안에서 바꿀 수 없다.
+    @State private var sharingSheetPhase: SharingPhase?
+    @State private var showFinalizeError = false
+    @State private var finalizeErrorMessage = LocalizationKey.raFinalizeFailedMessage.localized
 
     // Sorted by sortOrder so JSA work steps display in their entered order
     // (CloudKit does not preserve to-many relationship order).
@@ -55,8 +59,14 @@ struct RiskAssessmentDetailView: View {
             // Items stay directly under the header (the risk content); the 2a participation
             // sections follow so a conducted assessment reads content-first.
             itemsSection
+            // WO LEGAL-2d: 확정은 항목 바로 아래 — 항목 내용을 확인한 뒤 잠그는 순서로 읽히고,
+            // planned 의 "평가 시작"과 같은 위치(주 생명주기 동작)에 놓인다.
+            if assessment.status == .inProgress { finalizeSection }
             workerRepSection
             participantsSection
+            // 공유는 "무엇을 했는지"의 기록 — 내용·참여 다음, 면책 고지 앞에 온다.
+            sharingActionSection
+            SharingHistorySection(assessment: assessment)
             Section {
                 DisclaimerView()
                     .listRowInsets(EdgeInsets())
@@ -71,10 +81,101 @@ struct RiskAssessmentDetailView: View {
         .sheet(isPresented: $showStartSheet) {
             AssessmentStartSheet(assessment: assessment)
         }
+        .sheet(item: $sharingSheetPhase) { phase in
+            SharingRecordView(assessment: assessment, phase: phase)
+        }
         .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $showSaveError) {
             Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
         } message: {
             Text(LocalizationKey.raSaveFailedMessage.localized)
+        }
+        .alert(LocalizationKey.raFinalizeFailedTitle.localized, isPresented: $showFinalizeError) {
+            Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
+        } message: {
+            Text(finalizeErrorMessage)
+        }
+    }
+
+    // MARK: - 공유 기록 (WO LEGAL-2d) — 진입점이 시점을 결정한다
+
+    /// planned → 사전(일정) 공유, finalized → 사후(결과) 공유. inProgress/cancelled 에는 생성 진입점이
+    /// 없다 — Core 도 같은 규칙으로 거부하므로 화면과 규칙이 어긋나지 않는다.
+    @ViewBuilder
+    private var sharingActionSection: some View {
+        switch assessment.status {
+        case .planned:
+            Section {
+                Button { sharingSheetPhase = .pre } label: {
+                    Label(LocalizationKey.raSharingRecordPre.localized, systemImage: "calendar.badge.plus")
+                }
+                .frame(minHeight: 44)
+                .accessibilityIdentifier("ra_record_pre_sharing")
+
+                // KR 관할에서 사전 공유가 시작의 전제라는 사실 안내 (판정 문구 아님 — 필요 조건 안내).
+                if SharingEventPolicy.requiresPreSharingGate(assessment),
+                   !SharingEventPolicy.satisfiesPreSharingGate(assessment) {
+                    Text(LocalizationKey.raSharingPreGateRequired.localized)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("ra_pre_sharing_required_hint")
+                }
+            }
+        case .finalized:
+            Section {
+                Button { sharingSheetPhase = .post } label: {
+                    Label(LocalizationKey.raSharingRecordPost.localized, systemImage: "square.and.arrow.up")
+                }
+                .frame(minHeight: 44)
+                .accessibilityIdentifier("ra_record_post_sharing")
+            }
+        case .inProgress, .cancelled:
+            EmptyView()
+        }
+    }
+
+    // MARK: - 평가 확정 (inProgress → finalized)
+
+    private var finalizeSection: some View {
+        Section {
+            Button {
+                finalize()
+            } label: {
+                Label(LocalizationKey.raFinalizeAction.localized, systemImage: "lock.circle.fill")
+                    .font(.headline)
+            }
+            .frame(minHeight: 44)
+            .disabled(!AssessmentFinalization.isReadyToFinalize(assessment))
+            .accessibilityIdentifier("ra_finalize_assessment")
+
+            // 왜 아직 확정할 수 없는지 — 준비 미충족과 KR 사전공유 미충족을 구분해 알린다.
+            if !AssessmentFinalization.isReadyToFinalize(assessment) {
+                Text(LocalizationKey.raFinalizeNotReady.localized)
+                    .font(.caption).foregroundStyle(.secondary)
+            } else if !SharingEventPolicy.satisfiesPreSharingGate(assessment) {
+                Text(LocalizationKey.raFinalizePreSharingRequired.localized)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .accessibilityIdentifier("ra_finalize_pre_sharing_hint")
+            } else {
+                Text(LocalizationKey.raFinalizeHint.localized)
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    /// 확정은 원자적 Core op 하나로 — readiness·KR 사전공유를 그 안에서 다시 검증하고, 실패하면 상태와
+    /// 시각을 store·메모리 양쪽에서 되돌린다. View 는 로컬라이즈된 알럿만 띄운다(성공 시에만 상태 변경).
+    private func finalize() {
+        do {
+            try AssessmentFinalization.finalize(assessment, now: Date(), in: modelContext)
+        } catch AssessmentFinalizeError.missingCurrentPreSharing {
+            finalizeErrorMessage = LocalizationKey.raFinalizePreSharingRequired.localized
+            showFinalizeError = true
+        } catch AssessmentFinalizeError.notReady {
+            finalizeErrorMessage = LocalizationKey.raFinalizeNotReady.localized
+            showFinalizeError = true
+        } catch {
+            finalizeErrorMessage = LocalizationKey.raFinalizeFailedMessage.localized
+            showFinalizeError = true
         }
     }
 
