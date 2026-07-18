@@ -26,7 +26,7 @@ struct SharingEventRecordingTests {
         let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
                                 siteId: UUID(), siteName: "1공장", assessorName: "홍길동",
                                 jurisdictionSnapshot: jurisdiction,
-                                status: .planned, scheduledAt: schedule ?? scheduled)
+                                scheduledAt: schedule ?? scheduled)
         ctx.insert(ra)
         try ctx.save()
         return ra

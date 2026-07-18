@@ -27,7 +27,7 @@ struct SharingSnapshotTests {
                                 assessorName: "홍길동",
                                 jurisdictionSnapshot: jurisdiction,
                                 industryProfileSnapshot: .construction,
-                                status: .planned, scheduledAt: scheduled)
+                                scheduledAt: scheduled)
         ctx.insert(ra)
         try ctx.save()
         return ra

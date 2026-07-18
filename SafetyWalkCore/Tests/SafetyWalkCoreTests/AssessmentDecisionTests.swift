@@ -21,7 +21,7 @@ struct AssessmentDecisionTests {
     /// A saved inProgress assessment (locked criteria) with one consistent item (2×2 → medium).
     private func startedAssessment(in ctx: ModelContext) throws -> (RiskAssessment, RiskAssessmentItem) {
         let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
-                                siteId: UUID(), siteName: "현장", status: .planned)
+                                siteId: UUID(), siteName: "현장")
         ctx.insert(ra)
         try AssessmentStart.start(ra, criteria: .makeDefault(usesFrequencySeverity: true), now: when, in: ctx)
         let item = RiskAssessmentItem(likelihood: 2, severity: 2, riskLevel: .medium) // score 4 → exceeds@2
@@ -65,7 +65,10 @@ struct AssessmentDecisionTests {
         let ctx = try makeContext()
         // A hand-built inProgress assessment WITHOUT a locked criteria.
         let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
-                                siteId: UUID(), siteName: "현장", status: .inProgress)
+                                siteId: UUID(), siteName: "현장")
+        // WO LEGAL-2d §5: 생성자로는 .planned 만 만들 수 있다. 잠긴 기준 없는 inProgress 는 비정상
+        // 상태이므로 Core 내부 setter 로 직접 구성한다(@testable) — 앱 코드로는 도달 불가.
+        ra.status = .inProgress
         ctx.insert(ra)
         let item = RiskAssessmentItem(likelihood: 2, severity: 2, riskLevel: .medium)
         item.riskAssessment = ra

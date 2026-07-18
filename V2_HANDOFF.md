@@ -1526,3 +1526,65 @@ optional만으로 불완전. 다음 전부 포함:
 
 ## ✅ 리뷰어 기준 — 러버스탬프 안 함
 1. 전용 브랜치. 2. iOS·Mac 서명 빌드 + 테스트 그린(Core `swift test` — 이제 마이그레이션 플레이크 없음). **UI 테스트는 올바른 destination**(iPhone 테스트=iPhone 시뮬 · iPad 테스트=iPad 시뮬, 혼용 금지). 3. 스샷: 기준 설정·기준 초과 제안·사용자 확인·미평가 표시. 4. **선재 photo-grid 실패는 2b 무관**(main에도 있음·별도 task). 검증 후 refspec 병합.
+
+---
+
+# ✅ WO LEGAL-2c — 개선조치 이행·개선후위험도 — **병합 완료** (main `ffbdd6e`, 2026-07-18)
+
+fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 170/170 · ReportRenderingTests 9/9 (iPhone 16 / iOS 18.6) · `git diff --check` clean. 이후 LEGAL-2d의 기준점이 이 커밋이다.
+
+---
+
+# 🎫 WO LEGAL-2d — 비TBM 공유 기록 + 평가 확정 — **구현 완료, 검수 대기** (브랜치 `legal2d-sharing`)
+
+기준점 `ffbdd6e`. 병합·push 하지 않음.
+
+## 구현 결과
+
+### Core (SafetyWalkCore)
+- **`SharingSnapshot`** (신규, 순수 Foundation): `formatVersion` 1 Codable 값 스냅샷. `phase`·`assessmentId`·`siteName`·kind/method/jurisdiction/industry **raw code**·`scheduledAt`·`items[]`(사후만). 각 item 은 작업·유해위험요인·현재조치·위험도·확정 결정 + **1:N 개선조치 전부**(담당·기한·상태·이행일·개선후위험도·효과확인). **증거사진 binary·참여자 개인정보 제외.**
+  - 결정성: JSON key 정렬(`.sortedKeys`) + ISO8601 고정(UTC) 인코딩 + item `sortOrder`→`id`, action `id` 안정 정렬 → 같은 상태면 항상 byte-identical.
+  - `decode`는 **fail-closed**: 미지 `formatVersion`은 `unsupportedFormatVersion`, 손상 payload 는 `malformed`. 현재 데이터로 대체하지 않는다.
+- **`SharingEvent` 봉인**: data-only init 을 `internal` 로, 값 필드를 `public private(set)` 로. 생성 계약에 `target`·`contentSnapshot`·`ownerName` 추가 → 업무상 빈 기록은 **구성 자체가 불가**. **편집·삭제 op 없음**(생성 즉시 불변). unique/dedup 없음(실제 다회 공유 허용).
+- **`SharingEventRecording.record`** (유일한 생성 관문): 비공백 대상·담당자 → 시점 게이트(사전=`planned`+`scheduledAt` 필수 / 사후=`finalized`) → 스냅샷 생성 → insert → 원자 저장. 실패 시 `rollback()` + inverse 분리 후 in-place 제거로 **store·메모리 양쪽 원복**.
+- **`SharingEventPolicy`**: 스냅샷 생성 · 이력 정렬(시간 역순) · **최신성(stale) 판정** · 관할 게이트.
+  - stale = *당시 스냅샷 ≠ 지금 재생성한 스냅샷* **한 규칙**. 일정·위험도·결정·조치 변경이 모두 여기 걸린다(필드별 체크리스트가 낡는 문제 회피). decode 실패·스냅샷 재생성 실패는 fail-closed 로 stale.
+  - `jurisdictionState` = `.kr` / `.us` / **`.unset`**. unset 은 어떤 관할의 충족도 주장하지 않는다.
+- **`AssessmentFinalization.finalize`** (신규 원자 연산): `inProgress` 만 → readiness **전건 재검증** → KR 이면 현재 사전 공유 재검증 → `status`·`finalizedAt`·`updatedAt` 원자 기록 → 실패 시 store·메모리 원복 후 **오류 재전파**.
+- **`AssessmentStart`**: KR 사전 공유 게이트(`missingCurrentPreSharing`) 추가. **`AssessmentClosure.isClosed`**: KR 사후 공유 조건 추가. US·관할 미설정에는 KR 전용 게이트를 강제하지 않는다.
+- **`RiskAssessment` 봉인** (WO §5): 공개 생성자에서 **`status` 인자 제거**(모든 평가는 `.planned` 로 태어남) + `status`·`finalizedAt` 을 `internal(set)` 로. 앱·macOS 코드가 직접 써서 Core 연산을 우회할 수 없다. **스키마·저장 타입·기본값 불변.**
+
+### iOS
+- `RiskAssessmentDetailView`: planned="사전 일정 공유 기록" · inProgress="평가 확정"(readiness 기반 비활성 + 사유 안내) · finalized="사후 결과 공유 기록" · **전 상태 공유 이력**(시간 역순, stale 배지, 관할 미설정 고지). 섹션 순서 = 항목 → 확정 → 참여 → 공유 → 면책.
+- `SharingRecordView` + `SharingRecordViewModel`: **phase 는 진입점 고정**(시트에 변경 컨트롤 없음), `ownerName` 은 `assessorName` prefill·수정 가능, 저장 실패 시 **화면 유지**(성공에만 dismiss). 저장은 툴바 `confirmationAction` — 참여자·개선조치 편집기와 동일 위치이며 큰 글자에서도 스크롤로 사라지지 않는다.
+- `SharingSnapshotDetailView`: **저장된 스냅샷만** 렌더, decode 실패는 fail-closed 오류 상태.
+- 문구: "실제 전달 여부를 앱이 자동 확인하지 않으며 사용자가 수행한 공유 사실을 기록합니다." 준수/위반/인증 표현 없음. 기존 Disclaimer 유지.
+
+### macOS
+- `MacSharingHistoryCard`: **조회 전용** 이력 + 스냅샷 펼침(fail-closed 포함). 생성·확정은 복제하지 않음(read-only 정책 유지).
+
+### 범위 밖(의도적)
+- PDF/리포트에 공유 이력 **미추가** — LEGAL-2e 범위.
+- 스키마·필드·enum·관계·deleteRule **변경 없음**.
+
+## 검증 근거 (2026-07-18)
+- Core `swift test` **210/210** (30 suites). LEGAL-2d 신규 40건.
+- 앱 유닛: XCTest **18/18** + swift-testing **49/49** (`SharingRecordViewModelTests` 9건 포함).
+- UI (iPhone 16 / iOS 18.6, iPad destination 혼용 없음): RA 전체 **12/12** — 2a·2b·2c·LEGAL-0·RA·언어 회귀 + **LEGAL-2d 3건**(사전공유→시작 / 확정→사후공유→이력→스냅샷 상세 / **다크·영문·XXXL 스모크**).
+- 서명 빌드: iOS `generic/platform=iOS` ✅ · macOS ✅.
+- 로컬라이제이션: en/ko **545키 패리티** + `plutil -lint` OK.
+- `git diff --check` clean.
+
+## ⚠️ 오너 판단 필요 (구현자 소견 — 임의 처리하지 않음)
+
+1. **KR 게이트는 현재 프로덕션에서 도달 불가.** `jurisdictionSnapshot` 을 설정하는 생산 코드 경로가 **없다**(`PlanAssessmentView`·`RiskAssessmentViewModel` 모두 미설정 → 항상 `.unset`). 따라서 KR start/finalize/closed 게이트는 **테스트로만** 검증되며, 실제 화면은 전부 "관할 미설정"으로 표시된다. 관할 배선은 `RiskAssessmentProgram`(2a 잔여)에 속하므로 이번 WO에서 임의로 넣지 않았다.
+2. **관할 배선 시 잠재 교착.** 즉시 평가(create-now) 경로는 `scheduledAt` 없이 `.planned` 를 만든다. 그 평가가 KR 이면 사전 공유(일정 필수)를 기록할 수 없어 **시작 자체가 불가**해진다. 관할을 켜기 전에 "즉시 평가는 사전 일정 공유 대상이 아니다" 같은 예외 규칙이 필요하다.
+3. **`AssessmentClosure` 계약 확장.** `LEGAL_2_ARCH §1.1` 은 `closed = finalized AND 모든 필수 조치 완료` 로 정의한다. WO §4 지시대로 **KR 한정 사후공유 조건**을 세 번째 항으로 추가했다. 정본 문서는 임의 수정하지 않았으니, 확정되면 §1.1 에 관할 조건을 반영할지 결정 필요.
+4. **"법적 판정 금지" 원칙과의 긴장.** KR 사전공유 없이는 **평가 시작을 차단**하는 것이 WO §4 지시지만, CLAUDE.md 는 "앱은 기록 도구이지 판정 도구가 아님"을 규정한다. 지시대로 구현했으나 원칙과의 경계선이므로 확인 바람.
+5. **상세 화면에 항목 추가 진입점 없음(선재).** 항목 추가는 생성 화면에만 있어, 계획(plan) 경로로 만든 평가는 항목 0건이라 **UI만으로는 확정 readiness 를 충족시킬 수 없다.** LEGAL-2d 가 만든 문제가 아니라 드러낸 문제이며, 기능 추가는 스코프 밖이라 UI 테스트를 두 경로로 분리해 검증했다.
+6. **DOMAIN_TERMS.md 미갱신.** 공유 관련 용어(SharingEvent/SharingPhase/SharingMethod)는 이전부터 DOMAIN_TERMS 에 없었다. 이름을 바꾼 것이 없어 이번엔 손대지 않았으나, 공유 어휘를 정본화할지 결정 필요.
+
+## /code-review 결과 (기준점 `ffbdd6e`, Standards·Spec 독립 2축)
+- **반영함**: `RiskAssessment` 생성자·setter 봉인(§5 미구현이었음) · `AssessmentStartSheet` 의 KR 게이트 전용 메시지 · 미사용 키 2건 정리(`ra.sharing.staleHint` 삭제, `ra.snapshot.actions` 사용) · 죽은 지역변수 제거.
+- **의도적 유지**: stale 을 전체 스냅샷 비교로 판정(일정 외 변경도 stale — fail-closed 의도) · `SharingSnapshot` 이 enum 을 raw String 으로 보관(포맷 안정성 우선) · rollback/restore 패턴 반복(2c·2b와 동일한 확립된 관용구).
+- **사실 정정**: 리뷰어가 지적한 "`isStale` 가 매 렌더 JSON 인코딩" 은 부정확 — `isStale` 은 decode + 구조체 비교이며 **인코딩하지 않는다**. `AssessmentClosure.isClosed` 는 아직 호출부가 없다(2c가 후속용으로 추가).

@@ -24,7 +24,7 @@ struct AssessmentFinalizeReadyTests {
     /// Builds a fully finalize-ready assessment: inProgress + locked criteria + one CURRENT item.
     private func readyAssessment(in ctx: ModelContext) throws -> RiskAssessment {
         let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
-                                siteId: UUID(), siteName: "현장", status: .planned)
+                                siteId: UUID(), siteName: "현장")
         ctx.insert(ra)
         try AssessmentStart.start(ra, criteria: criteria, now: when, in: ctx)
         let item = RiskAssessmentItem(likelihood: 3, severity: 3, riskLevel: .high) // score 9 → exceeds@2

@@ -414,7 +414,6 @@ enum LocalizationKey: String {
     case raSharingSharedAt      = "ra.sharing.sharedAt"
     case raSharingDisclaimer    = "ra.sharing.disclaimer"
     case raSharingStale         = "ra.sharing.stale"
-    case raSharingStaleHint     = "ra.sharing.staleHint"
     case raSharingFailedTitle   = "ra.sharing.failedTitle"
     case raSharingFailedMessage = "ra.sharing.failedMessage"
     case raSharingTargetRequired = "ra.sharing.targetRequired"

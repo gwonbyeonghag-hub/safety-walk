@@ -26,7 +26,7 @@ struct SharingGateTests {
         let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
                                 siteId: UUID(), siteName: "1공장", assessorName: "홍길동",
                                 jurisdictionSnapshot: jurisdiction,
-                                status: .planned, scheduledAt: scheduled)
+                                scheduledAt: scheduled)
         ctx.insert(ra)
         try ctx.save()
         return ra
@@ -219,6 +219,23 @@ struct SharingGateTests {
         #expect(SharingEventPolicy.jurisdictionState(try plannedAssessment(in: ctx, jurisdiction: .kr)) == .kr)
         #expect(SharingEventPolicy.jurisdictionState(try plannedAssessment(in: ctx, jurisdiction: .us)) == .us)
         #expect(SharingEventPolicy.jurisdictionState(try plannedAssessment(in: ctx, jurisdiction: nil)) == .unset)
+    }
+
+    // MARK: - 생성자 봉인 (WO LEGAL-2d §5)
+
+    @Test("새로 만든 평가는 항상 planned 이며 확정 상태로 태어날 수 없다")
+    func newAssessmentIsAlwaysPlanned() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        // 생성자에 status 인자가 없으므로 임의의 .finalized 레코드를 만들 방법이 없다.
+        #expect(ra.status == .planned)
+        #expect(ra.finalizedAt == nil)
+
+        // status·finalizedAt 은 internal(set) — 패키지 밖(앱·macOS)에서는 쓸 수 없고, 확정은 오직
+        // AssessmentFinalization.finalize 를 통해서만 일어난다.
+        try AssessmentFinalization.finalize(
+            try readyToFinalize(in: ctx, jurisdiction: .us, withPreSharing: false),
+            now: when, in: ctx)
     }
 
     // MARK: - 확정(finalize) 원자 연산

@@ -13,6 +13,7 @@ struct AssessmentStartSheet: View {
     @Environment(\.modelContext) private var modelContext
     @State private var threshold: Int
     @State private var showStartError = false
+    @State private var startErrorMessage = LocalizationKey.raSaveFailedMessage.localized
 
     init(assessment: RiskAssessment) {
         self.assessment = assessment
@@ -46,7 +47,7 @@ struct AssessmentStartSheet: View {
             .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $showStartError) {
                 Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
             } message: {
-                Text(LocalizationKey.raSaveFailedMessage.localized)
+                Text(startErrorMessage)
             }
         }
     }
@@ -58,7 +59,12 @@ struct AssessmentStartSheet: View {
                 .withThreshold(threshold)
             try AssessmentStart.start(assessment, criteria: criteria, now: Date(), in: modelContext)
             dismiss()
+        } catch AssessmentStartError.missingCurrentPreSharing {
+            // KR 사전 공유 게이트는 확정 화면과 같은 문구로 구분해 안내한다(일반 저장 실패와 다른 원인).
+            startErrorMessage = LocalizationKey.raSharingPreGateRequired.localized
+            showStartError = true
         } catch {
+            startErrorMessage = LocalizationKey.raSaveFailedMessage.localized
             showStartError = true
         }
     }

@@ -113,7 +113,6 @@ struct PlanAssessmentView: View {
             siteId: site.id,
             siteName: site.name,
             assessorName: assessorName.trimmingCharacters(in: .whitespaces),
-            status: .planned,
             scheduledAt: scheduledAt
         )
         // §4.1 defence-in-depth: block persisting a business-empty assessment.

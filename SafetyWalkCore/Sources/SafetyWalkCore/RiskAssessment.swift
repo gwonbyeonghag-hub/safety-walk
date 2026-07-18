@@ -23,10 +23,13 @@ public final class RiskAssessment {
     public var industryProfileSnapshot: IndustryProfileCode?
     public var programVersionSnapshot: Int = 0
     // 상태·감사·취소 시각 (교정 #5·#6)
-    public var status: AssessmentStatus = AssessmentStatus.planned
+    // WO LEGAL-2d §5: `status`·`finalizedAt` 은 `internal(set)` — 수명주기 전환은 Core 의 원자 연산
+    // (`AssessmentStart.start` / `AssessmentFinalization.finalize`)만 소유한다. 앱·macOS 코드가 이 두
+    // 필드를 직접 써서 readiness·관할 게이트를 우회할 수 없다. 저장 타입·기본값은 그대로(스키마 불변).
+    public internal(set) var status: AssessmentStatus = AssessmentStatus.planned
     public var scheduledAt: Date?
     public var assessedAt: Date?
-    public var finalizedAt: Date?
+    public internal(set) var finalizedAt: Date?
     public var cancelledAt: Date?
     public var cancellationReason: String?
     public var createdAt: Date = Date()
@@ -41,6 +44,11 @@ public final class RiskAssessment {
     /// SCHEMA_V3 §4.1 생성자 계약: siteId·siteName·kind·method are REQUIRED (no init default),
     /// even though the stored properties keep CloudKit defaults. `validate()` re-checks the
     /// runtime rules (non-blank siteName) before persistence.
+    ///
+    /// WO LEGAL-2d §5: there is deliberately **no `status` parameter** — every assessment is born
+    /// `.planned`. A caller could otherwise construct a `.finalized` record directly and skip the
+    /// readiness re-verification (and, on KR, the 사전 공유 게이트) that `AssessmentFinalization.finalize`
+    /// owns. Reaching `.inProgress`/`.finalized` is only ever the result of a Core lifecycle op.
     public init(
         kind: RiskAssessmentKind,
         method: RiskAssessmentMethod,
@@ -53,7 +61,6 @@ public final class RiskAssessment {
         jurisdictionSnapshot: JurisdictionCode? = nil,
         industryProfileSnapshot: IndustryProfileCode? = nil,
         programVersionSnapshot: Int = 0,
-        status: AssessmentStatus = .planned,
         scheduledAt: Date? = nil,
         workerRepStatus: WorkerRepStatus? = nil
     ) {
@@ -69,7 +76,7 @@ public final class RiskAssessment {
         self.jurisdictionSnapshot = jurisdictionSnapshot
         self.industryProfileSnapshot = industryProfileSnapshot
         self.programVersionSnapshot = programVersionSnapshot
-        self.status = status
+        self.status = .planned
         self.scheduledAt = scheduledAt
         self.workerRepStatus = workerRepStatus
         self.createdAt = Date()

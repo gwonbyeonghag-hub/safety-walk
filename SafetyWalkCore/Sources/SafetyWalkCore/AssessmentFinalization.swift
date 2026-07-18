@@ -75,8 +75,8 @@ public enum AssessmentFinalization {
         }
 
         // Captured so the in-memory assessment can be restored on failure — `context.rollback()`
-        // reverts the STORE but leaves the mutated instance dirty.
-        let priorStatus = assessment.status
+        // reverts the STORE but leaves the mutated instance dirty. (The prior status is necessarily
+        // `.inProgress` after the guard above, so the restore names it directly.)
         let priorFinalizedAt = assessment.finalizedAt
         let priorUpdatedAt = assessment.updatedAt
 
@@ -88,7 +88,7 @@ public enum AssessmentFinalization {
             try commit()
         } catch {
             context.rollback()
-            assessment.status = priorStatus
+            assessment.status = .inProgress
             assessment.finalizedAt = priorFinalizedAt
             assessment.updatedAt = priorUpdatedAt
             throw error

@@ -20,7 +20,7 @@ struct AssessmentStartTests {
 
     private func plannedAssessment(in ctx: ModelContext) -> RiskAssessment {
         let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
-                                siteId: UUID(), siteName: "현장", status: .planned)
+                                siteId: UUID(), siteName: "현장")
         ctx.insert(ra)
         return ra
     }

@@ -25,7 +25,7 @@ struct CorrectiveActionEditorViewModelTests {
     private func completedFixture(in ctx: ModelContext)
         throws -> (RiskAssessment, RiskAssessmentItem, CorrectiveAction) {
         let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
-                                siteId: UUID(), siteName: "현장", assessorName: "평가자", status: .planned)
+                                siteId: UUID(), siteName: "현장", assessorName: "평가자")
         ctx.insert(ra)
         let criteria = AcceptabilityCriteria.makeDefault(usesFrequencySeverity: true)
         try AssessmentStart.start(ra, criteria: criteria, now: when, in: ctx)

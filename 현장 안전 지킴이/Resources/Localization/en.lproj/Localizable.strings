@@ -631,7 +631,6 @@
 "ra.sharing.sharedAt" = "Shared at";
 "ra.sharing.disclaimer" = "The app does not verify that delivery actually happened — it records the sharing you carried out.";
 "ra.sharing.stale" = "Differs from current";
-"ra.sharing.staleHint" = "This record shows the content as shared. The schedule or corrective actions have changed since, so it differs from the current content.";
 "ra.sharing.failedTitle" = "Couldn't save the sharing record";
 "ra.sharing.failedMessage" = "Saving failed and nothing was recorded. Please try again.";
 "ra.sharing.targetRequired" = "Enter who this was shared with.";

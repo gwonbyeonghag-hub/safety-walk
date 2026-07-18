@@ -631,7 +631,6 @@
 "ra.sharing.sharedAt" = "공유 시각";
 "ra.sharing.disclaimer" = "실제 전달 여부를 앱이 자동 확인하지 않으며 사용자가 수행한 공유 사실을 기록합니다.";
 "ra.sharing.stale" = "현재 내용과 다름";
-"ra.sharing.staleHint" = "이 기록은 공유 당시 내용입니다. 이후 일정이나 개선조치가 바뀌어 지금 내용과 다릅니다.";
 "ra.sharing.failedTitle" = "공유 기록을 저장하지 못했습니다";
 "ra.sharing.failedMessage" = "저장에 실패해 기록이 남지 않았습니다. 다시 시도해 주세요.";
 "ra.sharing.targetRequired" = "공유 대상을 입력해 주세요.";

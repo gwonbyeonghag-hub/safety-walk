@@ -21,7 +21,7 @@ struct AssessmentClosureTests {
 
     private func startedAssessment(in ctx: ModelContext) throws -> RiskAssessment {
         let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
-                                siteId: UUID(), siteName: "현장", status: .planned)
+                                siteId: UUID(), siteName: "현장")
         ctx.insert(ra)
         try AssessmentStart.start(ra, criteria: criteria, now: when, in: ctx)
         ra.items = []

@@ -23,7 +23,7 @@ struct CorrectiveActionEditingTests {
     /// A saved inProgress assessment (locked criteria) with one confirmed 기준 초과 item (2×2 → 4 → medium).
     private func startedAssessment(in ctx: ModelContext) throws -> (RiskAssessment, RiskAssessmentItem) {
         let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
-                                siteId: UUID(), siteName: "현장", status: .planned)
+                                siteId: UUID(), siteName: "현장")
         ctx.insert(ra)
         try AssessmentStart.start(ra, criteria: criteria, now: when, in: ctx)
         let item = RiskAssessmentItem(likelihood: 2, severity: 2, riskLevel: .medium) // score 4 → exceeds@2

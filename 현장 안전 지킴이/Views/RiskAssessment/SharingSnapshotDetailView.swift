@@ -101,6 +101,9 @@ struct SharingSnapshotDetailView: View {
             Text(LocalizationKey.raSnapshotNoActions.localized)
                 .font(.caption).foregroundStyle(.secondary)
         } else {
+            Text(LocalizationKey.raSnapshotActions.localized)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
             ForEach(actions, id: \.actionId) { action in
                 VStack(alignment: .leading, spacing: 3) {
                     Text(action.measure ?? "—").font(.subheadline.weight(.semibold))
