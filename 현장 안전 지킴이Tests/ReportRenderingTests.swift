@@ -320,6 +320,112 @@ final class ReportRenderingTests: XCTestCase {
                                       taskMarker: "TSKMRK", hazardMarker: "HAZMRK")
     }
 
+    // MARK: - WO LEGAL-2c 마감: JHA Controls 열의 행 의미(현재 안전조치 / 감소대책) 구분
+
+    /// The JHA Controls column carries two different kinds of row — the step's EXISTING controls and each
+    /// RECOMMENDED 감소대책. The column header (`report.jha.controls`) covers both, so only a per-row label
+    /// tells them apart; without it a reader on page 2 can't tell an in-place control from a proposal.
+    /// Locale-agnostic: the test host may render either language, so either form counts.
+    private func occurrences(_ needle: String, in text: String) -> Int {
+        text.components(separatedBy: needle).count - 1
+    }
+
+    /// PDFKit splits a page into text runs and can insert whitespace or a line break between them, so a
+    /// multi-word label ("현재 안전조치", "Current Controls") may come back with its inner spacing altered.
+    /// Matching on whitespace-stripped text keeps the assertion about the LABEL rather than about
+    /// PDFKit's run segmentation — the label characters must still all be present, in order.
+    private func despaced(_ s: String) -> String {
+        s.components(separatedBy: .whitespacesAndNewlines).joined()
+    }
+
+    private func labelHits(_ forms: [String], in text: String) -> Int {
+        let haystack = despaced(text)
+        return forms.map { occurrences(despaced($0), in: haystack) }.reduce(0, +)
+    }
+
+    func testJHAReportLabelsCurrentControlsAndReductionMeasureRows() throws {
+        let currentControlsForms = ["현재 안전조치", "Current Controls"]
+        let reductionForms = ["감소대책", "Reduction Measure"]
+
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .jsa,
+                                        siteId: UUID(), siteName: "Plant A — Line 2", assessorName: "J. Park")
+        ctx.insert(assessment)
+        // NOTE: neither the controls text nor any measure may contain a label word, or the assertions
+        // below would pass on the payload instead of on the label the renderer is supposed to add.
+        let item = RiskAssessmentItem(
+            taskDescription: "Erect exterior scaffold TSKMRK",
+            hazardDescription: "Fall / falling-object hazard HAZMRK",
+            currentControls: "Guardrail installed CTLMRK",
+            likelihood: 3, severity: 3, riskLevel: .high, sortOrder: 0)
+        ctx.insert(item)
+
+        var markers: [String] = []
+        for i in 0..<28 {
+            let marker = String(format: "MRK%02d", i)
+            markers.append(marker)
+            let action = try CorrectiveActionPolicy.makeDraft(
+                item: item,
+                measure: "Add spotter, verify anchors, inspect PPE [\(marker)]",
+                responsibleName: "Owner \(i)")
+            ctx.insert(action)
+        }
+        assessment.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(JHAReport.pdfURL(for: assessment), "JHA URL nil")
+        attachPages(url, name: "jha_controls_labelled")
+
+        let pages = pageTexts(url)
+        XCTAssertGreaterThanOrEqual(pages.count, 2, "28 actions must span ≥2 pages")
+
+        let whole = pages.joined(separator: "\n")
+        let missing = markers.filter { !whole.contains($0) }
+        XCTAssertTrue(missing.isEmpty, "no action may be truncated — missing: \(missing)")
+        for m in markers {
+            XCTAssertEqual(occurrences(m, in: whole), 1, "\(m) must appear exactly once")
+        }
+
+        // The step's existing controls must be labelled as such, on the page where they render.
+        for (index, text) in pages.enumerated() where text.contains("CTLMRK") {
+            XCTAssertGreaterThanOrEqual(labelHits(currentControlsForms, in: text), 1,
+                "page \(index + 1) shows the step's current controls without a 현재 안전조치 / Current Controls label")
+        }
+
+        // EVERY action row — including ones that open page 2 or 3 — must be labelled 감소대책, one label
+        // per action row (a single stray occurrence must not satisfy a page holding many actions).
+        for (index, text) in pages.enumerated() {
+            let actionsHere = markers.filter { text.contains($0) }
+            guard !actionsHere.isEmpty else { continue }
+            XCTAssertGreaterThanOrEqual(labelHits(reductionForms, in: text), actionsHere.count,
+                "page \(index + 1) renders \(actionsHere.count) action rows but only "
+                + "\(labelHits(reductionForms, in: text)) 감소대책 / Reduction Measure labels")
+        }
+    }
+
+    /// An empty Controls value must read as 미기록 / Not recorded — not a bare literal dash.
+    func testJHAReportUsesNotRecordedForEmptyControls() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .jsa,
+                                        siteId: UUID(), siteName: "Plant B", assessorName: "J. Park")
+        ctx.insert(assessment)
+        let item = RiskAssessmentItem(
+            taskDescription: "Step with no recorded controls NOCTL",
+            hazardDescription: "Pinch point",
+            currentControls: nil,
+            likelihood: 2, severity: 2, riskLevel: .medium, sortOrder: 0)
+        ctx.insert(item)
+        assessment.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(JHAReport.pdfURL(for: assessment), "JHA URL nil")
+        let whole = pageTexts(url).joined(separator: "\n")
+
+        XCTAssertTrue(whole.contains("NOCTL"), "sanity: the step must render")
+        XCTAssertGreaterThanOrEqual(labelHits(["미기록", "Not recorded"], in: whole), 1,
+            "an empty Controls value must render the shared 미기록 / Not recorded label")
+    }
+
     private func dummyImage() -> UIImage {
         UIGraphicsImageRenderer(size: CGSize(width: 320, height: 220)).image { ctx in
             UIColor.systemTeal.setFill()

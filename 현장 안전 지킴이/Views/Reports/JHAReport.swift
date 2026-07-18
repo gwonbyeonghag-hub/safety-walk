@@ -80,10 +80,12 @@ enum JHAReport {
     private static func rowBlocks(step: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod) -> [AnyView] {
         let actions = CorrectiveActionPolicy.sortedCorrectiveActions(item)
         var blocks: [AnyView] = [AnyView(row(step: step, item: item, method: method,
+                                             controlsLabel: LocalizationKey.raItemCurrentControls.localized,
                                              controls: item.currentControls ?? "",
                                              isItemEnd: actions.isEmpty))]
         for (i, action) in actions.enumerated() {
             blocks.append(AnyView(row(step: step, item: item, method: method,
+                                      controlsLabel: LocalizationKey.raItemReduction.localized,
                                       controls: action.measure ?? "",
                                       isItemEnd: i == actions.count - 1)))
         }
@@ -92,8 +94,10 @@ enum JHAReport {
 
     /// A full-width row: Step·Job Step·Hazards·Risk (always, for per-page traceability) with `controls`
     /// holding either the step's current controls or one recommended control (a 개선조치's 감소대책).
+    /// `controlsLabel` names which of the two this row is — the shared column header can't, so without it
+    /// a reader landing on page 2 could not tell an existing control from a proposed one.
     private static func row(step: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod,
-                            controls: String, isItemEnd: Bool) -> some View {
+                            controlsLabel: String, controls: String, isItemEnd: Bool) -> some View {
         HStack(spacing: 0) {
             Text("\(step)")
                 .font(.system(size: 9, weight: .bold)).monospacedDigit()
@@ -102,7 +106,7 @@ enum JHAReport {
                 .frame(width: Col.step, alignment: .center)
             cell(item.taskDescription, Col.task)
             cell(item.hazardDescription, Col.hazards)
-            cell(controls, Col.controls)
+            controlsCell(label: controlsLabel, controls)
             VStack(spacing: 2) {
                 if let level = item.riskLevel {
                     ReportRiskBand(level: level)
@@ -123,6 +127,24 @@ enum JHAReport {
         .overlay(alignment: .bottom) {
             Rectangle().fill(.black.opacity(isItemEnd ? 0.12 : 0.06)).frame(height: 0.5)
         }
+    }
+
+    /// The Controls cell: a small emphasized label naming the row's kind (현재 안전조치 / 감소대책) over the
+    /// value. Reuses the existing item keys — the column header `report.jha.controls` is unchanged, and no
+    /// new localization key is introduced. An empty value renders the shared 미기록 label, not a literal dash.
+    private static func controlsCell(label: String, _ string: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label)
+                .font(.system(size: 6.5, weight: .bold))
+                .foregroundStyle(Color.reportNavy.opacity(0.75))
+                .fixedSize(horizontal: false, vertical: true)
+            Text(string.isEmpty ? LocalizationKey.raNotRecorded.localized : string)
+                .font(.system(size: 8.5))
+                .foregroundStyle(.black)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 4).padding(.vertical, 6)
+        .frame(width: Col.controls, alignment: .leading)
     }
 
     private static func cell(_ string: String, _ width: CGFloat) -> some View {
