@@ -45,6 +45,7 @@ final class RiskAssessmentLegal2bUITests: XCTestCase {
         XCTAssertTrue(sitePicker.waitForExistence(timeout: 10), "create site picker not found")
         sitePicker.tap()
         app.buttons["테스트 현장"].firstMatch.tap()
+        pickUSJurisdiction(app)   // WO LEGAL-2d-PATH §3: 관할 확인 필수
         snap(app, "2b_01_create_criteria")   // criteria section shows the default 1~2 within
 
         // Add a 빈도×강도 item: likelihood 2 × severity 2 = 4 → exceeds the default threshold 2.
@@ -52,6 +53,11 @@ final class RiskAssessmentLegal2bUITests: XCTestCase {
         let task = app.textFields["공정·작업"]
         XCTAssertTrue(task.waitForExistence(timeout: 10), "task field not found")
         task.tap(); task.typeText("용접 작업")
+        // WO LEGAL-2d-PATH: Core 가 비공백 유해위험요인을 요구한다.
+        let hazardField = app.textFields["ra_item_hazard_field"]
+        if hazardField.waitForExistence(timeout: 5) {
+            hazardField.tap(); hazardField.typeText("화재·폭발")
+        }
         app.segmentedControls["ra_likelihood"].buttons["2"].firstMatch.tap()
         app.segmentedControls["ra_severity"].buttons["2"].firstMatch.tap()
         app.buttons["완료"].tap()
@@ -62,10 +68,11 @@ final class RiskAssessmentLegal2bUITests: XCTestCase {
         XCTAssertTrue(save.isEnabled, "save should be enabled for an assessed item + site")
         save.tap()
 
-        // Open the new row → inProgress detail.
+        // Open the new row → planned 상세 → 시작해야 기준이 잠긴다 (WO LEGAL-2d-PATH §2).
         let row = app.cells.firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10), "assessment row not shown")
         row.tap()
+        startAssessmentFromDetail(app)
 
         // Locked criteria read-only section + the 기준 초과 suggestion with an explicit 확인.
         XCTAssertTrue(app.staticTexts["잠긴 기준"].waitForExistence(timeout: 10),
@@ -101,6 +108,7 @@ final class RiskAssessmentLegal2bUITests: XCTestCase {
         XCTAssertTrue(sitePicker.waitForExistence(timeout: 10), "plan site picker not found")
         sitePicker.tap()
         app.buttons["테스트 현장"].firstMatch.tap()
+        pickUSJurisdiction(app)
         app.buttons["plan_save"].tap()
 
         let row = app.cells.firstMatch

@@ -13,6 +13,8 @@ struct RiskAssessmentCreateView: View {
     @State private var viewModel = RiskAssessmentViewModel()
     @State private var editorItem: RiskAssessmentViewModel.DraftItem?
     @State private var showInspectionPicker = false
+    // 추천 문구 전용 — 저장 접근은 RegionProfileStore 만 사용한다.
+    private let regionProfile = RegionProfileStore.get()
     @State private var showSaveError = false
     @State private var saveErrorMessage = LocalizationKey.raSaveFailedMessage.localized
 
@@ -54,9 +56,18 @@ struct RiskAssessmentCreateView: View {
                         .lineLimit(1...3)
                 }
 
-                // Same 허용 기준 selection the planned-start sheet uses; locked at save (WO §6).
-                CriteriaSelectionSection(usesFrequencySeverity: viewModel.method.usesFrequencySeverity,
-                                         threshold: $viewModel.criteriaThreshold)
+                // WO LEGAL-2d-PATH §2: 생성은 planned 까지만 — 허용 기준은 **시작할 때** 잠기므로
+                // 여기서 고르지 않는다(상세의 시작 시트가 담당). 관할은 저장 전 사용자가 확인해야 한다.
+                JurisdictionSection(jurisdiction: $viewModel.jurisdiction,
+                                    regionProfile: regionProfile)
+
+                if JurisdictionPolicy.requiresSchedule(viewModel.jurisdiction) {
+                    Section {
+                        DatePicker(LocalizationKey.raSchedule.localized,
+                                   selection: $viewModel.scheduledAt, displayedComponents: .date)
+                            .accessibilityIdentifier("ra_scheduled_date")
+                    }
+                }
 
                 itemsSection
             }
@@ -96,7 +107,9 @@ struct RiskAssessmentCreateView: View {
                     matrix: viewModel.matrix,
                     draft: draft
                 ) { updated in
+                    // 생성 화면은 초안만 모은다(영속은 저장 시 한 번) — 실패할 여지가 없으므로 항상 성공.
                     viewModel.addOrUpdate(updated)
+                    return true
                 }
             }
             .sheet(isPresented: $showInspectionPicker) {

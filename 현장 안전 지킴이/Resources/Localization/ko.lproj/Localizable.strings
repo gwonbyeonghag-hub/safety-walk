@@ -658,3 +658,16 @@
 "ra.finalize.failedTitle" = "평가를 확정하지 못했습니다";
 "ra.finalize.failedMessage" = "확정에 실패해 평가 상태가 그대로입니다. 다시 시도해 주세요.";
 "ra.finalize.preSharingRequired" = "현재 일정에 대한 사전 공유 기록이 있어야 확정할 수 있습니다.";
+
+/* MARK: - 법적 관할 + 항목 작성 경로 (WO LEGAL-2d-PATH) */
+"ra.jurisdiction" = "법적 관할";
+"ra.jurisdiction.select" = "선택하세요";
+"ra.jurisdiction.kr" = "대한민국";
+"ra.jurisdiction.us" = "미국";
+"ra.jurisdiction.suggestedFormat" = "추천: %@";
+"ra.jurisdiction.hint" = "관할에 따라 이 평가에 필요한 기록이 달라집니다. 지역 프로파일은 추천만 하며 자동으로 선택되지 않습니다.";
+"ra.jurisdiction.scheduleHint" = "대한민국 관할은 평가 일정이 필요합니다.";
+"ra.item.delete" = "항목 삭제";
+"ra.item.saveFailed" = "항목을 저장하지 못했습니다. 작업과 유해위험요인을 입력하고 위험성을 선택했는지 확인해 주세요.";
+"ra.status.closed" = "종결";
+"ra.status.actionsOpenFormat" = "개선조치 %d건 진행 중";

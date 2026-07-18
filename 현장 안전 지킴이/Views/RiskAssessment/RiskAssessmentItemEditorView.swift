@@ -8,7 +8,15 @@ struct RiskAssessmentItemEditorView: View {
 
     let method: RiskAssessmentMethod
     let matrix: RiskMatrixConfig
-    let onSave: (RiskAssessmentViewModel.DraftItem) -> Void
+    /// 위험성 수준까지 정해져야 저장을 허용할지.
+    ///
+    /// 생성 화면(`false`)은 **미평가 초안**을 일부러 허용한다 — 항목을 먼저 적어두고 위험도는 나중에
+    /// 정하는 흐름이며, 저장 자체는 create 화면의 `canSave` 와 Core 가 막는다(LEGAL-0).
+    /// 상세 화면(`true`)은 완료 즉시 영속하므로 미평가 항목을 만들 수 없다.
+    let requiresResolvedRisk: Bool
+    /// 저장 결과를 돌려준다 — `false` 면 시트를 닫지 않는다. 생성 화면(초안만 모으는 경로)은 항상
+    /// `true`, 상세 화면(원자 Core 연산으로 즉시 영속하는 경로)은 실패 시 `false` 를 준다.
+    let onSave: (RiskAssessmentViewModel.DraftItem) -> Bool
 
     @State private var draft: RiskAssessmentViewModel.DraftItem
     @Environment(\.dismiss) private var dismiss
@@ -16,16 +24,23 @@ struct RiskAssessmentItemEditorView: View {
     init(method: RiskAssessmentMethod,
          matrix: RiskMatrixConfig,
          draft: RiskAssessmentViewModel.DraftItem,
-         onSave: @escaping (RiskAssessmentViewModel.DraftItem) -> Void) {
+         requiresResolvedRisk: Bool = false,
+         onSave: @escaping (RiskAssessmentViewModel.DraftItem) -> Bool) {
         self.method = method
         self.matrix = matrix
+        self.requiresResolvedRisk = requiresResolvedRisk
         self.onSave = onSave
         _draft = State(initialValue: draft)
     }
 
+    /// 작업·유해위험요인은 **항상** 비공백이어야 한다 — Core 의 항목 계약과 같은 기준이라, 화면이 더
+    /// 느슨해서 저장을 눌렀다가 거부당하는 일이 없다. 위험성 수준은 즉시 영속하는 경로에서만 요구한다.
     private var canSave: Bool {
-        !draft.taskDescription.trimmingCharacters(in: .whitespaces).isEmpty ||
-        !draft.hazardDescription.trimmingCharacters(in: .whitespaces).isEmpty
+        guard !draft.taskDescription.trimmingCharacters(in: .whitespaces).isEmpty,
+              !draft.hazardDescription.trimmingCharacters(in: .whitespaces).isEmpty
+        else { return false }
+        guard requiresResolvedRisk else { return true }
+        return method.usesFrequencySeverity ? derivedLevel != nil : draft.directRiskLevel != nil
     }
 
     /// Live resolved band for the freq×severity inputs (nil until both chosen).
@@ -43,8 +58,11 @@ struct RiskAssessmentItemEditorView: View {
             Form {
                 Section {
                     LabeledField(method.taskFieldLabel, text: $draft.taskDescription)
+                        .accessibilityIdentifier("ra_item_task_field")
                     LabeledField(LocalizationKey.raItemHazard.localized, text: $draft.hazardDescription)
+                        .accessibilityIdentifier("ra_item_hazard_field")
                     LabeledField(LocalizationKey.raItemCurrentControls.localized, text: $draft.currentControls)
+                        .accessibilityIdentifier("ra_item_controls_field")
                 }
 
                 Section(LocalizationKey.raItemRiskLevel.localized) {
@@ -75,10 +93,11 @@ struct RiskAssessmentItemEditorView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(LocalizationKey.commonDone.localized) {
-                        onSave(draft)
-                        dismiss()
+                        // 저장이 실패하면 화면을 닫지 않는다 — 호출자가 알럿을 띄운다(LEGAL-0 패턴).
+                        if onSave(draft) { dismiss() }
                     }
                     .disabled(!canSave)
+                    .accessibilityIdentifier("ra_item_done")
                 }
             }
         }

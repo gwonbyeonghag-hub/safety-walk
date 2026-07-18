@@ -11,25 +11,17 @@ final class RiskAssessmentViewModel {
 
     // MARK: - Header
     var kind: RiskAssessmentKind = .regular
-    var method: RiskAssessmentMethod = .frequencySeverity {
-        didSet {
-            // The acceptability threshold means different things for score vs. level methods
-            // (raw score 2/4 vs. rank 1/2), so reset to the method default when the input
-            // category flips — never carry an out-of-range value across (WO LEGAL-2b §3).
-            if oldValue.usesFrequencySeverity != method.usesFrequencySeverity {
-                criteriaThreshold = AcceptabilityCriteria
-                    .makeDefault(usesFrequencySeverity: method.usesFrequencySeverity).threshold
-            }
-        }
-    }
+    var method: RiskAssessmentMethod = .frequencySeverity
     var selectedSite: Site?
     var assessorName: String = ""
     var note: String = ""
-    /// 허용 기준(acceptability) — the highest "기준 이내" score/rank, locked at start (WO LEGAL-2b).
-    /// Default = 빈도×강도 2 (score). Reset on method-category change (see `method.didSet`).
-    var criteriaThreshold: Int = 2
     /// Set when items were seeded from a completed Inspection (체크리스트법).
     var linkedInspectionId: UUID?
+    /// 사용자가 확인한 법적 관할. **처음은 nil** — 지역 프로파일 추천이 자동으로 채우지 않는다
+    /// (WO LEGAL-2d-PATH §3). 저장 전 반드시 선택돼야 한다.
+    var jurisdiction: JurisdictionCode?
+    /// KR 관할이면 필수인 평가 일정. 관할이 KR 이 아니면 무시된다.
+    var scheduledAt = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
 
     // MARK: - Draft items (value type until persisted; array order = sortOrder on save)
     var draftItems: [DraftItem] = []
@@ -71,8 +63,15 @@ final class RiskAssessmentViewModel {
         guard selectedSite != nil,
               !assessorName.trimmingCharacters(in: .whitespaces).isEmpty,
               !draftItems.isEmpty else { return false }
+        // WO LEGAL-2d-PATH §3: 관할은 저장 전 사용자가 명시적으로 확인해야 한다 — 추천만으로는 저장 불가.
+        guard jurisdiction != nil else { return false }
         // LEGAL-0: every item must have a resolved 위험성 수준 (no 미평가 items may be saved).
-        return draftItems.allSatisfy { resolvedLevel(for: $0) != nil }
+        // 작업·유해위험요인은 Core 가 비공백을 요구하므로 화면도 같은 기준으로 막는다.
+        return draftItems.allSatisfy { d in
+            resolvedLevel(for: d) != nil
+                && !d.taskDescription.trimmingCharacters(in: .whitespaces).isEmpty
+                && !d.hazardDescription.trimmingCharacters(in: .whitespaces).isEmpty
+        }
     }
 
     /// Resolved 위험성 수준 for a draft under the current method, or `nil` when not yet
@@ -147,91 +146,40 @@ final class RiskAssessmentViewModel {
         case incompleteAction // LEGAL-2c: 개선조치 필드(담당/기한)만 있고 감소대책이 비어 있음
     }
 
+    /// 평가를 **`.planned` 로** 저장한다 (WO LEGAL-2d-PATH §2).
+    ///
+    /// 옛 "저장하자마자 `AssessmentStart` 호출" 경로는 제거됐다 — 이제 두 생성 경로가 똑같이 planned
+    /// 평가를 만들고, 시작(기준 잠금 → `.inProgress`)은 상세 화면에서 따로 한다. 그래야 KR 처럼 시작 전
+    /// 사전 공유가 필요한 관할에서 "저장은 됐는데 시작이 막혀 반쯤 만들어진 평가"가 생기지 않는다.
+    ///
+    /// 검증·insert·commit 은 전부 Core 의 단일 원자 연산이 담당한다 — 실패하면 store 와 메모리 어디에도
+    /// 평가·항목·조치가 남지 않으므로, 화면은 그대로 두고 다시 시도할 수 있다.
     func save(context: ModelContext) throws {
-        // LEGAL-2c 방어 guard: 담당/기한 등 개선조치 필드만 입력하고 감소대책이 비면 전체 저장을 차단한다
-        // (빈 감소대책의 부분 조치를 조용히 버리지 않고, 저장 자체를 막아 사용자에게 알린다).
-        for d in draftItems {
-            let hasMeasure = d.reductionMeasure.trimmedOrNil != nil
-            let hasOtherActionData = d.responsibleName.trimmedOrNil != nil || d.hasDueDate
-            if !hasMeasure, hasOtherActionData { throw SaveError.incompleteAction }
-        }
-        // LEGAL-0 방어 guard: resolve every level BEFORE touching the context, so an
-        // unassessed item aborts the save without leaving partial inserts. The normal
-        // path is already gated by `canSave`; this makes 미평가 저장 impossible.
-        let levels = try draftItems.map { d -> RiskLevel in
-            guard let level = resolvedLevel(for: d) else { throw SaveError.incompleteItem }
-            return level
-        }
-        // SCHEMA_V3 §4.1: siteId·siteName are required at construction (defence-in-depth).
         guard let site = selectedSite else { throw SaveError.missingSite }
-        let isFreq = method.usesFrequencySeverity
-
-        // Build the acceptability criteria BEFORE touching the context; an invalid threshold
-        // aborts the whole save (fail-closed) rather than starting a half-built assessment.
-        let criteria = try AcceptabilityCriteria
-            .makeDefault(usesFrequencySeverity: isFreq)
-            .withThreshold(criteriaThreshold)
-
-        // Construct as .planned so both entry paths share the ONE start rule (WO LEGAL-2b §5):
-        // this "assess now" flow immediately starts it via AssessmentStart, which locks the
-        // criteria and flips it to .inProgress in a single atomic save.
-        let assessment = RiskAssessment(
+        let draft = AssessmentDraft(
             kind: kind,
             method: method,
             siteId: site.id,
             siteName: site.name,
-            assessorName: assessorName.trimmingCharacters(in: .whitespaces),
+            assessorName: assessorName,
             note: note.trimmedOrNil,
-            linkedInspectionId: linkedInspectionId
-        )
-        context.insert(assessment)
-
-        var items: [RiskAssessmentItem] = []
-        for (index, d) in draftItems.enumerated() {
-            let item = RiskAssessmentItem(
-                taskDescription: d.taskDescription.trimmingCharacters(in: .whitespaces),
-                hazardDescription: d.hazardDescription.trimmingCharacters(in: .whitespaces),
-                currentControls: d.currentControls.trimmedOrNil,
-                likelihood: isFreq ? d.likelihood : nil,
-                severity: isFreq ? d.severity : nil,
-                riskLevel: levels[index],
-                linkedHazardId: d.linkedHazardId,
-                sortOrder: index
-            )
-            // criteriaDecision stays nil here — 기준 이내/초과 is confirmed by the user in detail,
-            // never auto-filled at creation (WO LEGAL-2b §5/§6).
-            context.insert(item)
-            item.riskAssessment = assessment
-            // The improvement fields moved off the item to CorrectiveAction (SCHEMA_V3 §4).
-            // Persist whatever the user captured so nothing is silently dropped; the richer
-            // corrective-action management UI (효과확인 등) is 2c.
-            if let action = try makeCorrectiveAction(from: d, item: item) {
-                context.insert(action)
-            }
-            items.append(item)
-        }
-        assessment.items = items
-
-        // Single atomic start: validate criteria → lock a value-copied snapshot → inProgress →
-        // assessedAt/updatedAt → save (rolling back on any failure so the screen can retry).
-        try AssessmentStart.start(assessment, criteria: criteria, now: Date(), in: context)
-    }
-
-    /// Builds a `CorrectiveAction` for the draft, or nil when there is no 감소대책(measure). WO
-    /// LEGAL-2c: 최초 생성 조치는 항상 `.notStarted`(이행일·개선후위험도·효과확인 비어 있음) — 그 수명주기는
-    /// 상세의 개선조치 편집 화면에서만 진행한다. 빈 조치는 만들지 않는다(빈 개선조치 저장 금지).
-    ///
-    /// 생성은 Core 의 검증 관문 `CorrectiveActionPolicy.makeDraft` 를 통해서만 한다 — 모델 생성자는
-    /// 패키지 외부에 노출되지 않는다. 이 경로는 평가가 아직 `.planned` 인 최초 작성 단계라
-    /// `CorrectiveActionEditing.add`(inProgress/finalized 전용 원자 편집 API)를 쓸 수 없다.
-    private func makeCorrectiveAction(from d: DraftItem, item: RiskAssessmentItem) throws -> CorrectiveAction? {
-        guard let measure = d.reductionMeasure.trimmedOrNil else { return nil }
-        return try CorrectiveActionPolicy.makeDraft(
-            item: item,
-            measure: measure,
-            responsibleName: d.responsibleName.trimmedOrNil,
-            dueDate: d.hasDueDate ? d.dueDate : nil
-        )
+            linkedInspectionId: linkedInspectionId,
+            jurisdiction: jurisdiction,
+            scheduledAt: JurisdictionPolicy.requiresSchedule(jurisdiction) ? scheduledAt : nil,
+            items: draftItems.map { d in
+                AssessmentDraft.ItemDraft(
+                    taskDescription: d.taskDescription,
+                    hazardDescription: d.hazardDescription,
+                    currentControls: d.currentControls.trimmedOrNil,
+                    likelihood: d.likelihood,
+                    severity: d.severity,
+                    riskLevel: resolvedLevel(for: d),
+                    linkedHazardId: d.linkedHazardId,
+                    measure: d.reductionMeasure.trimmedOrNil,
+                    responsibleName: d.responsibleName.trimmedOrNil,
+                    dueDate: d.hasDueDate ? d.dueDate : nil)
+            })
+        try AssessmentAuthoring.create(draft, now: Date(), in: context)
     }
 }
 

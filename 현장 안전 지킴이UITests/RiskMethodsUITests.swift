@@ -26,6 +26,7 @@ final class RiskMethodsUITests: XCTestCase {
         let site = app.buttons["테스트 현장"].firstMatch
         XCTAssertTrue(site.waitForExistence(timeout: 5), "seeded site not in picker")
         site.tap()
+        pickUSJurisdiction(app)   // WO LEGAL-2d-PATH §3: 관할 확인 필수
     }
 
     private func snap(_ app: XCUIApplication, _ name: String) {
@@ -57,11 +58,18 @@ final class RiskMethodsUITests: XCTestCase {
         app.segmentedControls["ra_severity"].buttons[severity].tap()
     }
 
+    /// 작업명을 입력하고, WO LEGAL-2d-PATH 가 요구하는 **비공백 유해위험요인**도 함께 채운다
+    /// (Core 가 둘 다 요구하므로 편집기의 완료 버튼도 둘 다 있어야 활성화된다).
     private func typeTask(_ app: XCUIApplication, label: String, _ text: String) {
         let t = app.textFields[label]
         XCTAssertTrue(t.waitForExistence(timeout: 5), "task field \(label) not found")
         t.tap()
         t.typeText(text)
+        let hazard = app.textFields["ra_item_hazard_field"]
+        if hazard.waitForExistence(timeout: 5) {
+            hazard.tap()
+            hazard.typeText("\(text) 위험요인")
+        }
     }
 
     func testJsaOrderedSteps() throws {

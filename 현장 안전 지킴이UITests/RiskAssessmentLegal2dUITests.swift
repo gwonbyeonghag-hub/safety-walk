@@ -64,6 +64,7 @@ final class RiskAssessmentLegal2dUITests: XCTestCase {
         let site = app.buttons["테스트 현장"].firstMatch
         XCTAssertTrue(site.waitForExistence(timeout: 5), "seeded site not in picker")
         site.tap()
+        pickUSJurisdiction(app)
         app.buttons["plan_save"].tap()
 
         let row = app.cells.firstMatch
@@ -99,10 +100,8 @@ final class RiskAssessmentLegal2dUITests: XCTestCase {
         }
     }
 
-    /// 즉시 평가(create) 경로: 항목을 넣고 저장하면 곧바로 inProgress 가 된다.
-    /// **왜 이 경로를 쓰는가** — 항목 추가 진입점은 생성 화면에만 있고 상세 화면에는 없다. 그래서 계획
-    /// (plan) 경로로 만든 평가는 항목이 0건이라 확정 readiness 를 UI 만으로는 충족시킬 수 없다. 이 갭은
-    /// LEGAL-2d 가 만든 것이 아니라 드러낸 것이므로, 여기서는 기능을 늘리지 않고 경로를 나눠 검증한다.
+    /// 새 평가(create) 경로: 항목을 함께 작성해 planned 평가를 만든 뒤 상세에서 시작한다
+    /// (WO LEGAL-2d-PATH §2 — 두 생성 경로 모두 planned 를 거친다).
     private func createInProgressWithItem(_ app: XCUIApplication) {
         let card = app.buttons["ra_home_card"]
         XCTAssertTrue(card.waitForExistence(timeout: 20), "home RA card not shown")
@@ -116,15 +115,13 @@ final class RiskAssessmentLegal2dUITests: XCTestCase {
         XCTAssertTrue(sitePicker.waitForExistence(timeout: 10), "create site picker not found")
         sitePicker.tap()
         app.buttons["테스트 현장"].firstMatch.tap()
+        pickUSJurisdiction(app)   // WO LEGAL-2d-PATH §3: 관할 확인 필수
+
+        pickUSJurisdiction(app)
 
         // 1×1 = 1 → 기준 이내라 필수 개선조치가 없다 → 결정 확인만으로 확정 가능해진다.
         app.buttons["항목 추가"].tap()
-        let task = app.textFields["공정·작업"]
-        XCTAssertTrue(task.waitForExistence(timeout: 10), "task field not found")
-        task.tap(); task.typeText("운반 작업")
-        app.segmentedControls["ra_likelihood"].buttons["1"].firstMatch.tap()
-        app.segmentedControls["ra_severity"].buttons["1"].firstMatch.tap()
-        app.buttons["완료"].tap()
+        fillItem(app, task: "운반 작업", hazard: "협착", likelihood: "1", severity: "1")
 
         let save = app.buttons["저장"]
         XCTAssertTrue(save.waitForExistence(timeout: 10), "save button not found")
@@ -133,6 +130,8 @@ final class RiskAssessmentLegal2dUITests: XCTestCase {
         let row = app.cells.firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10), "assessment row not shown")
         row.tap()
+        // WO LEGAL-2d-PATH: 생성 결과는 planned — 상세에서 시작해야 inProgress 가 된다.
+        startAssessmentFromDetail(app)
     }
 
     /// 사전(일정) 공유 → 평가 시작. 계획 경로의 진입점 고정과 이력 기록을 검증한다.

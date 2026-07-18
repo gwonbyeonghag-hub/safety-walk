@@ -38,6 +38,7 @@ struct AssessmentStartSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(LocalizationKey.commonCancel.localized) { dismiss() }
+                        .accessibilityIdentifier("ra_criteria_start_cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(LocalizationKey.raCriteriaStartButton.localized) { start() }

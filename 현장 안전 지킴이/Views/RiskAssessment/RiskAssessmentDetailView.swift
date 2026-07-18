@@ -17,6 +17,9 @@ struct RiskAssessmentDetailView: View {
     /// 공유 기록 시트의 시점 — 진입점(planned=사전 / finalized=사후)이 정하며 시트 안에서 바꿀 수 없다.
     @State private var sharingSheetPhase: SharingPhase?
     @State private var showFinalizeError = false
+    /// 항목 편집 시트 (추가/수정) — WO LEGAL-2d-PATH §4.
+    @State private var itemSheet: ItemSheet?
+    @State private var showItemError = false
     @State private var finalizeErrorMessage = LocalizationKey.raFinalizeFailedMessage.localized
 
     // Sorted by sortOrder so JSA work steps display in their entered order
@@ -83,6 +86,21 @@ struct RiskAssessmentDetailView: View {
         }
         .sheet(item: $sharingSheetPhase) { phase in
             SharingRecordView(assessment: assessment, phase: phase)
+        }
+        .sheet(item: $itemSheet) { sheet in
+            // 기존 항목 편집기를 그대로 재사용한다 — 중복 폼을 만들지 않는다(WO LEGAL-2d-PATH §4).
+            RiskAssessmentItemEditorView(
+                method: assessment.method,
+                matrix: RiskMatrixConfig.threeByThree,
+                draft: sheet.draft(for: assessment.method),
+                requiresResolvedRisk: true) { edited in
+                    saveItem(edited, existing: sheet.item)
+                }
+        }
+        .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $showItemError) {
+            Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
+        } message: {
+            Text(LocalizationKey.raItemSaveFailed.localized)
         }
         .alert(LocalizationKey.raSaveFailedTitle.localized, isPresented: $showSaveError) {
             Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
@@ -189,6 +207,12 @@ struct RiskAssessmentDetailView: View {
                 AssessmentStatusBadge(status: assessment.status)
             }
             .font(.subheadline)
+
+            // 종결(closed)은 저장 상태가 아니라 파생이다(LEGAL_2_ARCH §1.1) — 확정 이후에만,
+            // 그리고 **사실형**으로만 보여준다("평가완료 · 개선조치 N건 진행 중").
+            if assessment.status == .finalized {
+                closedStatusRow
+            }
 
             infoRow(LocalizationKey.raKind.localized, assessment.kind.localizedLabel)
             infoRow(LocalizationKey.raMethod.localized, assessment.method.localizedLabel)
@@ -316,26 +340,124 @@ struct RiskAssessmentDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    // The 기준 이내/초과 SUGGESTION comes from the locked criteria (single Core source);
-                    // it is a proposal only — nothing is recorded until the user taps 확인.
-                    let suggestion = criteria?.suggestion(for: item)
-                    // A decision counts as confirmed ONLY while it is CURRENT under the locked
-                    // criteria (§2); a stale/incomplete record is shown as unconfirmed so the user
-                    // can re-confirm.
-                    let isCurrent = criteria.map { item.hasCurrentCriteriaDecision(under: $0) } ?? false
-                    ItemDetailRow(item: item,
-                                  method: assessment.method,
-                                  stepNumber: assessment.method == .jsa ? index + 1 : nil,
-                                  confirmedDecision: isCurrent ? item.criteriaDecision : nil,
-                                  suggestion: suggestion,
-                                  canConfirm: assessment.status == .inProgress && !isCurrent,
-                                  onConfirm: { confirmDecision(item) })
-                    // WO LEGAL-2c: push the item's 1:N 개선조치 management (depth-2). The summary
-                    // flags a 기준 초과 item still missing its required plan.
-                    correctiveActionLink(for: item)
-                }
+                EmptyView()
             }
+            itemRows(criteria: criteria)
+            // WO LEGAL-2d-PATH §4: 항목은 planned/inProgress 에서 작성·수정한다 (finalized 에 잠김).
+            // 계획만 먼저 세운 평가도 여기서 항목을 채울 수 있어야 시작·확정까지 갈 수 있다.
+            if canEditItems {
+                Button { itemSheet = .add } label: {
+                    Label(LocalizationKey.raItemAdd.localized, systemImage: "plus.circle")
+                }
+                .frame(minHeight: 44)
+                .accessibilityIdentifier("ra_add_item")
+            }
+        }
+    }
+
+    /// 항목 편집 가능 여부 — Core 규칙과 같은 단일 소스.
+    private var canEditItems: Bool { AssessmentItemEditing.allowsItemEditing(assessment) }
+
+    /// 종결 여부는 `AssessmentClosure.isClosed` 파생을 그대로 읽는다. 아직 종결이 아니면 남은 개선조치
+    /// 건수를 사실로 알린다 — "미준수" 같은 판정 문구는 쓰지 않는다.
+    @ViewBuilder
+    private var closedStatusRow: some View {
+        let openActions = (assessment.items ?? [])
+            .flatMap { $0.correctiveActions ?? [] }
+            .filter { !CorrectiveActionPolicy.isEffectivelyResolved($0) }
+            .count
+        HStack {
+            Text(LocalizationKey.raStatusClosed.localized).foregroundStyle(.secondary)
+            Spacer()
+            if AssessmentClosure.isClosed(assessment) {
+                Label(LocalizationKey.raStatusClosed.localized, systemImage: "checkmark.seal")
+                    .labelStyle(.titleAndIcon)
+                    .accessibilityIdentifier("ra_closed_yes")
+            } else {
+                Text(String(format: LocalizationKey.raStatusActionsOpenFmt.localized, openActions))
+                    .multilineTextAlignment(.trailing)
+                    .accessibilityIdentifier("ra_closed_no")
+            }
+        }
+        .font(.subheadline)
+    }
+
+    @ViewBuilder
+    private func itemRows(criteria: AcceptabilityCriteria?) -> some View {
+        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+            // The 기준 이내/초과 SUGGESTION comes from the locked criteria (single Core source);
+            // it is a proposal only — nothing is recorded until the user taps 확인.
+            let suggestion = criteria?.suggestion(for: item)
+            // A decision counts as confirmed ONLY while it is CURRENT under the locked
+            // criteria (§2); a stale/incomplete record is shown as unconfirmed so the user
+            // can re-confirm.
+            let isCurrent = criteria.map { item.hasCurrentCriteriaDecision(under: $0) } ?? false
+            let row = ItemDetailRow(item: item,
+                                    method: assessment.method,
+                                    stepNumber: assessment.method == .jsa ? index + 1 : nil,
+                                    confirmedDecision: isCurrent ? item.criteriaDecision : nil,
+                                    suggestion: suggestion,
+                                    canConfirm: assessment.status == .inProgress && !isCurrent,
+                                    onConfirm: { confirmDecision(item) })
+            // 편집·삭제는 **행 단위 swipeActions** 로 단다.
+            // `.onDelete` 를 쓰지 않는 이유: 이 ForEach 는 항목마다 행을 둘(항목 요약 + 개선조치 링크)
+            // 만들기 때문에 IndexSet 이 항목 인덱스와 어긋난다 — 엉뚱한 항목이 지워질 수 있다.
+            // swipeActions 는 자기 행에 직접 붙으므로 그런 매핑이 아예 없다.
+            // ⚠️ 행 컨테이너에는 accessibilityIdentifier 를 붙이지 않는다 — 자식(예: 결정 '확인'
+            // 버튼의 `ra_confirm_decision`)의 식별자를 덮어써서 테스트가 그 버튼을 찾지 못한다.
+            row
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    if canEditItems {
+                        Button(role: .destructive) { deleteItem(item) } label: {
+                            Label(LocalizationKey.raItemDelete.localized, systemImage: "trash")
+                        }
+                        .accessibilityIdentifier("ra_item_delete")
+                        Button { itemSheet = .edit(item) } label: {
+                            Label(LocalizationKey.raItemEdit.localized, systemImage: "pencil")
+                        }
+                        .accessibilityIdentifier("ra_item_edit")
+                    }
+                }
+            // WO LEGAL-2c: push the item's 1:N 개선조치 management (depth-2). The summary
+            // flags a 기준 초과 item still missing its required plan.
+            correctiveActionLink(for: item)
+        }
+    }
+
+    private func deleteItem(_ item: RiskAssessmentItem) {
+        do {
+            try AssessmentItemEditing.remove(item, in: assessment, at: Date(), context: modelContext)
+        } catch {
+            showItemError = true
+        }
+    }
+
+    /// 항목 저장 — 추가·수정 모두 Core 의 원자 연산을 지난다. 실패하면 시트를 닫지 않는다.
+    private func saveItem(_ draft: RiskAssessmentViewModel.DraftItem,
+                          existing: RiskAssessmentItem?) -> Bool {
+        let level = assessment.method.usesFrequencySeverity
+            ? nil : draft.directRiskLevel
+        do {
+            if let existing {
+                try AssessmentItemEditing.update(
+                    existing, in: assessment,
+                    task: draft.taskDescription, hazard: draft.hazardDescription,
+                    currentControls: draft.currentControls,
+                    likelihood: draft.likelihood, severity: draft.severity, riskLevel: level,
+                    at: Date(), context: modelContext)
+            } else {
+                try AssessmentItemEditing.add(
+                    to: assessment,
+                    task: draft.taskDescription, hazard: draft.hazardDescription,
+                    currentControls: draft.currentControls,
+                    likelihood: draft.likelihood, severity: draft.severity, riskLevel: level,
+                    linkedHazardId: draft.linkedHazardId,
+                    at: Date(), context: modelContext)
+            }
+            return true
+        } catch {
+            showItemError = true
+            return false
         }
     }
 
@@ -391,6 +513,41 @@ struct RiskAssessmentDetailView: View {
             Text(value).multilineTextAlignment(.trailing)
         }
         .font(.subheadline)
+    }
+}
+
+/// 항목 편집 시트의 대상 — 새 항목(add) 또는 기존 항목(edit). 기존 `RiskAssessmentItemEditorView` 를
+/// 그대로 쓰기 위해 저장된 항목을 그 화면의 `DraftItem` 값으로 옮겨 담는다(중복 폼 금지).
+private enum ItemSheet: Identifiable {
+    case add
+    case edit(RiskAssessmentItem)
+
+    var id: String {
+        switch self {
+        case .add:         return "add"
+        case .edit(let i): return i.id.uuidString
+        }
+    }
+
+    var item: RiskAssessmentItem? {
+        switch self {
+        case .add:         return nil
+        case .edit(let i): return i
+        }
+    }
+
+    func draft(for method: RiskAssessmentMethod) -> RiskAssessmentViewModel.DraftItem {
+        guard let item else { return RiskAssessmentViewModel.DraftItem() }
+        var d = RiskAssessmentViewModel.DraftItem()
+        d.taskDescription = item.taskDescription
+        d.hazardDescription = item.hazardDescription
+        d.currentControls = item.currentControls ?? ""
+        d.likelihood = item.likelihood
+        d.severity = item.severity
+        // 3단계/체크리스트는 직접 선택값을, 빈도×강도는 가능성·중대성에서 파생하므로 비워 둔다.
+        d.directRiskLevel = method.usesFrequencySeverity ? nil : item.riskLevel
+        d.linkedHazardId = item.linkedHazardId
+        return d
     }
 }
 

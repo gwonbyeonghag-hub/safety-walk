@@ -69,13 +69,16 @@ struct RiskAssessmentLegal0Tests {
         vm.method = .threeLevel
         vm.assessorName = "평가자"
         vm.selectedSite = Site(name: "현장")           // SCHEMA_V3 §4.1: site required
+        vm.jurisdiction = .us                          // LEGAL-2d-PATH §3: 관할 확인은 저장 전제
 
         var assessed = RiskAssessmentViewModel.DraftItem(taskDescription: "a")
+        assessed.hazardDescription = "위험요인 a"       // LEGAL-2d-PATH §4: 비공백 필수
         assessed.directRiskLevel = .high
         vm.addOrUpdate(assessed)
         #expect(vm.canSave == true)                   // site + one fully-assessed item
 
-        let unassessed = RiskAssessmentViewModel.DraftItem(taskDescription: "b")
+        var unassessed = RiskAssessmentViewModel.DraftItem(taskDescription: "b")
+        unassessed.hazardDescription = "위험요인 b"
         vm.addOrUpdate(unassessed)                    // no risk level
         #expect(vm.canSave == false)                  // one 미평가 blocks the whole save
     }

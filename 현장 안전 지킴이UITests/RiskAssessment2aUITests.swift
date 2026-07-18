@@ -47,6 +47,7 @@ final class RiskAssessment2aUITests: XCTestCase {
         XCTAssertTrue(site.waitForExistence(timeout: 5), "seeded site not in picker")
         site.tap()
         snap(app, "2a_01_plan_form")
+        pickUSJurisdiction(app)
         app.buttons["plan_save"].tap()
 
         // --- List now shows the planned row (예정 badge) ---

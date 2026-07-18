@@ -63,6 +63,7 @@ struct RiskAssessmentMethodsTests {
         let vm = RiskAssessmentViewModel()
         vm.method = .checklist
         vm.assessorName = "평가자"
+        vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
         vm.selectedSite = { let s = Site(name: "현장A"); ctx.insert(s); return s }()
         vm.seedFromInspection(insp)
 
@@ -87,10 +88,12 @@ struct RiskAssessmentMethodsTests {
         let vm = RiskAssessmentViewModel()
         vm.method = .jsa
         vm.assessorName = "평가자"
+        vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
         vm.selectedSite = { let s = Site(name: "현장C"); ctx.insert(s); return s }()
         for name in ["단계1", "단계2", "단계3"] {
             var d = RiskAssessmentViewModel.DraftItem()
             d.taskDescription = name
+            d.hazardDescription = "\(name) 위험요인"   // LEGAL-2d-PATH §4: 비공백 필수
             d.likelihood = 1; d.severity = 1   // jsa → frequency×severity
             vm.addOrUpdate(d)
         }

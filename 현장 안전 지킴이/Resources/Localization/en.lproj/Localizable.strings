@@ -658,3 +658,16 @@
 "ra.finalize.failedTitle" = "Couldn't finalize the assessment";
 "ra.finalize.failedMessage" = "Finalizing failed and the assessment status is unchanged. Please try again.";
 "ra.finalize.preSharingRequired" = "A sharing record for the current schedule is required before finalizing.";
+
+/* MARK: - Jurisdiction + item authoring path (WO LEGAL-2d-PATH) */
+"ra.jurisdiction" = "Jurisdiction";
+"ra.jurisdiction.select" = "Select";
+"ra.jurisdiction.kr" = "South Korea";
+"ra.jurisdiction.us" = "United States";
+"ra.jurisdiction.suggestedFormat" = "Suggested: %@";
+"ra.jurisdiction.hint" = "The jurisdiction determines which records this assessment needs. The region profile only suggests one — nothing is selected for you.";
+"ra.jurisdiction.scheduleHint" = "A South Korea assessment needs a scheduled date.";
+"ra.item.delete" = "Delete Item";
+"ra.item.saveFailed" = "Couldn't save the item. Check that the task and hazard are filled in and a risk level is chosen.";
+"ra.status.closed" = "Closed";
+"ra.status.actionsOpenFormat" = "%d corrective actions in progress";

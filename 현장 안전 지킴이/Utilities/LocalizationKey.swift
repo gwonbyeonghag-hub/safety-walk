@@ -400,6 +400,19 @@ enum LocalizationKey: String {
     case raEffPartial           = "ra.effectiveness.partial"
     case raEffIneffective       = "ra.effectiveness.ineffective"
 
+    // MARK: - 법적 관할 + 항목 작성 경로 (WO LEGAL-2d-PATH)
+    case raJurisdiction         = "ra.jurisdiction"
+    case raJurisdictionSelect   = "ra.jurisdiction.select"
+    case raJurisdictionKR       = "ra.jurisdiction.kr"
+    case raJurisdictionUS       = "ra.jurisdiction.us"
+    case raJurisdictionSuggestedFmt = "ra.jurisdiction.suggestedFormat"
+    case raJurisdictionHint     = "ra.jurisdiction.hint"
+    case raJurisdictionScheduleHint = "ra.jurisdiction.scheduleHint"
+    case raItemDelete           = "ra.item.delete"
+    case raItemSaveFailed       = "ra.item.saveFailed"
+    case raStatusClosed         = "ra.status.closed"
+    case raStatusActionsOpenFmt = "ra.status.actionsOpenFormat"
+
     // MARK: - 비TBM 공유 기록 + 평가 확정 (WO LEGAL-2d)
     case raSharingSection       = "ra.sharing.section"
     case raSharingEmpty         = "ra.sharing.empty"

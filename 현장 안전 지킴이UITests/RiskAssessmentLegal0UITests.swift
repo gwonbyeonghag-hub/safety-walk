@@ -42,7 +42,13 @@ final class RiskAssessmentLegal0UITests: XCTestCase {
         let task = app.textFields["공정·작업"]
         XCTAssertTrue(task.waitForExistence(timeout: 10), "task field not found")
         task.tap()
-        task.typeText("용접 작업")   // title only; risk deliberately left unset
+        task.typeText("용접 작업")
+        // WO LEGAL-2d-PATH: 작업·유해위험요인은 비공백 필수. **위험도는 일부러 비워 둔다** —
+        // 미평가 초안을 만들 수 있어야 LEGAL-0 의 "미평가 표시 + 저장 차단"을 검증할 수 있다.
+        let hazardField = app.textFields["ra_item_hazard_field"]
+        if hazardField.waitForExistence(timeout: 5) {
+            hazardField.tap(); hazardField.typeText("화상")
+        }
     }
 
     // ① 미평가 표시 + ② 미완성 저장 차단 (no DEBUG flag → 저장 stays disabled).

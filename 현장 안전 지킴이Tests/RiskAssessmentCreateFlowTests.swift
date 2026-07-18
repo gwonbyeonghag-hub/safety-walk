@@ -8,6 +8,9 @@ import SafetyWalkCore
 // a newly created action is always `.notStarted` with empty 이행일·개선후위험도·효과확인; an entirely
 // empty action makes no action; and entering action data (담당/기한) without a 감소대책 blocks the whole
 // save (no partial persist). Uses swift-testing @MainActor @Suite like RiskAssessmentPersistenceTests.
+//
+// WO LEGAL-2d-PATH: 저장은 이제 Core 의 단일 원자 연산(`AssessmentAuthoring.create`)을 지나며 결과는
+// **항상 `.planned`** 다(즉시 시작 경로 제거). 검증 오류도 Core 의 `AssessmentAuthoringError` 로 온다.
 
 @MainActor
 @Suite("RiskAssessment create flow — 개선조치 rules (LEGAL-2c 2차)")
@@ -27,6 +30,7 @@ struct RiskAssessmentCreateFlowTests {
         vm.method = .threeLevel      // 3단계: directRiskLevel resolves the level
         vm.assessorName = "홍길동"
         vm.selectedSite = site
+        vm.jurisdiction = .us        // 사용자가 확인한 관할 (US 는 일정 선택)
         return vm
     }
 
@@ -34,6 +38,7 @@ struct RiskAssessmentCreateFlowTests {
         -> RiskAssessmentViewModel.DraftItem {
         var d = RiskAssessmentViewModel.DraftItem()
         d.taskDescription = "작업"
+        d.hazardDescription = "유해위험요인"   // Core 가 비공백을 요구한다(LEGAL-2d-PATH §4)
         d.directRiskLevel = .low
         d.reductionMeasure = measure
         d.responsibleName = responsible
@@ -46,6 +51,8 @@ struct RiskAssessmentCreateFlowTests {
         let vm = makeVM(ctx)
         vm.draftItems = [draft(measure: "난간 설치")]
         try vm.save(context: ctx)
+        // 생성 결과는 항상 planned — 저장하자마자 시작하지 않는다.
+        #expect(try ctx.fetch(FetchDescriptor<RiskAssessment>()).first?.status == .planned)
         let action = try #require(try ctx.fetch(FetchDescriptor<CorrectiveAction>()).first)
         #expect(action.status == .notStarted)
         #expect(action.implementedAt == nil)
@@ -67,8 +74,7 @@ struct RiskAssessmentCreateFlowTests {
         let ctx = try makeContext()
         let vm = makeVM(ctx)
         vm.draftItems = [draft(responsible: "김담당")]   // action data, but no 감소대책
-        // The only SaveError reachable here (valid item + site + assessor) is .incompleteAction.
-        #expect(throws: RiskAssessmentViewModel.SaveError.self) {
+        #expect(throws: AssessmentAuthoringError.incompleteAction) {
             try vm.save(context: ctx)
         }
         #expect(try ctx.fetch(FetchDescriptor<RiskAssessment>()).isEmpty)   // no partial save

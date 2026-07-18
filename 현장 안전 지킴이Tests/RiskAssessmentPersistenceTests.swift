@@ -32,6 +32,7 @@ struct RiskAssessmentPersistenceTests {
         vm.method = .frequencySeverity
         vm.kind = .regular
         vm.assessorName = "Tester"
+        vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
         vm.selectedSite = seededSite(in: ctx)
 
         var item = RiskAssessmentViewModel.DraftItem()
@@ -62,10 +63,12 @@ struct RiskAssessmentPersistenceTests {
         vm.method = .threeLevel
         vm.kind = .initial
         vm.assessorName = "Tester"
+        vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
         vm.selectedSite = seededSite(in: ctx)
 
         var item = RiskAssessmentViewModel.DraftItem()
         item.taskDescription = "고소 작업"
+        item.hazardDescription = "추락"           // LEGAL-2d-PATH §4: 비공백 필수
         item.directRiskLevel = .medium
         vm.addOrUpdate(item)
 
@@ -85,12 +88,15 @@ struct RiskAssessmentPersistenceTests {
         let vm = RiskAssessmentViewModel()
         vm.method = .threeLevel
         vm.assessorName = ""
+        vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
         #expect(vm.canSave == false)           // no site, no assessor, no items
         vm.selectedSite = Site(name: "현장")    // SCHEMA_V3 §4.1: site required
         vm.assessorName = "Tester"
+        vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
         #expect(vm.canSave == false)           // still no items
 
         var item = RiskAssessmentViewModel.DraftItem(taskDescription: "x")
+        item.hazardDescription = "위험요인 x"      // LEGAL-2d-PATH §4: 비공백 필수
         vm.addOrUpdate(item)
         #expect(vm.canSave == false)           // LEGAL-0: item present but 미평가 → still blocked
 

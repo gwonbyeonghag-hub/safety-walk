@@ -2,11 +2,13 @@ import SwiftUI
 import SwiftData
 import SafetyWalkCore
 
-/// Creates a **planned** 위험성평가 (SCHEMA_V3 §3 lifecycle). This is the lightweight
-/// "schedule it now, assess it later" path: header + scheduled date only — no items.
-/// The assessment is saved with `status = .planned` and `scheduledAt` set; risk items
-/// are added after it moves to `.inProgress` (2b). The existing one-shot create flow
-/// (RiskAssessmentCreateView) is untouched — that remains the "assess now" path.
+/// Creates a **planned** 위험성평가 (SCHEMA_V3 §3 lifecycle). The lightweight
+/// "schedule it now, author it later" path: header + jurisdiction + scheduled date, no items —
+/// items are added from the detail screen while the assessment is still `.planned`.
+///
+/// WO LEGAL-2d-PATH: both creation paths (this one and RiskAssessmentCreateView) now go through the
+/// **same atomic Core op** `AssessmentAuthoring.create`, and both produce a `.planned` assessment.
+/// Starting it (locking the criteria → `.inProgress`) happens later in the detail screen.
 struct PlanAssessmentView: View {
 
     @Environment(\.dismiss) private var dismiss
@@ -20,9 +22,14 @@ struct PlanAssessmentView: View {
     @State private var assessorName = UserDefaults.standard.string(forKey: "com.safetywalk.inspectorName") ?? ""
     @State private var scheduledAt = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
     @State private var showSaveError = false
+    /// 사용자가 확인해야 하는 값 — 비어 있는 상태로 시작하고 추천이 자동으로 채우지 않는다(§3).
+    @State private var jurisdiction: JurisdictionCode?
+    // 지역 프로파일은 추천 문구에만 쓰인다. 저장 접근은 RegionProfileStore 만 사용한다(직접 UserDefaults 금지).
+    private let regionProfile = RegionProfileStore.get()
 
-    // SCHEMA_V3 §4.1: a RiskAssessment requires a site (siteId·siteName).
-    private var canSave: Bool { selectedSite != nil }
+    /// SCHEMA_V3 §4.1: 현장 필수. WO LEGAL-2d-PATH §3: 관할은 저장 전 **사용자가 명시적으로 확인**해야
+    /// 하므로 선택 전에는 저장할 수 없다.
+    private var canSave: Bool { selectedSite != nil && jurisdiction != nil }
 
     var body: some View {
         NavigationStack {
@@ -60,6 +67,8 @@ struct PlanAssessmentView: View {
                                selection: $scheduledAt, displayedComponents: .date)
                         .accessibilityIdentifier("plan_scheduled_date")
                 }
+
+                JurisdictionSection(jurisdiction: $jurisdiction, regionProfile: regionProfile)
 
                 Section {
                     Text(LocalizationKey.raPlanHint.localized)
@@ -105,24 +114,22 @@ struct PlanAssessmentView: View {
         .accessibilityIdentifier("plan_site_picker")
     }
 
+    /// 단일 원자 Core 연산으로 저장한다 — 검증·insert·commit 이 한 번에 끝나고, 실패하면 store 와
+    /// 메모리 어디에도 평가가 남지 않는다. 화면은 실패 시 닫히지 않는다.
     private func save() {
         guard let site = selectedSite else { showSaveError = true; return }
-        let assessment = RiskAssessment(
+        let draft = AssessmentDraft(
             kind: kind,
             method: method,
             siteId: site.id,
             siteName: site.name,
-            assessorName: assessorName.trimmingCharacters(in: .whitespaces),
-            scheduledAt: scheduledAt
-        )
-        // §4.1 defence-in-depth: block persisting a business-empty assessment.
-        guard (try? assessment.validate()) != nil else { showSaveError = true; return }
-        modelContext.insert(assessment)
+            assessorName: assessorName,
+            jurisdiction: jurisdiction,
+            scheduledAt: scheduledAt)
         do {
-            try modelContext.save()
+            try AssessmentAuthoring.create(draft, now: Date(), in: modelContext)
             dismiss()
         } catch {
-            modelContext.rollback()
             showSaveError = true
         }
     }

@@ -34,6 +34,7 @@ final class WO5ScreensUITests: XCTestCase {
         let site = app.buttons["테스트 현장"].firstMatch
         XCTAssertTrue(site.waitForExistence(timeout: 5), "seeded site not in picker")
         site.tap()
+        pickUSJurisdiction(app)   // WO LEGAL-2d-PATH §3: 관할 확인 필수
     }
 
     func testCaptureBothAppearances() throws {
@@ -81,6 +82,11 @@ final class WO5ScreensUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         field.tap()
         field.typeText(task)
+        // WO LEGAL-2d-PATH: Core 가 비공백 유해위험요인을 요구한다.
+        let hazardField = app.textFields["ra_item_hazard_field"]
+        if hazardField.waitForExistence(timeout: 5) {
+            hazardField.tap(); hazardField.typeText("\(task) 위험요인")
+        }
         app.buttons["완료"].tap()
     }
 }

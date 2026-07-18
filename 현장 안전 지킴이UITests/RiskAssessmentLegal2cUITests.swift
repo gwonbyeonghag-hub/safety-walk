@@ -43,25 +43,25 @@ final class RiskAssessmentLegal2cUITests: XCTestCase {
         XCTAssertTrue(sitePicker.waitForExistence(timeout: 10), "create site picker not found")
         sitePicker.tap()
         app.buttons["테스트 현장"].firstMatch.tap()
+        pickUSJurisdiction(app)   // WO LEGAL-2d-PATH §3: 관할 확인 필수
+
+        // WO LEGAL-2d-PATH: 관할을 확인해야 저장할 수 있다.
+        pickUSJurisdiction(app)
 
         // Add a 빈도×강도 item 2×2 = 4 → exceeds the default threshold 2.
         app.buttons["항목 추가"].tap()
-        let task = app.textFields["공정·작업"]
-        XCTAssertTrue(task.waitForExistence(timeout: 10), "task field not found")
-        task.tap(); task.typeText("용접 작업")
-        app.segmentedControls["ra_likelihood"].buttons["2"].firstMatch.tap()
-        app.segmentedControls["ra_severity"].buttons["2"].firstMatch.tap()
-        app.buttons["완료"].tap()
+        fillItem(app, task: "용접 작업", hazard: "화재·폭발", likelihood: "2", severity: "2")
 
-        // Save → shared atomic start locks criteria + flips to inProgress.
+        // Save → planned 평가가 만들어진다 (즉시 시작 경로는 제거됨).
         let save = app.buttons["저장"]
         XCTAssertTrue(save.waitForExistence(timeout: 10), "save button not found")
         save.tap()
 
-        // Open the row → inProgress detail → confirm the 기준 초과 decision.
+        // Open the row → planned 상세에서 시작 → inProgress 에서 결정 확인.
         let row = app.cells.firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10), "assessment row not shown")
         row.tap()
+        startAssessmentFromDetail(app)
         let confirm = app.buttons["ra_confirm_decision"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 10), "decision confirm button not shown")
         confirm.tap()

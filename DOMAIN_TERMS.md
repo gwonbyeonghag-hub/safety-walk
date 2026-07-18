@@ -36,7 +36,7 @@ Use these names consistently — do not invent synonyms.
 | In Progress | 진행중 | Corrective action is underway. |
 | Completed | 완료 | Corrective action has been finished. |
 | Evidence Photo | 증거 사진 | A photo taken to document a hazard or checklist item result. |
-| Region Profile | 지역 프로파일 | A configuration set that controls the default checklist template and reference text. Values: Korea, Global. **Selected implicitly by the Language toggle** (한국어 → Korea, English → Global) — it is no longer a separate user-facing control. Korea = KOSHA-oriented template; **Global = U.S. / OSHA-oriented site-inspection template (imperial units)**. |
+| Region Profile | 지역 프로파일 | Selects which **checklist template and reference text** are used. Values: Korea, Global. A **separate user-facing control** in Settings (`settings_region_picker`), independent of the display language — see the three-axis rule below. Korea = KOSHA-oriented template; Global = U.S. / OSHA-oriented site-inspection template. |
 | Disclaimer | 면책 고지 | Legal notice that the app does not provide compliance determinations. Required on all exports and in Settings. |
 
 ---
@@ -145,19 +145,24 @@ enum SharingPhase        { case pre, post }                                   //
 enum SharingMethod       { case education, posting, written, electronic }     // 비TBM 전용
 ```
 
-### ⚠️ `RegionProfile` 과 `JurisdictionCode` 는 **별개의 축** — 혼용 금지
+### ⚠️ 세 축은 **서로 독립** — 혼용 금지 (단일 정본)
 
-```swift
-enum RegionProfile     { case korea, global }   // 언어·지역 프로파일 (표시·템플릿 선택)
-enum JurisdictionCode  { case kr, us }          // 법적 관할 (평가에 값 스냅샷으로 저장)
-```
+| 축 | 타입 | 무엇을 정하는가 | 어디에 저장되나 |
+|---|---|---|---|
+| **UI Language** | 표시 언어 (ko / en) | 화면 **문구**가 어떤 언어로 보이는가 | `LocalizationManager` (앱 설정) |
+| **Region Profile** | `RegionProfile { korea, global }` | 어떤 **체크리스트 템플릿·참고 문구**를 쓰는가 | `RegionProfileStore` (앱 설정) |
+| **Jurisdiction** | `JurisdictionCode { kr, us }` | 그 평가에 **어느 관할의 기록 요건**이 적용되는가 | `RiskAssessment.jurisdictionSnapshot` (평가별 값 스냅샷) |
 
-- **`RegionProfile`** 은 어떤 체크리스트 템플릿·문구를 보여줄지 고르는 **표시/콘텐츠 축**이다.
+**어느 축도 다른 축을 자동으로 정하지 않는다.** 한국어로 보면서 Global 템플릿을 쓰고 US 관할로 기록할 수
+있다(LEGAL-1 이 언어·지역을 분리했고, LEGAL-2d-PATH 가 관할을 세 번째 축으로 분리했다).
+
+- **`RegionProfile`** 은 어떤 체크리스트 템플릿·문구를 보여줄지 고르는 **콘텐츠 축**이다.
 - **`JurisdictionCode`** 는 그 평가에 **어떤 관할의 기록 요건**이 적용되는지를 뜻하는 **법적 축**이며,
   `RiskAssessment.jurisdictionSnapshot` 에 **값 스냅샷**으로 저장된다(나중에 프로그램 설정이 바뀌어도
   과거 평가는 당시 관할을 유지).
 - 둘은 서로를 유도하지 않는다. Korea 프로파일이 곧 KR 관할을 의미하지 않으며, 그 반대도 아니다 —
-  프로파일은 **기본값을 제안**할 수 있을 뿐 사용자가 확인해야 한다(LEGAL-2d-PATH).
+  프로파일은 **기본값을 제안**할 수 있을 뿐 사용자가 확인해야 한다. 코드: `JurisdictionPolicy.suggested(for:)`
+  는 추천값을 *반환만* 하고, 저장되는 값은 사용자가 고른 `AssessmentDraft.jurisdiction` 뿐이다.
 - **`jurisdictionSnapshot == nil` 은 "관할 미설정"** 이며, 어떤 관할의 요건 충족도 주장하지 않는다
   (fail-closed 표시). 코드: `SharingEventPolicy.JurisdictionState { kr, us, unset }`.
 

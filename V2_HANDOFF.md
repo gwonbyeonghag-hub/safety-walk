@@ -1659,3 +1659,41 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 - Data Clump(`phase·method·sharedAt·target·snapshot·owner`) — 6개 값이 모델 필드 그 자체라 별도 타입으로 묶으면 오히려 `@Model` 과 이중화된다.
 
 **Spec 축**: 스코프 크리프 없음. LEGAL-2d-PATH 기능은 구현하지 않았음이 확인됨(생산 코드에서 `jurisdictionSnapshot` 미기록, 항목 추가 진입점 미추가, "즉시 평가 면제" 예외 없음).
+
+---
+
+# ✅ WO LEGAL-2d-PATH — 관할 배선 + 평가 작성 경로 — **구현 완료, 검수 대기** (브랜치 `legal2d-path`)
+
+기준점 `d353132`(= `legal2d-sharing` HEAD). main/origin-main 은 여전히 `ffbdd6e`. 병합·push 없음.
+
+## 구현 결과
+
+### Core (신규 2모듈 — 스키마 변경 없음)
+- **`AssessmentAuthoring.create(_:now:in:)`** — 평가 생성의 **단일 원자 연산**. 두 진입 경로(새 평가·평가 계획)가 이 하나를 공유하며, 결과는 **항상 `.planned`**. 검증을 **context 를 건드리기 전에** 모두 끝내므로 insert 이후 실패 가능 지점은 commit 뿐이고, commit 실패 시 inverse 를 끊고 삽입 객체를 지운 뒤 rollback 해 **store·메모리 어디에도** 평가·항목·조치가 남지 않는다.
+  - 입력은 순수 값 타입 `AssessmentDraft`(+ `ItemDraft`) — ViewModel 이 조립하고 Core 가 검증·영속한다.
+  - 검증: 비공백 현장명·평가자·작업·유해위험요인, 미평가 항목 금지, 담당/기한만 있고 감소대책 없는 조치 금지, **KR 이면 `scheduledAt` 필수**.
+- **`AssessmentItemEditing.{add,update,remove}`** — 항목 CRUD. `planned`·`inProgress` 에서만 허용하고 `finalized`·`cancelled` 는 **잠근다**(LEGAL_2_ARCH §1 lock timing). 소유권·비공백·미평가를 Core 가 재검증하고, 위험 입력 변경은 **기존 모델 API**(`updateFrequencySeverityInput`/`updateDirectRiskLevel`)를 거쳐 기준확인 3필드를 무효화한다(규칙 재구현 없음). commit 실패 시 store·메모리 원복.
+- **`JurisdictionPolicy`** — `suggested(for: RegionProfile)`(추천만) · `requiresSchedule(_:)`(KR 만 true). 화면과 Core 가 같은 규칙을 읽는다.
+
+### iOS
+- **즉시 시작 경로 제거**: `RiskAssessmentViewModel.save` 가 더 이상 `AssessmentStart` 를 부르지 않는다. 두 경로 모두 planned 를 만들고, 시작은 상세의 기준 확인 시트가 담당한다. 생성 화면의 허용기준 섹션은 제거(기준은 **시작 시점에** 잠긴다).
+- **관할 확인 UI**: `JurisdictionSection`(두 생성 화면 공유). 선택은 **nil 로 시작**하고, 지역 프로파일 추천은 문구로만 보여준다. 관할을 고르기 전에는 저장 버튼이 비활성. KR 선택 시 일정 입력이 나타난다.
+- **항목 작성 경로**: 상세에 `항목 추가` + 행 스와이프 `편집`/`삭제`. **기존 `RiskAssessmentItemEditorView` 재사용**(중복 폼 없음) — 상세 경로는 즉시 영속이라 `requiresResolvedRisk: true`, 생성 화면은 LEGAL-0 의 "미평가 초안" UX 를 그대로 유지하려고 `false`.
+- **종결 표시**: `AssessmentClosure.isClosed` 파생을 finalized 상세에 **사실형**으로 표시(종결 / 개선조치 N건 진행 중). 판정 문구 없음.
+
+### 문서 (§5)
+- `DOMAIN_TERMS` 39행의 "언어가 RegionProfile 을 암묵 선택 / 별도 UI 없음" **삭제** — 실제로 `settings_region_picker` 가 존재하고 LEGAL-1 이 두 축을 분리했다(문서가 출시 동작보다 낡았음).
+- "Global = imperial units" **삭제** — `checklist_global.json`·`checklist_korea.json` 어디에도 단위 언급이 없다(`mm` 히트는 전부 "co**mm**on" 부분문자열).
+- **세 축 단일 정본화**: UI Language(표시 언어) · RegionProfile(체크리스트 콘텐츠) · JurisdictionCode(평가 법적 관할). 어느 축도 다른 축을 자동으로 정하지 않는다.
+
+## 검증 (2026-07-18)
+- Core `swift test` **246/246** (32 suites) — LEGAL-2d-PATH 신규 20건.
+- 앱 유닛 XCTest **18/18** + swift-testing **54/54** (관할 확인 계약 5건 신규).
+- iPhone 16 / iOS 18.6 UI: 신규 `RiskAssessmentPathUITests` **2/2** — ① KR golden path(계획→항목작성→사전공유→시작→결정확인→확정→사후공유→**종결 표시**), 그 안에 사전공유 없는 시작이 **거부되고 planned 로 남는 것**까지 포함 ② 항목 편집 가능(planned) → 확정 후 **잠김**.
+- iOS/macOS 서명 빌드 ✅ · en/ko **556키 패리티** + `plutil -lint` ✅.
+
+## 흐름 변경의 파급 (선재 아님 — 이번 변경의 필연적 결과)
+저장 직후가 `.planned` 가 되면서, 저장하자마자 inProgress 기능을 기대하던 UI 테스트 6종(2b·2c·2d·RA·WO5·RiskMethods)과 앱 유닛 4종에 **"상세에서 시작" 단계 + 관할 확인 + 비공백 유해위험요인**을 반영했다. 공용 단계는 `PathFlowSupport.swift` 로 묶었다.
+
+## 남은 판단 (오너)
+- **`AssessmentAuthoring.create` 는 `jurisdiction: nil` 을 허용한다.** "저장 전 사용자 확인"은 **화면**(`canSave`)이 강제하고, Core 는 기존 nil 레코드·Mac 시드 같은 비UI 경로를 위해 nil 을 legal 상태로 남겨 뒀다(§3 "기존 nil 레코드는 읽기 가능"과 정합). Core 에서도 막아야 한다면 별도 지시가 필요하다.
