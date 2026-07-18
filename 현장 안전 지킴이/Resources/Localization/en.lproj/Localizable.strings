@@ -671,3 +671,9 @@
 "ra.item.saveFailed" = "Couldn't save the item. Check that the task and hazard are filled in and a risk level is chosen.";
 "ra.status.closed" = "Closed";
 "ra.status.actionsOpenFormat" = "%d corrective actions in progress";
+
+"ra.status.section" = "Closure";
+"ra.status.openItemsFormat" = "%d items awaiting a risk decision";
+"ra.status.openPostSharing" = "No results-sharing record";
+"ra.status.openCriteria" = "Criteria can't be read";
+"ra.status.openNoItems" = "No items";

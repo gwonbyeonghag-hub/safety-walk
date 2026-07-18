@@ -226,6 +226,78 @@ struct AssessmentItemEditingTests {
 
     // MARK: - commit 실패 원복
 
+    @Test("항목 수정이 commit 에 실패하면 모든 필드가 원복된다")
+    func failedUpdateRestoresEveryField() throws {
+        let ctx = try makeContext()
+        let hazardId = UUID()
+        let ra = try plannedAssessment(in: ctx, items: [
+            AssessmentDraft.ItemDraft(taskDescription: "굴착", hazardDescription: "붕괴",
+                                      currentControls: "흙막이", likelihood: 1, severity: 1,
+                                      riskLevel: .low, linkedHazardId: hazardId),
+        ])
+        try AssessmentStart.start(ra, criteria: criteria, now: when, in: ctx)
+        let item = try #require(ra.items?.first)
+        try item.confirmCriteriaDecision(under: criteria, at: when, by: "홍길동")
+        try ctx.save()
+        let priorUpdatedAt = ra.updatedAt
+
+        struct Boom: Error {}
+        #expect(throws: Boom.self) {
+            try AssessmentItemEditing.update(item, in: ra, task: "바뀐작업", hazard: "바뀐위험",
+                                             currentControls: "바뀐조치",
+                                             likelihood: 3, severity: 3, riskLevel: .high,
+                                             linkedHazardId: nil,
+                                             at: when.addingTimeInterval(60),
+                                             context: ctx, commit: { throw Boom() })
+        }
+
+        // 모든 필드가 편집 전 상태로 — 기준확인 3필드까지.
+        #expect(item.taskDescription == "굴착")
+        #expect(item.hazardDescription == "붕괴")
+        #expect(item.currentControls == "흙막이")
+        #expect(item.linkedHazardId == hazardId)
+        #expect(item.likelihood == 1)
+        #expect(item.severity == 1)
+        #expect(item.riskLevel == .low)
+        #expect(item.criteriaDecision == .withinThreshold)
+        #expect(item.decisionConfirmedBy == "홍길동")
+        #expect(ra.updatedAt == priorUpdatedAt)
+    }
+
+    @Test("항목 삭제가 commit 에 실패하면 항목이 되살아난다")
+    func failedRemoveRestoresItem() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, items: [itemDraft(), itemDraft(task: "운반", hazard: "협착")])
+        let target = try #require(ra.items?.first { $0.taskDescription == "굴착" })
+        let priorUpdatedAt = ra.updatedAt
+
+        struct Boom: Error {}
+        #expect(throws: Boom.self) {
+            try AssessmentItemEditing.remove(target, in: ra, at: when.addingTimeInterval(60),
+                                             context: ctx, commit: { throw Boom() })
+        }
+
+        #expect((ra.items ?? []).count == 2)
+        #expect((ra.items ?? []).contains { $0.taskDescription == "굴착" })
+        #expect(ra.updatedAt == priorUpdatedAt)
+        #expect(try ctx.fetch(FetchDescriptor<RiskAssessmentItem>()).count == 2)
+    }
+
+    @Test("손상된 기준으로는 항목을 평가·저장하지 않는다 (fail-closed)")
+    func corruptCriteriaRefusesItemWrites() throws {
+        let ctx = try makeContext()
+        let ra = try startedAssessment(in: ctx, items: [itemDraft()])
+        // 잠긴 기준의 매트릭스를 못 읽게 만든다 (CloudKit 손상 레코드 재현).
+        ra.criteria?.matrixData = Data("{ 손상".utf8)
+        try ctx.save()
+
+        #expect(throws: AssessmentItemError.criteriaUnreadable) {
+            try AssessmentItemEditing.add(to: ra, task: "추가", hazard: "위험",
+                                          likelihood: 1, severity: 1, at: when, context: ctx)
+        }
+        #expect((ra.items ?? []).count == 1)   // 기본 매트릭스로 조용히 대체하지 않는다
+    }
+
     @Test("항목 추가가 commit 에 실패하면 store 와 메모리 어디에도 남지 않는다")
     func failedAddLeavesNoPhantomItem() throws {
         let ctx = try makeContext()

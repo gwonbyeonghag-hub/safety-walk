@@ -55,6 +55,16 @@ public struct CriteriaMatrixSnapshot: Equatable {
     /// Maximum possible raw score for this matrix (likelihood × severity at full scale).
     public var maxScore: Int { likelihoodScale * severityScale }
 
+    /// The same matrix as a live `RiskMatrixConfig`, so a screen that draws a live band preview can
+    /// use **the assessment's locked matrix** instead of re-hardcoding 3×3 (WO LEGAL-2d-PATH). The
+    /// round-trip is lossless for the fields both types carry — `init(from:)` only normalizes the
+    /// open-ended top boundary down to `maxScore`, which is already this snapshot's real range.
+    public var asRiskMatrixConfig: RiskMatrixConfig {
+        RiskMatrixConfig(likelihoodScale: likelihoodScale,
+                         severityScale: severityScale,
+                         bands: bands.map { .init(maxScore: $0.maxScore, level: $0.level) })
+    }
+
     /// Default 3×3 (WO LEGAL-2b §5/§6): value-copied from `RiskMatrixConfig.threeByThree`
     /// (1~2 low, 3~4 medium, 5~9 high) — never re-hardcoded here.
     public static let threeByThree = CriteriaMatrixSnapshot(from: .threeByThree)

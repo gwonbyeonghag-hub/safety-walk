@@ -410,8 +410,13 @@ enum LocalizationKey: String {
     case raJurisdictionScheduleHint = "ra.jurisdiction.scheduleHint"
     case raItemDelete           = "ra.item.delete"
     case raItemSaveFailed       = "ra.item.saveFailed"
+    case raStatusSection        = "ra.status.section"
     case raStatusClosed         = "ra.status.closed"
     case raStatusActionsOpenFmt = "ra.status.actionsOpenFormat"
+    case raStatusOpenItemsFmt   = "ra.status.openItemsFormat"
+    case raStatusOpenPostSharing = "ra.status.openPostSharing"
+    case raStatusOpenCriteria   = "ra.status.openCriteria"
+    case raStatusOpenNoItems    = "ra.status.openNoItems"
 
     // MARK: - 비TBM 공유 기록 + 평가 확정 (WO LEGAL-2d)
     case raSharingSection       = "ra.sharing.section"

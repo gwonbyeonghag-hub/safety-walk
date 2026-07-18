@@ -117,8 +117,6 @@ final class RiskAssessmentLegal2dUITests: XCTestCase {
         app.buttons["테스트 현장"].firstMatch.tap()
         pickUSJurisdiction(app)   // WO LEGAL-2d-PATH §3: 관할 확인 필수
 
-        pickUSJurisdiction(app)
-
         // 1×1 = 1 → 기준 이내라 필수 개선조치가 없다 → 결정 확인만으로 확정 가능해진다.
         app.buttons["항목 추가"].tap()
         fillItem(app, task: "운반 작업", hazard: "협착", likelihood: "1", severity: "1")

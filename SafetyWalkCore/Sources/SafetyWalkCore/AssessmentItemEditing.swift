@@ -8,6 +8,7 @@ public enum AssessmentItemError: Error, Equatable {
     case emptyTaskDescription
     case emptyHazardDescription
     case unassessedItem             // 위험성 수준을 해결할 수 없음 (미평가 저장 금지)
+    case criteriaUnreadable         // 잠긴 기준 decode 실패 — 손상된 기준으로 평가하지 않는다(fail-closed)
 }
 
 /// 평가 항목의 원자 편집 — add / update / remove (WO LEGAL-2d-PATH §4).
@@ -87,11 +88,12 @@ public enum AssessmentItemEditing {
         do {
             try commit()
         } catch {
-            context.rollback()
-            // rollback 은 store 만 되돌린다 — inverse 를 먼저 끊고 in-place 로 제거해야 메모리에도
-            // 유령 항목이 남지 않는다(`CorrectiveActionEditing.add` 패턴).
+            // inverse 를 먼저 끊고 in-place 로 제거한 뒤 rollback 한다 — 관계가 살아 있으면 SwiftData 가
+            // `assessment.items` 를 다시 동기화해 메모리에 유령 항목이 남는다(`create` 와 같은 순서).
             item.riskAssessment = nil
             assessment.items?.removeAll { $0 === item }
+            context.delete(item)
+            context.rollback()
             assessment.updatedAt = priorUpdatedAt
             throw error
         }
@@ -109,12 +111,14 @@ public enum AssessmentItemEditing {
         likelihood: Int? = nil,
         severity: Int? = nil,
         riskLevel: RiskLevel? = nil,
+        linkedHazardId: UUID? = nil,
         at date: Date,
         context: ModelContext
     ) throws {
         try update(item, in: assessment, task: task, hazard: hazard, currentControls: currentControls,
                    likelihood: likelihood, severity: severity, riskLevel: riskLevel,
-                   at: date, context: context, commit: { try context.save() })
+                   linkedHazardId: linkedHazardId, at: date, context: context,
+                   commit: { try context.save() })
     }
 
     static func update(
@@ -126,6 +130,7 @@ public enum AssessmentItemEditing {
         likelihood: Int? = nil,
         severity: Int? = nil,
         riskLevel: RiskLevel? = nil,
+        linkedHazardId: UUID? = nil,
         at date: Date,
         context: ModelContext,
         commit: () throws -> Void
@@ -141,10 +146,11 @@ public enum AssessmentItemEditing {
         item.taskDescription = task.trimmed
         item.hazardDescription = hazard.trimmed
         item.currentControls = currentControls?.trimmedOrNil
+        item.linkedHazardId = linkedHazardId
         // 위험 입력은 기존 모델 API 로만 — 값이 실제로 바뀌면 그 안에서 기준확인이 무효화된다.
         if assessment.method.usesFrequencySeverity {
             item.updateFrequencySeverityInput(likelihood: likelihood, severity: severity,
-                                              using: matrix(for: assessment))
+                                              using: try matrix(for: assessment))
         } else {
             item.updateDirectRiskLevel(riskLevel)
         }
@@ -215,14 +221,20 @@ public enum AssessmentItemEditing {
         guard !hazard.sw_isBlank else { throw AssessmentItemError.emptyHazardDescription }
     }
 
-    /// 잠긴 기준이 있으면 그 매트릭스를, 없으면(planned) 기법 기본값을 쓴다 — 위험도 파생의 단일 소스.
-    private static func matrix(for assessment: RiskAssessment) -> CriteriaMatrixSnapshot {
+    /// 위험도 파생에 쓸 매트릭스 — 화면과 Core 가 같은 값을 쓰도록 하는 단일 소스.
+    ///
+    /// 잠긴 기준이 있으면 **반드시 그것을** 쓴다. decode 에 실패하면 기본 매트릭스로 조용히 대체하지
+    /// 않고 던진다 — 손상된 기준으로 항목을 "평가됨"으로 저장하면 fail-open 이 되기 때문이다
+    /// (SCHEMA_V3 §7 · LEGAL_2_ARCH §2.1 fail-closed). 기준이 아직 없는 `planned` 단계에서만
+    /// 기법 기본값을 쓴다.
+    static func matrix(for assessment: RiskAssessment) throws -> CriteriaMatrixSnapshot {
         let isFreq = assessment.method.usesFrequencySeverity
-        if let stored = assessment.criteria,
-           let decoded = try? AcceptabilityCriteria.decode(from: stored, usesFrequencySeverity: isFreq) {
-            return decoded.matrix
+        guard let stored = assessment.criteria else {
+            return AcceptabilityCriteria.makeDefault(usesFrequencySeverity: isFreq).matrix
         }
-        return AcceptabilityCriteria.makeDefault(usesFrequencySeverity: isFreq).matrix
+        guard let decoded = try? AcceptabilityCriteria.decode(from: stored, usesFrequencySeverity: isFreq)
+        else { throw AssessmentItemError.criteriaUnreadable }
+        return decoded.matrix
     }
 
     /// 저장될 위험성 수준을 미리 확정한다 — nil 이면 미평가이므로 **context 를 건드리기 전에** 거부한다.
@@ -230,7 +242,7 @@ public enum AssessmentItemEditing {
                                       likelihood: Int?, severity: Int?,
                                       direct: RiskLevel?) throws -> RiskLevel {
         let level = assessment.method.usesFrequencySeverity
-            ? matrix(for: assessment).inRangeBand(likelihood: likelihood, severity: severity)
+            ? try matrix(for: assessment).inRangeBand(likelihood: likelihood, severity: severity)
             : direct
         guard let level else { throw AssessmentItemError.unassessedItem }
         return level
@@ -246,12 +258,13 @@ public enum AssessmentItemEditing {
 
     /// 편집 전 필드 사본 — 실패한 commit 을 메모리에서 되돌린다(`rollback()` 은 store 만 되돌린다).
     private struct FieldSnapshot {
-        let task: String, hazard: String, controls: String?
+        let task: String, hazard: String, controls: String?, linkedHazardId: UUID?
         let likelihood: Int?, severity: Int?, riskLevel: RiskLevel?
         let decision: CriteriaDecision?, confirmedAt: Date?, confirmedBy: String?
 
         init(_ i: RiskAssessmentItem) {
             task = i.taskDescription; hazard = i.hazardDescription; controls = i.currentControls
+            linkedHazardId = i.linkedHazardId
             likelihood = i.likelihood; severity = i.severity; riskLevel = i.riskLevel
             decision = i.criteriaDecision
             confirmedAt = i.decisionConfirmedAt; confirmedBy = i.decisionConfirmedBy
@@ -259,6 +272,7 @@ public enum AssessmentItemEditing {
 
         func restore(to i: RiskAssessmentItem) {
             i.taskDescription = task; i.hazardDescription = hazard; i.currentControls = controls
+            i.linkedHazardId = linkedHazardId
             i.likelihood = likelihood; i.severity = severity; i.riskLevel = riskLevel
             i.criteriaDecision = decision
             i.decisionConfirmedAt = confirmedAt; i.decisionConfirmedBy = confirmedBy

@@ -197,8 +197,43 @@ struct SharingGateTests {
     func usHasNoPreSharingStartGate() throws {
         let ctx = try makeContext()
         let ra = try plannedAssessment(in: ctx, jurisdiction: .us)
+        // 공유 기록이 하나도 없음을 먼저 못박는다 — 게이트가 없어서 통과하는 것임이 분명해진다.
+        #expect((ra.sharingEvents ?? []).isEmpty)
+        #expect(!SharingEventPolicy.requiresPreSharingGate(ra))
+
         try AssessmentStart.start(ra, criteria: criteria, now: when, in: ctx)
         #expect(ra.status == .inProgress)
+    }
+
+    @Test("US 평가는 사전공유 없이 확정까지 갈 수 있다 (KR 전용 게이트 미적용)")
+    func usFinalizesWithoutAnySharing() throws {
+        let ctx = try makeContext()
+        let ra = try readyToFinalize(in: ctx, jurisdiction: .us, withPreSharing: false)
+        #expect((ra.sharingEvents ?? []).isEmpty)
+
+        #expect(throws: Never.self) {
+            try AssessmentFinalization.finalize(ra, now: when, in: ctx)
+        }
+        #expect(ra.status == .finalized)
+        // 사후 공유도 없지만 US 의 기존 종결 규칙은 그대로 — 기준 초과 0건이면 종결이다.
+        #expect(AssessmentClosure.isClosed(ra))
+        #expect(AssessmentClosure.openReason(ra) == nil)
+    }
+
+    @Test("KR 평가의 미종결 사유는 실제로 막고 있는 조건을 가리킨다")
+    func openReasonNamesTheRealBlocker() throws {
+        let ctx = try makeContext()
+        let ra = try readyToFinalize(in: ctx, jurisdiction: .kr, withPreSharing: true)
+        #expect(AssessmentClosure.openReason(ra) == .notFinalized)
+
+        try AssessmentFinalization.finalize(ra, now: when, in: ctx)
+        // 기준 초과 항목이 0건이므로 남은 조치는 없다 — 진짜 막는 것은 사후 공유 부재다.
+        #expect(AssessmentClosure.openReason(ra) == .postSharingMissing)
+
+        try SharingEventRecording.record(phase: .post, method: .written, in: ra,
+                                         target: "전 근로자", ownerName: "홍길동",
+                                         at: when, context: ctx)
+        #expect(AssessmentClosure.openReason(ra) == nil)
     }
 
     @Test("관할 미설정 평가에도 KR 게이트를 강제하지 않지만 법규 충족을 주장하지도 않는다")

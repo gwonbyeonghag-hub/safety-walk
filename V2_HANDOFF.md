@@ -1697,3 +1697,28 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 
 ## 남은 판단 (오너)
 - **`AssessmentAuthoring.create` 는 `jurisdiction: nil` 을 허용한다.** "저장 전 사용자 확인"은 **화면**(`canSave`)이 강제하고, Core 는 기존 nil 레코드·Mac 시드 같은 비UI 경로를 위해 nil 을 legal 상태로 남겨 뒀다(§3 "기존 nil 레코드는 읽기 가능"과 정합). Core 에서도 막아야 한다면 별도 지시가 필요하다.
+
+### LEGAL-2d-PATH /code-review 결과 (기준점 `d353132`, Standards·Spec 2축)
+
+**반영함 (하드)**
+- **종결 표시가 틀린 사유를 말했다.** 라벨과 값이 같은 키(`ra.status.closed`)라 "종결 / 종결"로 렌더됐고, 미종결일 때는 항상 "개선조치 N건 진행 중"이라 **실제 막고 있는 조건과 어긋났다**(필수 조치 0건인데 사후 공유가 없어 미종결인 golden path 상황에서 "개선조치 0건 진행 중"이라고 말함). → Core 에 **`AssessmentClosure.openReason`** 을 추가해 `isClosed` 와 **같은 순서로** 사유를 파생하고, 화면은 그 값을 표시만 한다. 라벨은 `ra.status.section` 으로 분리.
+- **손상된 기준으로 항목을 평가·저장했다(fail-open).** `AssessmentItemEditing.matrix(for:)` 가 decode 실패 시 기본 매트릭스로 조용히 대체했다 → `criteriaUnreadable` 로 **던지도록** 수정(SCHEMA_V3 §7 fail-closed). 회귀 테스트 추가.
+- **편집기 매트릭스가 Core 와 달랐다.** 상세의 항목 시트가 `RiskMatrixConfig.threeByThree` 를 하드코딩해, 잠긴 기준이 다른 매트릭스면 화면의 실시간 밴드와 저장값이 갈릴 수 있었다 → 잠긴 기준에서 도출한 매트릭스를 넘기도록 수정(`CriteriaMatrixSnapshot.asRiskMatrixConfig` 추가).
+- **`add`/`remove` 의 rollback 순서가 주석·`create` 와 반대였다** → inverse 를 먼저 끊고 지운 뒤 rollback 하도록 통일.
+- **`update` 가 `linkedHazardId` 를 조용히 버렸다**(`add` 에는 있는데 `update` 에 없어 편집 시 소실) → 파라미터 추가 + `FieldSnapshot` 에도 포함.
+- 죽은 `EmptyView()` 제거, 2d UI 테스트의 중복 `pickUSJurisdiction` 제거.
+
+**반영함 (누락 테스트 — §6 명시 항목)**
+- **US 는 사전공유 없이 시작·확정 가능**: 공유 기록이 0건임을 못박고 시작→확정→종결까지 통과하는 테스트 2건.
+- **update / remove 의 commit 실패 원복**: 9개 필드 전부 원복, 삭제 실패 시 항목 부활.
+- **미종결 사유가 진짜 blocker 를 가리키는지**: `notFinalized → postSharingMissing → nil` 전이 검증.
+
+**의도적 유지 (근거)**
+- **`AssessmentAuthoring.create` 가 `jurisdiction: nil` 을 허용**: "저장 전 확인"은 화면(`canSave`)이 강제하고, Core 는 §3 "기존 nil 레코드는 읽기 가능"과 Mac 시드 같은 비UI 경로를 위해 nil 을 legal 상태로 둔다. Core 에서도 막을지는 **오너 판단**.
+- **편집기 `canSave` 를 `task || hazard` → `task && hazard` 로 조인 것**: Core 가 둘 다 요구하므로, 느슨하면 저장을 눌렀다가 거부당한다. 위험도까지 요구하는 것은 **즉시 영속하는 상세 경로에서만**(`requiresResolvedRisk`) — 생성 화면의 LEGAL-0 "미평가 초안" UX 는 그대로 유지된다.
+- **PlanAssessmentView 는 관할과 무관하게 `scheduledAt` 을 저장**: 일정을 잡는 화면이라 날짜 입력이 항상 노출된다. 생성 화면은 KR 일 때만 필드를 보여주므로 그때만 저장한다.
+- swipeActions 의 `ra_item_edit`/`ra_item_delete` 가 행마다 같은 식별자인 점: 스와이프는 한 번에 한 행만 액션을 노출하므로 실사용·테스트 모두 모호성이 없다.
+
+### 선재 실패 (이번 변경과 무관 — 기준점에서 재현 확인)
+`IPadRiskAssessmentSheetUITests` 2건(`testToolbarButtonOpensCreateSheet`, `testEmptyStateButtonOpensCreateSheet`)이 실패한다. **기준점 `d353132` 를 별도 워크트리에 꺼내 같은 iPad destination 으로 돌린 결과 동일하게 2건 실패** — LEGAL-2d-PATH 가 만든 문제가 아니다. iPad 생성 시트가 열리지 않는 별도 이슈로 남긴다(같은 파일의 세 번째 테스트는 통과).
+또 `RiskAssessmentUITests.testFrequencySeverityEndToEnd` 가 1회 "Lost connection to the application" 으로 실패했으나 재실행 시 통과 — 시뮬레이터 플레이크.

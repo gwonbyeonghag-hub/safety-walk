@@ -33,4 +33,43 @@ public enum AssessmentClosure {
         guard SharingEventPolicy.satisfiesPostSharingGate(assessment) else { return false }
         return true
     }
+
+    /// 아직 종결이 아닌 **이유**. 화면이 "개선조치 N건 진행 중" 같은 문구를 스스로 추측하면 실제 막고 있는
+    /// 조건과 어긋난다(예: 필수 조치가 0건인데 사후 공유가 없어서 미종결인 경우). 그래서 사유도 `isClosed`
+    /// 와 **같은 순서로** 여기서 파생한다 — 사실만 말하고 판정하지 않는다.
+    public enum OpenReason: Equatable, Sendable {
+        case notFinalized                       // 아직 확정 전
+        case criteriaUnavailable                // 기준 누락·손상 (fail-closed)
+        case noItems
+        case itemsIncomplete(count: Int)        // 위험도 미입력 또는 결정이 현재 기준과 불일치
+        case correctiveActionsOpen(count: Int)  // 효과확인까지 끝나지 않은 필수 조치
+        case postSharingMissing                 // KR: 현재 상태와 일치하는 사후 공유 없음
+    }
+
+    /// 종결이면 `nil`, 아니면 첫 번째로 걸린 사유.
+    public static func openReason(_ assessment: RiskAssessment) -> OpenReason? {
+        guard assessment.status == .finalized else { return .notFinalized }
+        guard let stored = assessment.criteria, stored.lockedAt != nil,
+              let criteria = try? AcceptabilityCriteria.decode(
+                from: stored, usesFrequencySeverity: assessment.method.usesFrequencySeverity)
+        else { return .criteriaUnavailable }
+        guard let items = assessment.items, !items.isEmpty else { return .noItems }
+
+        let incomplete = items.filter {
+            $0.riskLevel == nil || !$0.hasCurrentCriteriaDecision(under: criteria)
+        }.count
+        if incomplete > 0 { return .itemsIncomplete(count: incomplete) }
+
+        // 기준 초과 항목이 요구하는 조치 중 아직 효과확인까지 끝나지 않은 것.
+        var openActions = 0
+        for item in items where CorrectiveActionPolicy.needsCorrectiveActionPlan(item) {
+            let actions = item.correctiveActions ?? []
+            if actions.isEmpty { openActions += 1; continue }   // 계획 자체가 없음
+            openActions += actions.filter { !CorrectiveActionPolicy.isEffectivelyResolved($0) }.count
+        }
+        if openActions > 0 { return .correctiveActionsOpen(count: openActions) }
+
+        guard SharingEventPolicy.satisfiesPostSharingGate(assessment) else { return .postSharingMissing }
+        return nil
+    }
 }

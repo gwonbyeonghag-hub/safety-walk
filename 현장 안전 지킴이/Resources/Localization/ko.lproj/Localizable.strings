@@ -671,3 +671,9 @@
 "ra.item.saveFailed" = "항목을 저장하지 못했습니다. 작업과 유해위험요인을 입력하고 위험성을 선택했는지 확인해 주세요.";
 "ra.status.closed" = "종결";
 "ra.status.actionsOpenFormat" = "개선조치 %d건 진행 중";
+
+"ra.status.section" = "종결 여부";
+"ra.status.openItemsFormat" = "위험성 결정 미완료 %d건";
+"ra.status.openPostSharing" = "사후 공유 기록 없음";
+"ra.status.openCriteria" = "기준을 읽을 수 없음";
+"ra.status.openNoItems" = "항목 없음";

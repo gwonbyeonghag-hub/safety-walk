@@ -89,9 +89,11 @@ struct RiskAssessmentDetailView: View {
         }
         .sheet(item: $itemSheet) { sheet in
             // 기존 항목 편집기를 그대로 재사용한다 — 중복 폼을 만들지 않는다(WO LEGAL-2d-PATH §4).
+            // 편집기의 실시간 밴드는 Core 가 저장에 쓰는 것과 **같은 매트릭스**를 써야 한다 —
+            // 3×3 을 하드코딩하면 잠긴 기준이 다른 매트릭스일 때 화면과 저장값이 어긋난다.
             RiskAssessmentItemEditorView(
                 method: assessment.method,
-                matrix: RiskMatrixConfig.threeByThree,
+                matrix: editorMatrix,
                 draft: sheet.draft(for: assessment.method),
                 requiresResolvedRisk: true) { edited in
                     saveItem(edited, existing: sheet.item)
@@ -339,8 +341,6 @@ struct RiskAssessmentDetailView: View {
                 Text(LocalizationKey.raItemsEmpty.localized)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-            } else {
-                EmptyView()
             }
             itemRows(criteria: criteria)
             // WO LEGAL-2d-PATH §4: 항목은 planned/inProgress 에서 작성·수정한다 (finalized 에 잠김).
@@ -358,28 +358,48 @@ struct RiskAssessmentDetailView: View {
     /// 항목 편집 가능 여부 — Core 규칙과 같은 단일 소스.
     private var canEditItems: Bool { AssessmentItemEditing.allowsItemEditing(assessment) }
 
-    /// 종결 여부는 `AssessmentClosure.isClosed` 파생을 그대로 읽는다. 아직 종결이 아니면 남은 개선조치
-    /// 건수를 사실로 알린다 — "미준수" 같은 판정 문구는 쓰지 않는다.
+    /// 항목 편집기가 쓸 매트릭스 — 잠긴 기준이 있으면 그것, 없으면(planned) 기법 기본값.
+    /// Core 의 `AssessmentItemEditing.matrix(for:)` 와 같은 규칙이라 화면과 저장값이 어긋나지 않는다.
+    /// 기준이 손상돼 읽을 수 없으면 Core 가 저장을 거부하므로, 화면은 기본값으로 그리되 저장은 막힌다.
+    private var editorMatrix: RiskMatrixConfig {
+        guard let decoded = decodedCriteria else { return RiskMatrixConfig.threeByThree }
+        return decoded.matrix.asRiskMatrixConfig
+    }
+
+    /// 종결 여부와 **미종결 사유**를 모두 Core 파생(`AssessmentClosure`)에서 읽는다. 화면이 사유를 따로
+    /// 추측하면 실제로 막고 있는 조건과 어긋난다(예: 필수 조치가 0건인데 사후 공유가 없어 미종결인 경우
+    /// "개선조치 0건 진행 중"이라고 말하게 된다). 사실만 말하고 판정 문구는 쓰지 않는다.
     @ViewBuilder
     private var closedStatusRow: some View {
-        let openActions = (assessment.items ?? [])
-            .flatMap { $0.correctiveActions ?? [] }
-            .filter { !CorrectiveActionPolicy.isEffectivelyResolved($0) }
-            .count
-        HStack {
-            Text(LocalizationKey.raStatusClosed.localized).foregroundStyle(.secondary)
-            Spacer()
-            if AssessmentClosure.isClosed(assessment) {
+        HStack(alignment: .top) {
+            Text(LocalizationKey.raStatusSection.localized).foregroundStyle(.secondary)
+            Spacer(minLength: 8)
+            if let reason = AssessmentClosure.openReason(assessment) {
+                Text(openReasonText(reason))
+                    .multilineTextAlignment(.trailing)
+                    .accessibilityIdentifier("ra_closed_no")
+            } else {
                 Label(LocalizationKey.raStatusClosed.localized, systemImage: "checkmark.seal")
                     .labelStyle(.titleAndIcon)
                     .accessibilityIdentifier("ra_closed_yes")
-            } else {
-                Text(String(format: LocalizationKey.raStatusActionsOpenFmt.localized, openActions))
-                    .multilineTextAlignment(.trailing)
-                    .accessibilityIdentifier("ra_closed_no")
             }
         }
         .font(.subheadline)
+    }
+
+    private func openReasonText(_ reason: AssessmentClosure.OpenReason) -> String {
+        switch reason {
+        case .notFinalized, .criteriaUnavailable:
+            return LocalizationKey.raStatusOpenCriteria.localized
+        case .noItems:
+            return LocalizationKey.raStatusOpenNoItems.localized
+        case .itemsIncomplete(let count):
+            return String(format: LocalizationKey.raStatusOpenItemsFmt.localized, count)
+        case .correctiveActionsOpen(let count):
+            return String(format: LocalizationKey.raStatusActionsOpenFmt.localized, count)
+        case .postSharingMissing:
+            return LocalizationKey.raStatusOpenPostSharing.localized
+        }
     }
 
     @ViewBuilder
