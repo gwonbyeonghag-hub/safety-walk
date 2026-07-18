@@ -32,7 +32,7 @@ struct AssessmentFinalizeReadyTests {
         try item.confirmCriteriaDecision(under: criteria, at: when, by: "홍길동")
         ctx.insert(item)
         // LEGAL-2c: a 기준 초과 item requires ≥1 개선조치 계획 to be finalize-ready.
-        let action = try CorrectiveAction(item: item, measure: "난간 설치")
+        let action = try CorrectiveActionPolicy.makeDraft(item: item, measure: "난간 설치")
         ctx.insert(action)
         item.correctiveActions = [action]
         ra.items = [item]

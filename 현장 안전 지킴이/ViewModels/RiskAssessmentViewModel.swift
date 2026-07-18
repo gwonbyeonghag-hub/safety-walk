@@ -220,9 +220,13 @@ final class RiskAssessmentViewModel {
     /// Builds a `CorrectiveAction` for the draft, or nil when there is no 감소대책(measure). WO
     /// LEGAL-2c: 최초 생성 조치는 항상 `.notStarted`(이행일·개선후위험도·효과확인 비어 있음) — 그 수명주기는
     /// 상세의 개선조치 편집 화면에서만 진행한다. 빈 조치는 만들지 않는다(빈 개선조치 저장 금지).
+    ///
+    /// 생성은 Core 의 검증 관문 `CorrectiveActionPolicy.makeDraft` 를 통해서만 한다 — 모델 생성자는
+    /// 패키지 외부에 노출되지 않는다. 이 경로는 평가가 아직 `.planned` 인 최초 작성 단계라
+    /// `CorrectiveActionEditing.add`(inProgress/finalized 전용 원자 편집 API)를 쓸 수 없다.
     private func makeCorrectiveAction(from d: DraftItem, item: RiskAssessmentItem) throws -> CorrectiveAction? {
         guard let measure = d.reductionMeasure.trimmedOrNil else { return nil }
-        return try CorrectiveAction(
+        return try CorrectiveActionPolicy.makeDraft(
             item: item,
             measure: measure,
             responsibleName: d.responsibleName.trimmedOrNil,

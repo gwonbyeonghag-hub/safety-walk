@@ -77,39 +77,36 @@ enum RiskAssessmentReport {
             .frame(width: width, alignment: .leading)
     }
 
-    /// Width of the item columns (No·Task·Hazard·Controls·Risk) — a continuation row spans this with a
-    /// clear spacer so the reduction/owner/status columns stay aligned under their headers.
-    private static let leadingWidth = Col.no + Col.task + Col.hazard + Col.controls + Col.risk
-
-    /// One item → 1..N page-placeable row blocks: the item info prints once on the first row, and each
-    /// corrective action gets its own block (deterministic order). Zero actions → a single item row.
-    /// The item-info columns are blank on continuation rows; the heavy separator marks the item's end.
+    /// One item → 1..N page-placeable row blocks, one per corrective action (deterministic order);
+    /// zero actions → a single row with the 미기록 action columns.
+    ///
+    /// WO LEGAL-2c 5차 P1: every row REPEATS the item columns (번호·공정·작업·유해위험요인·현재
+    /// 안전조치·위험성). `ReportRenderer` packs blocks greedily and knows nothing about item boundaries,
+    /// so any row can land at the top of a page — a row that omitted the item info would be unreadable
+    /// there. Repeating costs a few extra pages and buys per-page traceability, which a 위험성평가표
+    /// (a legal record) needs. The heavy separator still marks where an item ends.
     private static func rowBlocks(index: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod) -> [AnyView] {
         let actions = CorrectiveActionPolicy.sortedCorrectiveActions(item)
         guard !actions.isEmpty else {
             return [AnyView(rowBlock(index: index, item: item, method: method,
-                                     action: nil, showsItemInfo: true, isItemEnd: true))]
+                                     action: nil, isItemEnd: true))]
         }
         return actions.enumerated().map { i, action in
             AnyView(rowBlock(index: index, item: item, method: method,
-                             action: action, showsItemInfo: i == 0, isItemEnd: i == actions.count - 1))
+                             action: action, isItemEnd: i == actions.count - 1))
         }
     }
 
-    /// A full-width row: item columns (first row) or a clear spacer (continuation), then the one
-    /// action's reduction·owner·status. `isItemEnd` draws the item separator; inner rows draw a hairline.
+    /// A full-width row: the item columns (always) + one action's reduction·owner·status.
+    /// `isItemEnd` draws the item separator; inner rows draw a hairline.
     private static func rowBlock(index: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod,
-                                 action: CorrectiveAction?, showsItemInfo: Bool, isItemEnd: Bool) -> some View {
+                                 action: CorrectiveAction?, isItemEnd: Bool) -> some View {
         HStack(alignment: .top, spacing: 0) {
-            if showsItemInfo {
-                cell("\(index)", Col.no)
-                cell(item.taskDescription, Col.task)
-                cell(item.hazardDescription, Col.hazard)
-                cell(item.currentControls ?? "", Col.controls)
-                riskCell(item: item, method: method)
-            } else {
-                Color.clear.frame(width: leadingWidth, height: 1)
-            }
+            cell("\(index)", Col.no)
+            cell(item.taskDescription, Col.task)
+            cell(item.hazardDescription, Col.hazard)
+            cell(item.currentControls ?? "", Col.controls)
+            riskCell(item: item, method: method)
             actionCell(action?.measure, Col.reduction)                                  // 감소대책 (P3: 빈 셀 → 미기록)
             ownerSubCell(action)                                                         // 담당·기한 (P3: 빈 담당 → 미기록)
             actionCell(action.map { $0.status.localizedLabel }, Col.status)             // 상태

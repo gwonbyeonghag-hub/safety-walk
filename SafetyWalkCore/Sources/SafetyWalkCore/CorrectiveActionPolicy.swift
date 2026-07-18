@@ -7,6 +7,32 @@ import Foundation
 /// `CorrectiveActionEditing` ops in this module, which own precondition checks + atomic persistence).
 public enum CorrectiveActionPolicy {
 
+    // MARK: - Create gate
+
+    /// The ONLY way to bring a `CorrectiveAction` into existence outside this package (the model's own
+    /// initializer is `internal`). Validates and returns a draft; it never **saves** — committing is the
+    /// caller's job, or `CorrectiveActionEditing.add`'s when the assessment is already editable. (Note
+    /// SwiftData registers the new object into `item`'s context on its own, via the relationship — the
+    /// factory issues no `insert`, but the draft is not detached either.)
+    ///
+    /// Why a separate create gate exists (WO LEGAL-2c 5차): `add` is the atomic EDIT op and refuses a
+    /// `.planned` assessment, but the 최초 작성 경로 (평가 생성 화면·Mac 시드) assembles items and their
+    /// 개선조치 while the assessment is still `.planned`. That path needs the same validation without
+    /// the editable-state precondition — this factory, not a direct model construction.
+    ///
+    /// Guarantees: 비공백 감소대책(공백만이면 `emptyMeasure`), 항상 `.notStarted`, 이행일·개선후위험도·
+    /// 효과확인 3필드·증거사진은 전부 nil (the initializer takes no such parameters).
+    public static func makeDraft(
+        item: RiskAssessmentItem,
+        measure: String,
+        responsibleName: String? = nil,
+        dueDate: Date? = nil
+    ) throws -> CorrectiveAction {
+        guard !measure.sw_isBlank else { throw CorrectiveActionError.emptyMeasure }
+        return CorrectiveAction(item: item, measure: measure,
+                                responsibleName: responsibleName, dueDate: dueDate)
+    }
+
     // MARK: - Pure judgement (CorrectiveAction)
 
     /// 조치 필요 여부 = 부모 item.criteriaDecision == exceedsThreshold 에서 파생(저장 안 함, 교정 #2).

@@ -60,10 +60,10 @@ public enum CorrectiveActionEditing {
             throw CorrectiveActionError.itemNotInAssessment
         }
 
-        // Sealed create contract: always .notStarted, non-blank measure enforced by the throwing init
-        // (no separate requireMeasure here — the init is the single measure gate for creation).
-        let action = try CorrectiveAction(item: item, measure: measure,
-                                          responsibleName: responsibleName, dueDate: dueDate)
+        // Single create gate: `makeDraft` validates 비공백 감소대책 and guarantees .notStarted with empty
+        // 이행일·개선후위험도·효과확인 (no separate requireMeasure here — the factory owns that rule).
+        let action = try CorrectiveActionPolicy.makeDraft(item: item, measure: measure,
+                                                          responsibleName: responsibleName, dueDate: dueDate)
 
         let priorUpdatedAt = assessment.updatedAt
         context.insert(action)

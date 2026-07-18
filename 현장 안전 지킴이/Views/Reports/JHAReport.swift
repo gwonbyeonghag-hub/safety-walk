@@ -70,23 +70,30 @@ enum JHAReport {
             .frame(width: width, alignment: .leading)
     }
 
-    /// Width of the leading columns (Step·Job Step·Hazards) — a recommended-control row spans this with
-    /// a clear spacer so its measure sits under the Controls header (mirrors RiskAssessmentReport.leadingWidth).
-    private static let leadingWidth = Col.step + Col.task + Col.hazards
-
-    /// One job step → its item row plus one page-placeable row per corrective action (recommended
-    /// control). The controls column reads top-to-bottom: the step's own controls, then each measure —
-    /// so every action in the 1:N set is preserved and can flow onto the next page instead of clipping.
+    /// One job step → its own row (the step's current controls) plus one page-placeable row per
+    /// corrective action (recommended control) — so every action in the 1:N set is preserved and can
+    /// flow onto the next page instead of clipping.
+    ///
+    /// WO LEGAL-2c 5차 P1: every row REPEATS Step·Job Step·Hazards·Risk and varies only the Controls
+    /// column. `ReportRenderer` packs blocks greedily with no notion of item boundaries, so a
+    /// recommended-control row can open a page; without the step identity it would be unattributable.
     private static func rowBlocks(step: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod) -> [AnyView] {
         let actions = CorrectiveActionPolicy.sortedCorrectiveActions(item)
-        var blocks: [AnyView] = [AnyView(itemRow(step: step, item: item, method: method, isItemEnd: actions.isEmpty))]
+        var blocks: [AnyView] = [AnyView(row(step: step, item: item, method: method,
+                                             controls: item.currentControls ?? "",
+                                             isItemEnd: actions.isEmpty))]
         for (i, action) in actions.enumerated() {
-            blocks.append(AnyView(actionRow(action: action, isItemEnd: i == actions.count - 1)))
+            blocks.append(AnyView(row(step: step, item: item, method: method,
+                                      controls: action.measure ?? "",
+                                      isItemEnd: i == actions.count - 1)))
         }
         return blocks
     }
 
-    private static func itemRow(step: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod, isItemEnd: Bool) -> some View {
+    /// A full-width row: Step·Job Step·Hazards·Risk (always, for per-page traceability) with `controls`
+    /// holding either the step's current controls or one recommended control (a 개선조치's 감소대책).
+    private static func row(step: Int, item: RiskAssessmentItem, method: RiskAssessmentMethod,
+                            controls: String, isItemEnd: Bool) -> some View {
         HStack(spacing: 0) {
             Text("\(step)")
                 .font(.system(size: 9, weight: .bold)).monospacedDigit()
@@ -95,7 +102,7 @@ enum JHAReport {
                 .frame(width: Col.step, alignment: .center)
             cell(item.taskDescription, Col.task)
             cell(item.hazardDescription, Col.hazards)
-            cell(item.currentControls ?? "", Col.controls)   // step's own controls; measures follow as rows
+            cell(controls, Col.controls)
             VStack(spacing: 2) {
                 if let level = item.riskLevel {
                     ReportRiskBand(level: level)
@@ -111,20 +118,6 @@ enum JHAReport {
             }
             .padding(.horizontal, 3).padding(.vertical, 6)
             .frame(width: Col.risk, alignment: .center)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(.black.opacity(isItemEnd ? 0.12 : 0.06)).frame(height: 0.5)
-        }
-    }
-
-    /// A recommended-control row: one corrective action's measure in the Controls column, aligned under
-    /// its header via a clear leading spacer; step/task/hazards/risk are blank (continuation of the step).
-    private static func actionRow(action: CorrectiveAction, isItemEnd: Bool) -> some View {
-        HStack(spacing: 0) {
-            Color.clear.frame(width: leadingWidth, height: 1)
-            cell(action.measure ?? "", Col.controls)
-            Color.clear.frame(width: Col.risk, height: 1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottom) {

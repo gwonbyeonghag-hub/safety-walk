@@ -53,7 +53,7 @@ final class ReportRenderingTests: XCTestCase {
             ctx.insert(item)
             // Improvement fields live on CorrectiveAction (SCHEMA_V3 §4); the report renders the
             // reduction/owner/status columns from the item's 1:N corrective actions (WO LEGAL-2c).
-            let action = try CorrectiveAction(item: item, measure: "감소대책 항목 \(i + 1)",
+            let action = try CorrectiveActionPolicy.makeDraft(item: item, measure: "감소대책 항목 \(i + 1)",
                                               responsibleName: "담당\(i + 1)", dueDate: Date())
             ctx.insert(action)
             items.append(item)
@@ -81,7 +81,7 @@ final class ReportRenderingTests: XCTestCase {
                 currentControls: "LOTO; barricade exclusion zone \(i + 1)",
                 likelihood: l, severity: s, riskLevel: level, sortOrder: i)
             ctx.insert(item)
-            let action = try CorrectiveAction(item: item, measure: "Add spotter; PPE check \(i + 1)")
+            let action = try CorrectiveActionPolicy.makeDraft(item: item, measure: "Add spotter; PPE check \(i + 1)")
             ctx.insert(action)
             items.append(item)
         }
@@ -158,7 +158,7 @@ final class ReportRenderingTests: XCTestCase {
         for i in 0..<28 {
             let marker = String(format: "MRK%02d", i)
             markers.append(marker)
-            let action = try CorrectiveAction(
+            let action = try CorrectiveActionPolicy.makeDraft(
                 item: item,
                 measure: "감소대책 안전대 착용 및 안전난간 보강 점검 실시 [\(marker)]",
                 responsibleName: "담당\(i)", dueDate: Date())
@@ -197,7 +197,7 @@ final class ReportRenderingTests: XCTestCase {
         for i in 0..<28 {
             let marker = String(format: "MRK%02d", i)
             markers.append(marker)
-            let action = try CorrectiveAction(
+            let action = try CorrectiveActionPolicy.makeDraft(
                 item: item,
                 measure: "Add spotter, verify anchor points and inspect PPE before work [\(marker)]",
                 responsibleName: "Owner \(i)")
@@ -217,6 +217,107 @@ final class ReportRenderingTests: XCTestCase {
         for m in markers {
             XCTAssertEqual(text.components(separatedBy: m).count - 1, 1, "\(m) must appear exactly once (no duplication)")
         }
+    }
+
+    // MARK: - WO LEGAL-2c 5차 P1: 조치 행이 그 자체로 부모 항목을 식별할 수 있는가
+
+    /// Per-page selectable text (PDFKit) — page-boundary claims need per-page, not whole-document, text.
+    private func pageTexts(_ url: URL) -> [String] {
+        guard let doc = PDFDocument(url: url) else { return [] }
+        return (0..<doc.pageCount).map { doc.page(at: $0)?.string ?? "" }
+    }
+
+    /// Asserts the report's core 1:N guarantees plus per-page traceability: on EVERY page that shows a
+    /// corrective action, the parent item's task/hazard identifiers must be on that same page. A reader
+    /// holding page 2 alone must still be able to tell which 항목 those 개선조치 belong to.
+    private func assertActionsTraceablePerPage(
+        url: URL, markers: [String], taskMarker: String, hazardMarker: String,
+        minPages: Int = 2, file: StaticString = #filePath, line: UInt = #line
+    ) {
+        let pages = pageTexts(url)
+        XCTAssertGreaterThanOrEqual(pages.count, minPages,
+            "one item with \(markers.count) actions must span ≥\(minPages) pages", file: file, line: line)
+
+        let whole = pages.joined(separator: "\n")
+        let missing = markers.filter { !whole.contains($0) }
+        XCTAssertTrue(missing.isEmpty, "no action may be truncated — missing: \(missing)", file: file, line: line)
+        for m in markers {
+            XCTAssertEqual(whole.components(separatedBy: m).count - 1, 1,
+                           "\(m) must appear exactly once (no duplication)", file: file, line: line)
+        }
+
+        for (index, text) in pages.enumerated() {
+            let actionsHere = markers.filter { text.contains($0) }
+            guard !actionsHere.isEmpty else { continue }
+            XCTAssertTrue(text.contains(taskMarker),
+                "page \(index + 1) renders actions \(actionsHere) but carries no parent task identifier",
+                file: file, line: line)
+            XCTAssertTrue(text.contains(hazardMarker),
+                "page \(index + 1) renders actions \(actionsHere) but carries no parent hazard identifier",
+                file: file, line: line)
+        }
+    }
+
+    func testRiskAssessmentReportKeepsItemIdentityOnEveryActionPage() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                        siteId: UUID(), siteName: "○○건설 1현장", assessorName: "홍길동")
+        ctx.insert(assessment)
+        let item = RiskAssessmentItem(
+            taskDescription: "고소 작업 TSKMRK 외부 비계 설치",
+            hazardDescription: "추락·낙하물 위험 HAZMRK",
+            currentControls: "안전난간 설치",
+            likelihood: 3, severity: 3, riskLevel: .high, sortOrder: 0)
+        ctx.insert(item)
+
+        var markers: [String] = []
+        for i in 0..<28 {
+            let marker = String(format: "MRK%02d", i)
+            markers.append(marker)
+            let action = try CorrectiveActionPolicy.makeDraft(
+                item: item,
+                measure: "감소대책 안전대 착용 및 안전난간 보강 [\(marker)]",
+                responsibleName: "담당\(i)", dueDate: Date())
+            ctx.insert(action)
+        }
+        assessment.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(RiskAssessmentReport.pdfURL(for: assessment), "report URL nil")
+        attachPages(url, name: "risk_actions_traceable")
+        assertActionsTraceablePerPage(url: url, markers: markers,
+                                      taskMarker: "TSKMRK", hazardMarker: "HAZMRK")
+    }
+
+    func testJHAReportKeepsStepIdentityOnEveryActionPage() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .jsa,
+                                        siteId: UUID(), siteName: "Plant A — Line 2", assessorName: "J. Park")
+        ctx.insert(assessment)
+        let item = RiskAssessmentItem(
+            taskDescription: "Erect exterior scaffold TSKMRK",
+            hazardDescription: "Fall / falling-object hazard HAZMRK",
+            currentControls: "Guardrail installed",
+            likelihood: 3, severity: 3, riskLevel: .high, sortOrder: 0)
+        ctx.insert(item)
+
+        var markers: [String] = []
+        for i in 0..<28 {
+            let marker = String(format: "MRK%02d", i)
+            markers.append(marker)
+            let action = try CorrectiveActionPolicy.makeDraft(
+                item: item,
+                measure: "Add spotter, verify anchors, inspect PPE [\(marker)]",
+                responsibleName: "Owner \(i)")
+            ctx.insert(action)
+        }
+        assessment.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(JHAReport.pdfURL(for: assessment), "JHA URL nil")
+        attachPages(url, name: "jha_actions_traceable")
+        assertActionsTraceablePerPage(url: url, markers: markers,
+                                      taskMarker: "TSKMRK", hazardMarker: "HAZMRK")
     }
 
     private func dummyImage() -> UIImage {

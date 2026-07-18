@@ -275,7 +275,7 @@ struct CorrectiveActionEditingTests {
     @Test func isEffectivenessCompleteRequiresCompletedStatus() throws {
         let ctx = try makeContext()
         let (_, item) = try startedAssessment(in: ctx)
-        let action = try CorrectiveAction(item: item, measure: "난간")
+        let action = try CorrectiveActionPolicy.makeDraft(item: item, measure: "난간")
         action.status = .inProgress
         action.implementedAt = when
         action.postRiskLevel = .low
@@ -337,26 +337,11 @@ struct CorrectiveActionEditingTests {
         #expect(try fresh.fetch(FetchDescriptor<CorrectiveAction>()).count == 2)
     }
 
-    // MARK: - 생성 계약 (반송 3차): 공개 생성자로 빈/임의 상태 조치 생성 불가
-
-    @Test func constructorRejectsBlankMeasure() throws {
-        let item = RiskAssessmentItem()
-        #expect(throws: CorrectiveActionError.emptyMeasure) {
-            _ = try CorrectiveAction(item: item, measure: "   ")
-        }
-    }
-
-    /// 공개 생성자는 status·postRiskLevel 인자를 받지 않으므로 최초 조치는 항상 미착수·빈 완료필드.
-    @Test func constructorCreatesNotStartedEmpty() throws {
-        let item = RiskAssessmentItem()
-        let action = try CorrectiveAction(item: item, measure: "난간 설치", responsibleName: "김안전")
-        #expect(action.status == .notStarted)
-        #expect(action.implementedAt == nil)
-        #expect(action.postRiskLevel == nil)
-        #expect(action.effectivenessResult == nil)
-        #expect(action.measure == "난간 설치")
-        #expect(action.responsibleName == "김안전")
-    }
+    // MARK: - 생성 계약 (반송 5차): `CorrectiveActionDraftTests` 로 이관
+    //
+    // "빈/임의 상태 조치 생성 불가" 계약은 그대로 유지되지만, 그 관문이 3차의 throwing 생성자에서 5차의
+    // `CorrectiveActionPolicy.makeDraft` 로 옮겨졌다(@Model 은 업무 검증을 소유하지 않는다). 동일한
+    // 단언은 `CorrectiveActionDraftTests` 가 factory seam 에서 수행한다.
 
     // MARK: - 손상 triplet 초기화 (반송 3차)
 

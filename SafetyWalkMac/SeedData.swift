@@ -158,10 +158,11 @@ enum SeedData {
         // 초과여부 결정은 seedLockAndConfirm 에서 잠긴 기준 기반으로 확정한다(임의 주입 금지).
         it.riskAssessment = ra
         context.insert(it)
-        // WO LEGAL-2c: 감소대책이 있을 때만, 봉인된 생성자(비공백 measure 필수)로 항상 .notStarted 조치를
-        // 만든다. 상태 다양성은 시작(AssessmentStart.start) 이후 CorrectiveActionEditing.update로 부여한다.
-        if let measure, let action = try? CorrectiveAction(item: it, measure: measure,
-                                                           responsibleName: responsible, dueDate: due) {
+        // WO LEGAL-2c: 감소대책이 있을 때만, Core 의 검증 관문(비공백 measure 필수)으로 항상 .notStarted
+        // 조치를 만든다. 상태 다양성은 시작(AssessmentStart.start) 이후 CorrectiveActionEditing.update로 부여.
+        if let measure,
+           let action = try? CorrectiveActionPolicy.makeDraft(item: it, measure: measure,
+                                                              responsibleName: responsible, dueDate: due) {
             context.insert(action)
         }
         return it

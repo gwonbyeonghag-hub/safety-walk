@@ -50,7 +50,7 @@ determinations** (disclaimer required, see Legal section).
 | English (code/EN UI) | Korean (KO UI) | Definition |
 |---|---|---|
 | Risk Assessment | 위험성평가 | One assessment record (평가표). Holds kind, method, site, assessor, date, and items. Code: `RiskAssessment`. |
-| Risk Assessment Item | 위험성평가 항목 | One row of an assessment: task/process, hazard, current controls, risk, reduction measure, post-measure risk, responsible, due date, status. Code: `RiskAssessmentItem`. |
+| Risk Assessment Item | 위험성평가 항목 | One row of an assessment: task/process, hazard, current controls, risk inputs/level, and the 기준 이내/초과 decision. Owns its 개선조치 as a **1:N `CorrectiveAction` relationship** — it does **not** store reduction measure, post-measure risk, responsible, due date, or status itself (absorbed into `CorrectiveAction`, SCHEMA_V3 §4). Code: `RiskAssessmentItem`. |
 | Assessment Kind | 평가종류 | When the assessment is performed: Initial / Regular / Occasional. Code: `RiskAssessmentKind { initial, regular, occasional }`. |
 | Assessment Method | 평가기법 | The 4 methods (AD-3). Code: `RiskAssessmentMethod { threeLevel, frequencySeverity, checklist, jsa }`. `usesFrequencySeverity` classifies the risk input: likelihood×severity (`frequencySeverity`, `jsa`) vs. direct 상/중/하 (`threeLevel`, `checklist`). |
 | Checklist method | 체크리스트법 | Method that seeds assessment items from a completed Inspection's **failed (부적합)** checklist items (text-copied); risk entered as 3-level. Reuses `linkedInspectionId` / `linkedHazardId`. |
@@ -60,7 +60,8 @@ determinations** (disclaimer required, see Legal section).
 | Severity | 중대성 (강도) | Frequency×Severity input, 1–3. Code: `severity`. |
 | Risk Score | 위험성 점수 | likelihood × severity (1–9). Derived, not stored on its own. |
 | Risk Level (band) | 위험성 수준 | Resolved 상/중/하 — **reuses `RiskLevel`**. For 3-Level the user picks it directly; for Frequency × Severity it is derived from the score via `RiskMatrixConfig.band(forScore:)`. |
-| Reduction Measure | 감소대책 | Risk-reduction action recorded for an item. Code: `reductionMeasure`. |
+| Reduction Measure | 감소대책 | Risk-reduction action recorded for an item. Stored on the 개선조치: `CorrectiveAction.measure`. (`DraftItem.reductionMeasure` in the create screen is a transient input value, not a persisted model field.) |
+| Post-measure Risk | 개선 후 위험성 | The risk level recorded after a 개선조치 has been implemented. Stored on the 개선조치: `CorrectiveAction.postRiskLevel`. |
 
 The 3×3 (and future 5×5) band boundaries live in **data** (`RiskMatrixConfig`, not
 hard-coded `if`): score ≤2 → 하(low), 3–4 → 중(medium), ≥6 → 상(high).

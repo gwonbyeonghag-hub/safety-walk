@@ -5,11 +5,16 @@ import SwiftData
 /// per-item improvement fields (measure/responsible/due/status/postRiskLevel) and adds 효과확인.
 /// CloudKit-ready (all attributes optional/defaulted, no `.unique`).
 ///
-/// This `@Model` body is a pure DATA container: stored properties + the sealed create contract. It holds
-/// **no** business policy — every WO LEGAL-2c derivation and mutation (조치 필요/효과확인 완료·종결·확인
-/// 가능 판정, 상태별 필드 정규화, 효과확인 무효화·기록, field snapshot/restore, 결정적 정렬) lives in the
-/// INDEPENDENT `CorrectiveActionPolicy` type — never as an extension on this model. External code creates
-/// through the sealed init and edits only through `CorrectiveActionEditing`.
+/// This `@Model` body is a pure DATA container: stored properties + relationships + an `internal`
+/// data initializer that performs **no** validation and throws nothing. Every WO LEGAL-2c rule —
+/// creation validation (비공백 감소대책·항상 미착수), 조치 필요/효과확인 완료·종결·확인 가능 판정,
+/// 상태별 필드 정규화, 효과확인 무효화·기록, field snapshot/restore, 결정적 정렬 — lives in the
+/// INDEPENDENT `CorrectiveActionPolicy` type, never in this body and never as an extension on it.
+///
+/// The initializer is deliberately **not** `public`: outside the package a `CorrectiveAction` can only
+/// come from `CorrectiveActionPolicy.makeDraft` (validated draft, e.g. a `.planned` assessment being
+/// authored) or `CorrectiveActionEditing.add` (validated + atomically persisted). There is no way for
+/// app/macOS code to bypass validation by constructing the model directly.
 @Model
 public final class CorrectiveAction {
     public var id: UUID = UUID()
@@ -26,18 +31,17 @@ public final class CorrectiveAction {
     // CloudKit-required inverse of RiskAssessmentItem.correctiveActions.
     public var item: RiskAssessmentItem?
 
-    /// Sealed create contract (WO LEGAL-2c 3차): no `status`/`postRiskLevel` args — a new action is
-    /// ALWAYS `.notStarted` with empty 이행일·개선후위험도·효과확인 — and a **non-blank `measure` is
-    /// required**, so an empty/metadata-only/arbitrary-`.completed` action can't be created through
-    /// the public API. The stored `measure` stays `String?` (CloudKit default) but this init blocks
-    /// the empty string at creation. The completed lifecycle is reached only via `CorrectiveActionEditing`.
-    public init(
+    /// Plain data initializer — assigns the given values and nothing else. It has no `status`/
+    /// `implementedAt`/`postRiskLevel`/효과확인 parameters, so a newly built action necessarily carries
+    /// the stored defaults (`.notStarted`, everything else nil); the completed lifecycle is reached only
+    /// through `CorrectiveActionEditing`. Validation of `measure` belongs to
+    /// `CorrectiveActionPolicy.makeDraft`, the single create gate — this body performs none.
+    init(
         item: RiskAssessmentItem,
         measure: String,
         responsibleName: String? = nil,
         dueDate: Date? = nil
-    ) throws {
-        guard !measure.sw_isBlank else { throw CorrectiveActionError.emptyMeasure }
+    ) {
         self.id = UUID()
         self.item = item
         self.measure = measure

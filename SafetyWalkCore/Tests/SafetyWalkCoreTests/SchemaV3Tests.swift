@@ -43,7 +43,7 @@ struct SchemaV3RegistrationTests {
         let participant = RiskAssessmentParticipant(name: "김근로", role: .worker)
         participant.riskAssessment = ra
         ctx.insert(participant)
-        let action = try CorrectiveAction(item: item, measure: "국소배기 설치")
+        let action = try CorrectiveActionPolicy.makeDraft(item: item, measure: "국소배기 설치")
         ctx.insert(action)
         try ctx.save()
 
@@ -113,17 +113,17 @@ struct SchemaV3InvariantTests {
     /// isRequired is derived from the parent item's 초과 여부 — never stored (교정 #2).
     @Test func correctiveActionIsRequiredDerivesFromDecision() throws {
         let exceed = RiskAssessmentItem(riskLevel: .high); exceed.criteriaDecision = .exceedsThreshold
-        #expect(CorrectiveActionPolicy.isRequired(try CorrectiveAction(item: exceed, measure: "조치")) == true)
+        #expect(CorrectiveActionPolicy.isRequired(try CorrectiveActionPolicy.makeDraft(item: exceed, measure: "조치")) == true)
         let within = RiskAssessmentItem(riskLevel: .low); within.criteriaDecision = .withinThreshold
-        #expect(CorrectiveActionPolicy.isRequired(try CorrectiveAction(item: within, measure: "조치")) == false)
+        #expect(CorrectiveActionPolicy.isRequired(try CorrectiveActionPolicy.makeDraft(item: within, measure: "조치")) == false)
         let unassessed = RiskAssessmentItem(riskLevel: .high)   // criteriaDecision nil = 미평가
-        #expect(CorrectiveActionPolicy.isRequired(try CorrectiveAction(item: unassessed, measure: "조치")) == false)
+        #expect(CorrectiveActionPolicy.isRequired(try CorrectiveActionPolicy.makeDraft(item: unassessed, measure: "조치")) == false)
     }
 
     /// 효과확인은 result·confirmedBy·effectivenessConfirmedAt 를 한 번에 갱신 — 부분 갱신 없음.
     @Test func effectivenessConfirmUpdatesAllThreeFieldsAtomically() throws {
         let item = RiskAssessmentItem(riskLevel: .high)
-        let action = try CorrectiveAction(item: item, measure: "가드 설치")
+        let action = try CorrectiveActionPolicy.makeDraft(item: item, measure: "가드 설치")
         #expect(CorrectiveActionPolicy.isEffectivenessConfirmed(action) == false)
         #expect(action.effectivenessResult == nil)
         #expect(action.confirmedBy == nil)
