@@ -68,6 +68,27 @@ hard-coded `if`): score ≤2 → 하(low), 3–4 → 중(medium), ≥6 → 상(h
 
 ---
 
+## Sharing Terms (공유 기록) — v2 WO LEGAL-2d
+
+A **record of sharing the user performed**. The app never verifies that delivery actually
+happened, and never states legal compliance — it records the fact the user reports.
+
+| English (code/EN UI) | Korean (KO UI) | Definition |
+|---|---|---|
+| Sharing Event | 공유 기록 | One non-TBM sharing of an assessment: phase, method, time, target, owner, and an immutable content snapshot. **Immutable the moment it is created** — there is no edit or delete operation; a correction is a *new* record. Multiple real shares are legitimate, so nothing dedupes them. Code: `SharingEvent`. |
+| Sharing Phase | 공유 시점 | Before (사전) = the schedule; after (사후) = the results. Decided by the entry point, never flipped by the user. Code: `SharingPhase { pre, post }`. |
+| Sharing Method | 공유 방법 | How the sharing was carried out — **non-TBM only**. TBM sharing is proved by the `SafetyBriefing` itself, never by a `SharingEvent` (LEGAL_2_ARCH §3). Code: `SharingMethod { education, posting, written, electronic }`. |
+| Content Snapshot | 공유 내용 스냅샷 | The versioned JSON value-copy of what was shared, stored in `SharingEvent.contentSnapshot`. Enums as raw codes, all dates normalised to UTC whole seconds, deterministic ordering, sorted keys. Excludes evidence photos and participant personal data. Decode failure is **fail-closed** — the app shows an error, never today's data. Code: `SharingSnapshot` (`formatVersion` 1). |
+| Current sharing record | 현재 유효한 공유 기록 | A record that is **complete** (phase/method/time present; target, owner, snapshot non-blank and decodable; owned by this assessment; snapshot's assessmentId and phase agree with the event) **and matches the assessment's present state**. Single source: `SharingEventPolicy.isCurrent`. |
+| Stale sharing record | 현재 내용과 다른 공유 기록 | A past record that is no longer *current* — the schedule, risk decision, or corrective actions changed after it was made (or the record is incomplete/corrupt). **Stale is not deletion**: the record stays in the history as evidence of what was shared at the time. It simply does not count as sharing of the present state. |
+
+**공유 게이트는 법적 판정이 아니다.** Where a KR-jurisdiction assessment requires a current
+pre-/post-sharing record before 시작·확정·종결, that is a **workflow record-completeness gate**
+("the record this workflow requires is not there yet"), *not* a determination that the user is
+compliant or in violation. The app states facts about its own records only.
+
+---
+
 ## Hazard Types
 
 | English | Korean | Notes |
@@ -116,11 +137,29 @@ enum ChecklistItemResult { case pass, fail, notApplicable, unchecked }
 enum RiskLevel           { case low, medium, high }
 enum CorrectiveActionStatus { case notStarted, inProgress, completed }
 enum InspectionStatus    { case inProgress, completed }
-enum RegionProfile       { case korea, global }
 enum HazardType          { case fallRisk, electrical, fire, chemical, general, other }
 enum RiskAssessmentKind   { case initial, regular, occasional }
 enum RiskAssessmentMethod { case threeLevel, frequencySeverity, checklist, jsa }
+enum AssessmentStatus    { case planned, inProgress, finalized, cancelled }
+enum SharingPhase        { case pre, post }                                   // nil = 미설정
+enum SharingMethod       { case education, posting, written, electronic }     // 비TBM 전용
 ```
+
+### ⚠️ `RegionProfile` 과 `JurisdictionCode` 는 **별개의 축** — 혼용 금지
+
+```swift
+enum RegionProfile     { case korea, global }   // 언어·지역 프로파일 (표시·템플릿 선택)
+enum JurisdictionCode  { case kr, us }          // 법적 관할 (평가에 값 스냅샷으로 저장)
+```
+
+- **`RegionProfile`** 은 어떤 체크리스트 템플릿·문구를 보여줄지 고르는 **표시/콘텐츠 축**이다.
+- **`JurisdictionCode`** 는 그 평가에 **어떤 관할의 기록 요건**이 적용되는지를 뜻하는 **법적 축**이며,
+  `RiskAssessment.jurisdictionSnapshot` 에 **값 스냅샷**으로 저장된다(나중에 프로그램 설정이 바뀌어도
+  과거 평가는 당시 관할을 유지).
+- 둘은 서로를 유도하지 않는다. Korea 프로파일이 곧 KR 관할을 의미하지 않으며, 그 반대도 아니다 —
+  프로파일은 **기본값을 제안**할 수 있을 뿐 사용자가 확인해야 한다(LEGAL-2d-PATH).
+- **`jurisdictionSnapshot == nil` 은 "관할 미설정"** 이며, 어떤 관할의 요건 충족도 주장하지 않는다
+  (fail-closed 표시). 코드: `SharingEventPolicy.JurisdictionState { kr, us, unset }`.
 
 ---
 

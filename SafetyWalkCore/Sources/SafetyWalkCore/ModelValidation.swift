@@ -13,6 +13,9 @@ public enum ModelValidationError: Error, Equatable {
     case missingPhase         // 공유 시점 필수
     case missingMethod        // 공유 방법 필수
     case missingSharedAt      // 공유 시각 필수
+    case emptyTarget          // 공유 대상 필수 (WO LEGAL-2d 반송 1차)
+    case emptyOwnerName       // 공유 담당자 필수
+    case emptyContentSnapshot // 공유 내용 스냅샷 필수
 }
 
 extension String {

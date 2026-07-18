@@ -8,6 +8,20 @@ public enum SharingSnapshotError: Error, Equatable {
     case malformed                  // JSON 아님 / 필수 키 누락 / 인코딩 불가
 }
 
+extension Date {
+    /// 스냅샷 정밀도 — UTC whole second.
+    ///
+    /// 스냅샷 JSON 은 ISO-8601 초 단위로 인코딩된다. 실제 `Date()` 는 소수초를 갖기 때문에, 정규화하지
+    /// 않으면 **저장된 스냅샷(초 단위) ≠ 재생성 스냅샷(소수초 보유)** 이 되어 기록한 그 순간부터 영구히
+    /// stale 로 판정된다(KR 게이트까지 닫혀 평가 시작이 막힌다 — 반송 1차 P1-A).
+    ///
+    /// 그래서 스냅샷의 모든 Date 는 생성 시점에 이 한 경로로 정규화되고, 인코딩과 "현재값 재생성 후 비교"가
+    /// **같은 정규화를 통과한 값**을 비교하게 된다. 내림(floor)이라 같은 입력은 항상 같은 결과를 준다.
+    var sw_snapshotPrecision: Date {
+        Date(timeIntervalSince1970: timeIntervalSince1970.rounded(.down))
+    }
+}
+
 /// The versioned value snapshot stored in `SharingEvent.contentSnapshot` (WO LEGAL-2d §3).
 ///
 /// A `SharingEvent` proves *what was shared at the time*, so it can never reference live models —
@@ -53,6 +67,44 @@ public struct SharingSnapshot: Codable, Equatable, Sendable {
         public let decisionConfirmedAt: Date?
         public let decisionConfirmedBy: String?
         public let correctiveActions: [Action]
+
+        /// 모든 Date 를 스냅샷 정밀도로 정규화해 보관한다 (`SharingSnapshot` 의 정밀도 계약 참조).
+        public init(itemId: UUID, sortOrder: Int, taskDescription: String, hazardDescription: String,
+                    currentControls: String?, riskLevel: String?, likelihood: Int?, severity: Int?,
+                    criteriaDecision: String?, decisionConfirmedAt: Date?, decisionConfirmedBy: String?,
+                    correctiveActions: [Action]) {
+            self.itemId = itemId
+            self.sortOrder = sortOrder
+            self.taskDescription = taskDescription
+            self.hazardDescription = hazardDescription
+            self.currentControls = currentControls
+            self.riskLevel = riskLevel
+            self.likelihood = likelihood
+            self.severity = severity
+            self.criteriaDecision = criteriaDecision
+            self.decisionConfirmedAt = decisionConfirmedAt?.sw_snapshotPrecision
+            self.decisionConfirmedBy = decisionConfirmedBy
+            self.correctiveActions = correctiveActions
+        }
+
+        /// Decoding routes through the normalizing initializer too. `JSONDecoder`'s `.iso8601`
+        /// strategy **accepts** fractional seconds, so a payload from another client (or a
+        /// hand-edited store) would otherwise land un-normalized and be permanently stale.
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            self.init(itemId: try c.decode(UUID.self, forKey: .itemId),
+                      sortOrder: try c.decode(Int.self, forKey: .sortOrder),
+                      taskDescription: try c.decode(String.self, forKey: .taskDescription),
+                      hazardDescription: try c.decode(String.self, forKey: .hazardDescription),
+                      currentControls: try c.decodeIfPresent(String.self, forKey: .currentControls),
+                      riskLevel: try c.decodeIfPresent(String.self, forKey: .riskLevel),
+                      likelihood: try c.decodeIfPresent(Int.self, forKey: .likelihood),
+                      severity: try c.decodeIfPresent(Int.self, forKey: .severity),
+                      criteriaDecision: try c.decodeIfPresent(String.self, forKey: .criteriaDecision),
+                      decisionConfirmedAt: try c.decodeIfPresent(Date.self, forKey: .decisionConfirmedAt),
+                      decisionConfirmedBy: try c.decodeIfPresent(String.self, forKey: .decisionConfirmedBy),
+                      correctiveActions: try c.decode([Action].self, forKey: .correctiveActions))
+        }
     }
 
     /// 한 개선조치의 담당·기한·상태·이행일·개선후위험도·효과확인 결과 (증거사진 제외).
@@ -67,6 +119,68 @@ public struct SharingSnapshot: Codable, Equatable, Sendable {
         public let effectivenessResult: String? // EffectivenessResult raw — nil = 미확인
         public let effectivenessConfirmedAt: Date?
         public let confirmedBy: String?
+
+        /// 모든 Date 를 스냅샷 정밀도로 정규화해 보관한다.
+        public init(actionId: UUID, measure: String?, responsibleName: String?, dueDate: Date?,
+                    status: String, implementedAt: Date?, postRiskLevel: String?,
+                    effectivenessResult: String?, effectivenessConfirmedAt: Date?, confirmedBy: String?) {
+            self.actionId = actionId
+            self.measure = measure
+            self.responsibleName = responsibleName
+            self.dueDate = dueDate?.sw_snapshotPrecision
+            self.status = status
+            self.implementedAt = implementedAt?.sw_snapshotPrecision
+            self.postRiskLevel = postRiskLevel
+            self.effectivenessResult = effectivenessResult
+            self.effectivenessConfirmedAt = effectivenessConfirmedAt?.sw_snapshotPrecision
+            self.confirmedBy = confirmedBy
+        }
+
+        /// Decoding routes through the normalizing initializer too (see `Item.init(from:)`).
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            self.init(actionId: try c.decode(UUID.self, forKey: .actionId),
+                      measure: try c.decodeIfPresent(String.self, forKey: .measure),
+                      responsibleName: try c.decodeIfPresent(String.self, forKey: .responsibleName),
+                      dueDate: try c.decodeIfPresent(Date.self, forKey: .dueDate),
+                      status: try c.decode(String.self, forKey: .status),
+                      implementedAt: try c.decodeIfPresent(Date.self, forKey: .implementedAt),
+                      postRiskLevel: try c.decodeIfPresent(String.self, forKey: .postRiskLevel),
+                      effectivenessResult: try c.decodeIfPresent(String.self, forKey: .effectivenessResult),
+                      effectivenessConfirmedAt: try c.decodeIfPresent(Date.self, forKey: .effectivenessConfirmedAt),
+                      confirmedBy: try c.decodeIfPresent(String.self, forKey: .confirmedBy))
+        }
+    }
+
+    /// 모든 Date 를 스냅샷 정밀도로 정규화해 보관한다.
+    public init(formatVersion: Int, phase: String, assessmentId: UUID, siteName: String,
+                kind: String, method: String, jurisdiction: String?, industryProfile: String?,
+                scheduledAt: Date?, items: [Item]) {
+        self.formatVersion = formatVersion
+        self.phase = phase
+        self.assessmentId = assessmentId
+        self.siteName = siteName
+        self.kind = kind
+        self.method = method
+        self.jurisdiction = jurisdiction
+        self.industryProfile = industryProfile
+        self.scheduledAt = scheduledAt?.sw_snapshotPrecision
+        self.items = items
+    }
+
+    /// Decoding routes through the normalizing initializer too (see `Item.init(from:)`).
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(formatVersion: try c.decode(Int.self, forKey: .formatVersion),
+                  phase: try c.decode(String.self, forKey: .phase),
+                  assessmentId: try c.decode(UUID.self, forKey: .assessmentId),
+                  siteName: try c.decode(String.self, forKey: .siteName),
+                  kind: try c.decode(String.self, forKey: .kind),
+                  method: try c.decode(String.self, forKey: .method),
+                  jurisdiction: try c.decodeIfPresent(String.self, forKey: .jurisdiction),
+                  industryProfile: try c.decodeIfPresent(String.self, forKey: .industryProfile),
+                  scheduledAt: try c.decodeIfPresent(Date.self, forKey: .scheduledAt),
+                  items: try c.decode([Item].self, forKey: .items))
     }
 
     // MARK: - Codec

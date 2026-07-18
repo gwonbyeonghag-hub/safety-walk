@@ -221,6 +221,171 @@ struct SharingGateTests {
         #expect(SharingEventPolicy.jurisdictionState(try plannedAssessment(in: ctx, jurisdiction: nil)) == .unset)
     }
 
+    // MARK: - current 공유 이벤트 완전성 (반송 1차 P1-B)
+    // CloudKit 은 모든 속성을 optional 로 저장하므로 부분 채워진 레코드가 배달될 수 있다. 그런 레코드가
+    // "현재 유효한 공유"로 인정되면 KR 게이트가 잘못 열린다 — 완전성은 Core 검증 함수 하나가 소유한다.
+
+    /// 정상 경로로 만든 유효 스냅샷 JSON (손상 레코드에 심어 다른 결함만 분리 검증하기 위함).
+    private func validPreSnapshotJSON(_ ra: RiskAssessment) throws -> String {
+        try SharingEventPolicy.makeSnapshotJSON(phase: .pre, for: ra)
+    }
+
+    /// 손상 레코드를 평가에 붙인다 (Core-internal corruption seam).
+    @discardableResult
+    private func attachCorrupted(to ra: RiskAssessment, in ctx: ModelContext,
+                                 phase: SharingPhase? = .pre, method: SharingMethod? = .posting,
+                                 sharedAt: Date? = nil, target: String? = "전 근로자",
+                                 snapshot: String, ownerName: String? = "홍길동") -> SharingEvent {
+        let event = SharingEvent(corruptedPhase: phase, method: method,
+                                 sharedAt: sharedAt ?? when, target: target,
+                                 contentSnapshot: snapshot, ownerName: ownerName)
+        ctx.insert(event)
+        event.riskAssessment = ra
+        ra.sharingEvents = (ra.sharingEvents ?? []) + [event]
+        try? ctx.save()
+        return event
+    }
+
+    private func expectNotCurrent(_ ra: RiskAssessment, _ label: Comment) {
+        #expect(SharingEventPolicy.currentEvent(phase: .pre, in: ra) == nil, label)
+        #expect(!SharingEventPolicy.satisfiesPreSharingGate(ra), label)
+    }
+
+    @Test("공유 방법이 없는 손상 레코드는 current 가 아니다")
+    func nilMethodIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        attachCorrupted(to: ra, in: ctx, method: nil, snapshot: try validPreSnapshotJSON(ra))
+        expectNotCurrent(ra, "nil method")
+    }
+
+    @Test("공유 시각이 없는 손상 레코드는 current 가 아니다")
+    func nilSharedAtIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        let json = try validPreSnapshotJSON(ra)
+        let event = SharingEvent(corruptedPhase: .pre, method: .posting, sharedAt: nil,
+                                 target: "전 근로자", contentSnapshot: json, ownerName: "홍길동")
+        ctx.insert(event)
+        event.riskAssessment = ra
+        ra.sharingEvents = (ra.sharingEvents ?? []) + [event]
+        try ctx.save()
+        expectNotCurrent(ra, "nil sharedAt")
+    }
+
+    @Test("공유 시점이 없는 손상 레코드는 current 가 아니다")
+    func nilPhaseIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        attachCorrupted(to: ra, in: ctx, phase: nil, snapshot: try validPreSnapshotJSON(ra))
+        expectNotCurrent(ra, "nil phase")
+    }
+
+    @Test("공백 대상을 가진 손상 레코드는 current 가 아니다")
+    func blankTargetIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        attachCorrupted(to: ra, in: ctx, target: "   ", snapshot: try validPreSnapshotJSON(ra))
+        expectNotCurrent(ra, "blank target")
+    }
+
+    @Test("공백 담당자를 가진 손상 레코드는 current 가 아니다")
+    func blankOwnerIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        attachCorrupted(to: ra, in: ctx, snapshot: try validPreSnapshotJSON(ra), ownerName: "  ")
+        expectNotCurrent(ra, "blank owner")
+    }
+
+    @Test("빈 스냅샷을 가진 손상 레코드는 current 가 아니다")
+    func emptySnapshotIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        attachCorrupted(to: ra, in: ctx, snapshot: "")
+        expectNotCurrent(ra, "empty snapshot")
+    }
+
+    @Test("다른 평가의 스냅샷을 심은 레코드는 current 가 아니다")
+    func foreignAssessmentIdIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        let other = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        attachCorrupted(to: ra, in: ctx, snapshot: try validPreSnapshotJSON(other))
+        expectNotCurrent(ra, "foreign assessmentId")
+    }
+
+    @Test("스냅샷의 시점이 이벤트 시점과 다르면 current 가 아니다")
+    func phaseMismatchIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        // 이벤트는 .pre 라고 주장하지만 스냅샷 본문은 "post" 다.
+        let tampered = try validPreSnapshotJSON(ra)
+            .replacingOccurrences(of: "\"phase\":\"pre\"", with: "\"phase\":\"post\"")
+        attachCorrupted(to: ra, in: ctx, snapshot: tampered)
+        expectNotCurrent(ra, "phase mismatch between event and snapshot")
+    }
+
+    @Test("다른 평가가 소유한 이벤트는 이 평가의 current 가 아니다 — 소유 조건만으로 걸러진다")
+    func eventOwnedByAnotherAssessmentIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        let other = try plannedAssessment(in: ctx, jurisdiction: .kr)
+
+        // ★ 소유 조건을 **격리**한다: 스냅샷은 `ra` 것으로 만들어 assessmentId·phase·값 비교를 전부
+        // 통과시키고, 이벤트만 `other` 가 소유하게 붙인다. 그러면 이 이벤트를 걸러내는 것은 오직
+        // "이 평가가 소유한 이벤트인가" 조건뿐이다 — 그 가드를 지우면 이 테스트가 빨개진다.
+        let snapshotOfRA = try SharingEventPolicy.makeSnapshotJSON(phase: .pre, for: ra)
+        let foreign = SharingEvent(corruptedPhase: .pre, method: .posting, sharedAt: when,
+                                   target: "전 근로자", contentSnapshot: snapshotOfRA,
+                                   ownerName: "홍길동")
+        ctx.insert(foreign)
+        foreign.riskAssessment = other
+        other.sharingEvents = (other.sharingEvents ?? []) + [foreign]
+        try ctx.save()
+
+        // 다른 조건은 모두 통과하는 이벤트임을 먼저 확인한다(가드 격리 증명).
+        let recorded = try SharingEventPolicy.decodeSnapshot(foreign)
+        #expect(recorded.assessmentId == ra.id)
+        #expect(recorded.phase == SharingPhase.pre.rawValue)
+        #expect(recorded == (try SharingEventPolicy.makeSnapshot(phase: .pre, for: ra)))
+        #expect(SharingEventPolicy.isComplete(foreign))
+
+        // 그럼에도 ra 의 current 는 아니다 — 소유가 다르기 때문.
+        #expect(!SharingEventPolicy.isCurrent(foreign, phase: .pre, in: ra))
+        expectNotCurrent(ra, "event belongs to another assessment")
+    }
+
+    @Test("정상 기록은 완전성 검증을 모두 통과한다 — vacuous pass 차단")
+    func validRecordIsCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try plannedAssessment(in: ctx, jurisdiction: .kr)
+        let event = try recordPre(ra, in: ctx)
+        #expect(SharingEventPolicy.isCurrent(event, phase: .pre, in: ra))
+        #expect(SharingEventPolicy.currentEvent(phase: .pre, in: ra) === event)
+        #expect(SharingEventPolicy.satisfiesPreSharingGate(ra))
+    }
+
+    @Test("불완전한 이벤트는 validate 에서도 같은 계약으로 거부된다")
+    func validateRejectsIncompleteRecords() throws {
+        let json = "{}"
+        #expect(throws: ModelValidationError.emptyTarget) {
+            try SharingEvent(corruptedPhase: .pre, method: .posting, sharedAt: when,
+                             target: "  ", contentSnapshot: json, ownerName: "홍길동").validate()
+        }
+        #expect(throws: ModelValidationError.emptyOwnerName) {
+            try SharingEvent(corruptedPhase: .pre, method: .posting, sharedAt: when,
+                             target: "전 근로자", contentSnapshot: json, ownerName: nil).validate()
+        }
+        #expect(throws: ModelValidationError.emptyContentSnapshot) {
+            try SharingEvent(corruptedPhase: .pre, method: .posting, sharedAt: when,
+                             target: "전 근로자", contentSnapshot: "  ", ownerName: "홍길동").validate()
+        }
+        #expect(throws: ModelValidationError.missingMethod) {
+            try SharingEvent(corruptedPhase: .pre, method: nil, sharedAt: when,
+                             target: "전 근로자", contentSnapshot: json, ownerName: "홍길동").validate()
+        }
+    }
+
     // MARK: - 생성자 봉인 (WO LEGAL-2d §5)
 
     @Test("새로 만든 평가는 항상 planned 이며 확정 상태로 태어날 수 없다")

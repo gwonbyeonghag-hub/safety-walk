@@ -30,7 +30,7 @@ public final class SharingEvent {
     /// 계약: phase·method·sharedAt are REQUIRED; WO LEGAL-2d additionally makes target·ownerName·
     /// contentSnapshot required, so a business-empty 공유 기록 cannot even be constructed. All
     /// validation belongs to `SharingEventRecording.record`, the single create gate.
-    init(
+    convenience init(
         phase: SharingPhase,
         method: SharingMethod,
         sharedAt: Date,
@@ -38,6 +38,17 @@ public final class SharingEvent {
         contentSnapshot: String,
         ownerName: String
     ) {
+        self.init(corruptedPhase: phase, method: method, sharedAt: sharedAt,
+                  target: target, contentSnapshot: contentSnapshot, ownerName: ownerName)
+    }
+
+    /// Corruption seam — **Core-internal, tests only.** CloudKit stores every attribute as optional and
+    /// can deliver a partially-populated record (an older client, an interrupted sync, a hand-edited
+    /// store), so the completeness rules in `SharingEventPolicy` must be provable against records the
+    /// sanctioned create gate would never produce. This initializer is the only way to build one, it is
+    /// not `public`, and it weakens neither the public immutability nor the schema.
+    init(corruptedPhase phase: SharingPhase?, method: SharingMethod?, sharedAt: Date?,
+         target: String?, contentSnapshot: String, ownerName: String?) {
         self.id = UUID()
         self.phase = phase
         self.method = method
@@ -47,9 +58,15 @@ public final class SharingEvent {
         self.ownerName = ownerName
     }
 
+    /// 업무상 완전한 공유 기록인지 (SCHEMA_V3 §4.1 + WO LEGAL-2d 반송 1차 P1-B). 시점·방법·시각이 있고
+    /// 대상·담당자·스냅샷이 비어 있지 않아야 한다 — `SharingEventPolicy` 의 completeness 판정과 **같은
+    /// 계약**이며, 저장 직전 방어선이다.
     public func validate() throws {
         guard phase != nil else { throw ModelValidationError.missingPhase }
         guard method != nil else { throw ModelValidationError.missingMethod }
         guard sharedAt != nil else { throw ModelValidationError.missingSharedAt }
+        guard !(target ?? "").sw_isBlank else { throw ModelValidationError.emptyTarget }
+        guard !(ownerName ?? "").sw_isBlank else { throw ModelValidationError.emptyOwnerName }
+        guard !contentSnapshot.sw_isBlank else { throw ModelValidationError.emptyContentSnapshot }
     }
 }

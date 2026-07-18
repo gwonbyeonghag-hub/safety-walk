@@ -1588,3 +1588,74 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 - **반영함**: `RiskAssessment` 생성자·setter 봉인(§5 미구현이었음) · `AssessmentStartSheet` 의 KR 게이트 전용 메시지 · 미사용 키 2건 정리(`ra.sharing.staleHint` 삭제, `ra.snapshot.actions` 사용) · 죽은 지역변수 제거.
 - **의도적 유지**: stale 을 전체 스냅샷 비교로 판정(일정 외 변경도 stale — fail-closed 의도) · `SharingSnapshot` 이 enum 을 raw String 으로 보관(포맷 안정성 우선) · rollback/restore 패턴 반복(2c·2b와 동일한 확립된 관용구).
 - **사실 정정**: 리뷰어가 지적한 "`isStale` 가 매 렌더 JSON 인코딩" 은 부정확 — `isStale` 은 decode + 구조체 비교이며 **인코딩하지 않는다**. `AssessmentClosure.isClosed` 는 아직 호출부가 없다(2c가 후속용으로 추가).
+
+---
+
+## 🔁 WO LEGAL-2d — 독립 검수 반송 1차 반영 (2026-07-18)
+
+기준점 `ffbdd6e`, 반송 대상 `1b634be`. 병합·push 없음.
+
+### P1-A — 스냅샷 날짜 정밀도 (확진·수정)
+
+**증상**: 소수초를 가진 시각(= 실제 `Date()`)으로 공유를 기록하면 **그 즉시** stale 로 판정되고 `currentEvent` 가 nil 이 되어, KR 평가는 **시작조차 불가**했다.
+
+**원인**: `JSONEncoder.dateEncodingStrategy = .iso8601` 은 `withInternetDateTime` 만 사용해 **소수초를 버린다**. 저장된 스냅샷은 초 단위, 재생성 스냅샷은 소수초 보유 → `recorded != current` 가 영구히 참.
+
+**수정**: `withFractionalSeconds` 로 바꾸는 대신, **스냅샷 정밀도 계약**을 도입했다. `Date.sw_snapshotPrecision`(UTC whole-second, floor) 한 경로로 정규화하며, `SharingSnapshot`/`.Item`/`.Action` 의 **초기화 시점에** 모든 Date 가 이 경로를 지난다 → 인코딩과 "재생성 후 비교"가 같은 정규화를 통과한 값을 비교한다. 적용 필드: `scheduledAt`·`decisionConfirmedAt`·`dueDate`·`implementedAt`·`effectivenessConfirmedAt`. 스키마 변경 없음, snapshot format **v1 내부**에서 해결.
+
+**증거**: `allDates` 전수 검사(소수초 0, 5개 필드 확인 — vacuous pass 차단) · encode→decode **값 동일성 + byte 동일성** · 재생성 JSON 동일 · 소수초 기록 직후 `!isStale` 및 KR 시작 게이트 통과.
+
+### P1-B — current 공유 이벤트 완전성 (확진·수정)
+
+**중요**: P1-B 진단은 처음에 **거짓 green** 이었다. P1-A 가 모든 이벤트를 stale 로 만들어 결함을 가리고 있었고, P1-A 를 고치자 곧바로 RED 가 됐다 — 공백 대상·담당자를 가진 손상 레코드가 `currentEvent` 를 통과하고 **KR 게이트를 열었다**.
+
+**수정**: 완전성과 최신성을 **단일 Core 검증 함수** `SharingEventPolicy.isCurrent(_:phase:in:)` 로 통합. 8개 조건 전부를 만족해야 인정한다 — 소유·시점 일치·`method`/`sharedAt` 존재·`target`/`ownerName` 비공백·스냅샷 비공백 및 정상 decode·`snapshot.assessmentId == assessment.id`·`snapshot.phase == event.phase`·재생성 스냅샷과 일치. `isStale` 은 이제 `!isCurrent` 이고, `currentEvent`·KR 게이트·stale 배지가 모두 이 한 함수를 지난다. `SharingEvent.validate()` 도 같은 계약(비공백 대상·담당자·스냅샷)으로 보강했고, 생성 관문이 저장 직전 `validate()` 를 재확인한다.
+
+**테스트 시임**: CloudKit 이 배달할 수 있는 부분 채워진 레코드를 만들기 위해 `SharingEvent` 에 **Core-internal** `init(corruptedPhase:…)` 하나만 추가했다. public 불변성(`private(set)`)·생성 관문·스키마는 그대로다.
+
+**증거**: nil phase / nil method / nil sharedAt / 공백 target / 공백 owner / 빈 스냅샷 / 타 평가 스냅샷 / phase 불일치 / 타 평가 소유 — **각각** `currentEvent == nil` 이고 KR 게이트 false. 정상 기록은 통과(vacuous pass 차단). `validate()` 거부 4종.
+
+### 오너 결정 반영
+- KR 사전/사후 공유 게이트를 **"워크플로우 필수 기록 완전성" 게이트**로 명문화(법적 준수 판정 아님). `SharingEventPolicy` 도크 주석 + DOMAIN_TERMS 에 원칙 기재.
+- `LEGAL_2_ARCH §1.1` 의 `closed` 에 **KR 한정 현재 사후공유 조건**을 반영(US·미설정 제외 명시).
+- `DOMAIN_TERMS.md` 에 **Sharing Terms** 절 신설: SharingEvent · SharingPhase · SharingMethod · Content Snapshot · **current** · **stale**.
+- `RegionProfile`(언어·지역) 과 `JurisdictionCode`(법적 관할) 가 **별개 축**임을 DOMAIN_TERMS 에 정정·명시(서로 유도하지 않음, nil = 관할 미설정 fail-closed).
+- **"즉시 평가는 사전공유 면제" 예외는 추가하지 않았다.** 해당 경로 문제는 아래 PATH 에서 해결한다.
+
+---
+
+# 🚧 WO LEGAL-2d-PATH — 관할 배선 + 평가 작성 경로 (**병합 전 후속 블로커**)
+
+> **상태: 미착수.** LEGAL-2d 반송 1차에서 등재. **이 PATH 가 끝나기 전에는 LEGAL-2 전체를 완료로 처리하지 않는다.**
+> 이번 반송에서는 PATH 기능 자체를 구현하지 않았다(범위 밖).
+
+**왜 블로커인가**: 현재 `jurisdictionSnapshot` 을 설정하는 생산 코드 경로가 없어 모든 평가가 "관할 미설정"이다. 따라서 LEGAL-2d 가 구현한 KR 기록-완전성 게이트는 **테스트로만 검증되고 실제 사용자에게는 작동하지 않는다.** 또한 계획(plan) 경로로 만든 평가는 항목을 추가할 화면이 없어 **UI 만으로는 확정할 수 없다.**
+
+## 범위
+1. **명시적 관할 값 스냅샷** — 신규 평가가 `JurisdictionCode` 를 값 스냅샷으로 저장한다.
+2. **프로파일은 제안만** — Korea/Global 프로파일은 KR/US **기본 제안**만 하고, 사용자가 확인해 확정한다. `RegionProfile` → `JurisdictionCode` 자동 유도 금지(별개 축).
+3. **KR 시작 조건, 예외 없음** — KR 평가는 `scheduledAt` 이 있고 사전 공유가 기록된 뒤에만 시작한다. "즉시 평가 면제" 예외를 만들지 않는다 → 즉시 평가 경로 자체가 일정·사전공유를 받도록 재설계한다.
+4. **항목 작성 경로** — `planned`/`inProgress` 상태에서 항목을 추가·수정할 수 있는 진입점을 상세 화면에 제공한다.
+5. **원자적 생성** — 시작 전 게이트 실패가 **이미 insert 한 평가·항목을 메모리에 남기지 않아야 한다**(store 뿐 아니라 in-memory 까지 원복 — `AssessmentStart`/`CorrectiveActionEditing` 과 동일 패턴).
+
+## 완료 조건
+- KR 관할 평가를 UI 만으로 계획 → 사전공유 → 시작 → 항목작성 → 확정 → 사후공유 → 종결까지 완주하는 UI 테스트.
+- 게이트 실패 후 재시도해도 유령 평가·항목이 남지 않음을 보이는 Core 테스트.
+- 프로파일이 관할을 자동 확정하지 않음을 보이는 테스트.
+
+### 반송 1차 /code-review 결과 (기준점 `ffbdd6e`, Standards·Spec 2축)
+
+**하드 위반 1건 — 반영함(중요).** `SharingSnapshot` 의 정규화가 **decode 경로로 우회 가능**했다. `JSONDecoder` 의 `.iso8601` 전략은 소수초를 **수용**하며(독립 확인: `{"d":"…T21:33:20.123Z"}` → `1700602400.1230001`), Codable 이 합성한 `init(from:)` 은 커스텀 초기화를 호출하지 않는다. 따라서 다른 클라이언트·손상 스토어가 만든 소수초 JSON 은 정규화되지 않은 채 decode 되어 **P1-A 가 그대로 재발**(영구 stale → KR 시작 차단)했다. → 세 타입 모두에 **명시적 `init(from:)`** 을 두어 정규화 초기화로 위임했다. RED(5개 Date 전부 소수초 통과 + 값 불일치) → GREEN 확인.
+
+**반영함(그 외)**
+- `allDates` 수동 목록을 **production 에서 제거**하고, 테스트가 **Mirror 기반 재귀 수집기**로 스냅샷의 모든 Date 를 훑도록 바꿨다. 이제 새 Date 필드를 추가하고 정규화를 깜빡여도 테스트가 잡는다(리뷰 지적: 손수 관리하는 목록은 vacuous pass 를 만든다). Speculative Generality 였던 public 접근자도 함께 사라졌다.
+- **소유권 조건 테스트가 vacuous 였다** — 다른 평가의 이벤트는 `assessmentId` 조건이 먼저 걸러내서, 소유 가드를 지워도 green 이었다. 스냅샷을 `ra` 것으로 만들어 나머지 7개 조건을 전부 통과시키고 **소유만 다르게** 구성하도록 고쳤다(가드를 지우면 빨개진다).
+- `SharingEvent` 의 두 초기화가 본문이 동일했다 → 정상 경로를 `convenience init` 으로 위임(Duplicated Code 제거).
+- 테스트 상수를 반송 지시문에 적힌 `1_700_000_000.123456` 으로 맞췄다.
+
+**의도적 유지(근거 있음)**
+- **View 가 `SharingEventPolicy` 를 직접 호출**(`SharingHistorySection`·`SharingSnapshotDetailView`). CLAUDE.md 의 "Service 주입" 규칙은 상태를 가진 서비스가 대상이며, `SharingEventPolicy` 는 상태 없는 Core 판단 네임스페이스다. **2c 의 확립된 선례**(`RiskAssessmentDetailView` 가 `CorrectiveActionPolicy` 를 직접 호출)와 동일하므로 이번에 임의로 갈아엎지 않았다. 바꾸려면 2c 까지 함께 바꾸는 별도 리팩터가 맞다.
+- **corruption seam 이 `internal` 이라 Core 내부 어디서든 쓸 수 있다**는 지적 — 사실이나, `public` 불변성·스키마·생성 관문은 그대로이며 현재 사용처는 테스트뿐이다. 더 좁히려면 테스트 전용 타깃 분리가 필요해 이번 범위를 넘는다.
+- Data Clump(`phase·method·sharedAt·target·snapshot·owner`) — 6개 값이 모델 필드 그 자체라 별도 타입으로 묶으면 오히려 `@Model` 과 이중화된다.
+
+**Spec 축**: 스코프 크리프 없음. LEGAL-2d-PATH 기능은 구현하지 않았음이 확인됨(생산 코드에서 `jurisdictionSnapshot` 미기록, 항목 추가 진입점 미추가, "즉시 평가 면제" 예외 없음).

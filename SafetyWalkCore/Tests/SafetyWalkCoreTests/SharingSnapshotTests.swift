@@ -221,6 +221,144 @@ struct SharingSnapshotTests {
         #expect(json.contains("2023-11-21T20:53:20Z"))
     }
 
+    // MARK: - 날짜 정밀도 (반송 1차 P1-A)
+    // 실제 `Date()` 는 소수초를 갖는다. 스냅샷 JSON 은 초 단위로 인코딩되므로, 정규화하지 않으면
+    // 저장된 스냅샷(초 단위)과 재생성 스냅샷(소수초 보유)이 영원히 달라져 기록 직후 stale 이 된다
+    // — KR 게이트까지 닫혀 평가 시작이 불가능해진다. 그래서 스냅샷의 **모든** Date 는 생성 시점에
+    // UTC whole-second 로 한 번 정규화되고, 인코딩과 현재값 비교가 같은 경로를 쓴다.
+
+    /// 소수초를 가진 시각 — 실제 `Date()` 와 같은 모양.
+    private var fractional: Date { Date(timeIntervalSince1970: 1_700_000_000.123456) }
+
+    /// 값 안의 **모든** Date 를 리플렉션으로 재귀 수집한다.
+    ///
+    /// 손으로 관리하는 목록(`allDates` 같은)은 새 Date 필드를 추가하고 깜빡이면 그대로 green 이 되어
+    /// vacuous pass 를 만든다. Mirror 로 구조 자체를 훑으면 **선언을 잊어도 테스트가 잡는다** — 정밀도
+    /// 계약을 실제로 강제하는 것은 이 수집기다.
+    private func everyDate(in value: Any) -> [Date] {
+        if let date = value as? Date { return [date] }
+        let mirror = Mirror(reflecting: value)
+        // Optional 은 자식으로 래핑을 벗겨서 순회된다 (nil 이면 자식 없음).
+        return mirror.children.flatMap { everyDate(in: $0.value) }
+    }
+
+    @Test("스냅샷의 모든 Date 는 whole-second 로 정규화된다")
+    func allSnapshotDatesAreWholeSeconds() throws {
+        let ctx = try makeContext()
+        let ra = try fullyPopulatedFinalized(in: ctx, at: fractional)
+
+        let snap = try SharingEventPolicy.makeSnapshot(phase: .post, for: ra)
+        let dates = everyDate(in: snap)
+        for date in dates {
+            #expect(date.timeIntervalSince1970 == date.timeIntervalSince1970.rounded(.down),
+                    "스냅샷 날짜에 소수초가 남아 있다: \(date.timeIntervalSince1970)")
+        }
+        // vacuous pass 차단 — 실제로 다섯 개의 Date 를 검사했는지 확인한다:
+        // scheduledAt · item.decisionConfirmedAt · action(dueDate·implementedAt·effectivenessConfirmedAt).
+        #expect(dates.count == 5)
+    }
+
+    @Test("외부에서 온 소수초 JSON 도 decode 시 정규화된다 — 정규화 우회 경로 없음")
+    func decodingNormalizesFractionalSecondsFromForeignJSON() throws {
+        let ctx = try makeContext()
+        let ra = try fullyPopulatedFinalized(in: ctx, at: fractional)
+        let json = try SharingEventPolicy.makeSnapshotJSON(phase: .post, for: ra)
+
+        // 다른 클라이언트·손상 스토어가 만들 수 있는 소수초 payload 를 재현한다. `.iso8601` 디코더는
+        // 소수초를 **수용**하므로, 정규화가 생성 시점에만 있으면 decode 로 우회된다(= P1-A 재발).
+        let withFractions = json.replacingOccurrences(of: ":20Z\"", with: ":20.123Z\"")
+        #expect(withFractions != json, "소수초를 주입하지 못하면 이 테스트는 무의미하다")
+
+        let decoded = try SharingSnapshot.decode(withFractions)
+        for date in everyDate(in: decoded) {
+            #expect(date.timeIntervalSince1970 == date.timeIntervalSince1970.rounded(.down),
+                    "decode 가 소수초를 그대로 통과시켰다: \(date.timeIntervalSince1970)")
+        }
+        // 정규화되었으므로 현재 상태와 다시 일치해야 한다 — 영구 stale 이 되지 않는다.
+        #expect(decoded == (try SharingEventPolicy.makeSnapshot(phase: .post, for: ra)))
+    }
+
+    @Test("소수초를 가진 상태로 encode→decode 해도 값 동일성과 byte 동일성이 유지된다")
+    func fractionalSecondsRoundTripIsStable() throws {
+        let ctx = try makeContext()
+        let ra = try fullyPopulatedFinalized(in: ctx, at: fractional)
+
+        let snap = try SharingEventPolicy.makeSnapshot(phase: .post, for: ra)
+        let json = try snap.encoded()
+        let decoded = try SharingSnapshot.decode(json)
+
+        #expect(decoded == snap)                     // 값 동일성
+        #expect(try decoded.encoded() == json)       // byte 동일성
+        // 재생성해도 같은 JSON — 이게 stale 판정의 전제다.
+        #expect(try SharingEventPolicy.makeSnapshotJSON(phase: .post, for: ra) == json)
+    }
+
+    @Test("소수초 시각으로 기록한 공유는 기록 직후 stale 이 아니다")
+    func fractionalSecondRecordIsNotImmediatelyStale() throws {
+        let ctx = try makeContext()
+        let ra = try fullyPopulatedFinalized(in: ctx, at: fractional)
+
+        let post = try SharingEventRecording.record(phase: .post, method: .written, in: ra,
+                                                    target: "전 근로자", ownerName: "홍길동",
+                                                    at: fractional, context: ctx)
+        #expect(!SharingEventPolicy.isStale(post, in: ra))
+        #expect(SharingEventPolicy.currentEvent(phase: .post, in: ra) === post)
+        #expect(SharingEventPolicy.satisfiesPostSharingGate(ra))
+    }
+
+    @Test("소수초 일정으로 기록한 사전 공유는 KR 시작 게이트를 곧바로 충족한다")
+    func fractionalSecondPreSharingSatisfiesStartGate() throws {
+        let ctx = try makeContext()
+        let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                siteId: UUID(), siteName: "1공장", assessorName: "홍길동",
+                                jurisdictionSnapshot: .kr, scheduledAt: fractional)
+        ctx.insert(ra)
+        try ctx.save()
+
+        let pre = try SharingEventRecording.record(phase: .pre, method: .posting, in: ra,
+                                                   target: "전 근로자", ownerName: "홍길동",
+                                                   at: fractional, context: ctx)
+        #expect(!SharingEventPolicy.isStale(pre, in: ra))
+        #expect(SharingEventPolicy.satisfiesPreSharingGate(ra))
+        // 게이트가 열려 있으므로 실제로 시작할 수 있어야 한다.
+        #expect(throws: Never.self) {
+            try AssessmentStart.start(ra, criteria: criteria, now: fractional, in: ctx)
+        }
+    }
+
+    /// 스냅샷의 모든 Date 필드(일정·결정확인·기한·이행일·효과확인)가 소수초를 가진 채 채워진 finalized 평가.
+    private func fullyPopulatedFinalized(in ctx: ModelContext, at date: Date) throws -> RiskAssessment {
+        let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                siteId: UUID(), siteName: "1공장", assessorName: "홍길동",
+                                jurisdictionSnapshot: .kr, industryProfileSnapshot: .construction,
+                                scheduledAt: date)
+        ctx.insert(ra)
+        try ctx.save()
+        try SharingEventRecording.record(phase: .pre, method: .posting, in: ra,
+                                         target: "전 근로자", ownerName: "홍길동",
+                                         at: date, context: ctx)
+        try AssessmentStart.start(ra, criteria: criteria, now: date, in: ctx)
+        let item = RiskAssessmentItem(taskDescription: "굴착", hazardDescription: "붕괴",
+                                      currentControls: "흙막이", likelihood: 1, severity: 1,
+                                      riskLevel: .low, sortOrder: 0)
+        item.riskAssessment = ra
+        try item.confirmCriteriaDecision(under: criteria, at: date, by: "홍길동")
+        ctx.insert(item)
+        ra.items = [item]
+        try ctx.save()
+        let action = try CorrectiveActionEditing.add(to: item, in: ra, measure: "흙막이 보강",
+                                                     responsibleName: "김담당", dueDate: date,
+                                                     at: date, context: ctx)
+        try CorrectiveActionEditing.update(action, in: ra, measure: "흙막이 보강",
+                                           responsibleName: "김담당", dueDate: date,
+                                           status: .completed, implementedAt: date,
+                                           postRiskLevel: .low, at: date, context: ctx)
+        try CorrectiveActionEditing.confirmEffectiveness(action, in: ra, result: .effective,
+                                                         by: "박확인", at: date, context: ctx)
+        try AssessmentFinalization.finalize(ra, now: date, in: ctx)
+        return ra
+    }
+
     // MARK: - 개인정보·바이너리 배제
 
     @Test("스냅샷에는 증거사진 binary도 참여자 개인정보도 중복 저장되지 않는다")

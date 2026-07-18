@@ -63,6 +63,9 @@ public enum SharingEventRecording {
         let priorUpdatedAt = assessment.updatedAt
         let event = SharingEvent(phase: phase, method: method, sharedAt: date,
                                  target: target, contentSnapshot: json, ownerName: ownerName)
+        // 저장 직전 같은 완전성 계약으로 재확인 — 생성 관문과 `SharingEventPolicy.isComplete` 가 서로
+        // 어긋날 수 없게 묶는다(빈 모델 영속 차단, SCHEMA_V3 §4.1).
+        try event.validate()
         context.insert(event)
         event.riskAssessment = assessment
         appendInPlace(event, to: assessment)
