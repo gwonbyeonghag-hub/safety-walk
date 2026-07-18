@@ -387,6 +387,9 @@ final class ReportRenderingTests: XCTestCase {
         }
 
         // The step's existing controls must be labelled as such, on the page where they render.
+        // The sanity check is load-bearing: the loop below is filtered on CTLMRK, so if the renderer ever
+        // dropped the current-controls value entirely the loop body would never run and pass vacuously.
+        XCTAssertTrue(whole.contains("CTLMRK"), "sanity: the step's current controls must render at all")
         for (index, text) in pages.enumerated() where text.contains("CTLMRK") {
             XCTAssertGreaterThanOrEqual(labelHits(currentControlsForms, in: text), 1,
                 "page \(index + 1) shows the step's current controls without a 현재 안전조치 / Current Controls label")
