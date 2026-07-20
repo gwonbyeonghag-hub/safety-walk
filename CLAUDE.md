@@ -7,9 +7,10 @@ Industrial safety inspection app. SwiftUI, SwiftData.
 
 ---
 
-## Behavioral Guidelines (기초자료 `02_개발/06_기초자료/CLAUDE.md` 병합)
+## Behavioral Guidelines
 
-LLM 코딩 실수를 줄이는 행동지침. 사소한 작업엔 판단껏. 출처: 개발 기초자료.
+LLM 코딩 실수를 줄이는 행동지침. 사소한 작업엔 판단껏.
+출처: `multica-ai/andrej-karpathy-skills`(MIT, 확인일 2026-07-20)의 4원칙을 우리 맥락으로 번안. 원 출처는 Andrej Karpathy X 게시글 `x.com/karpathy/status/2015883857489522876`.
 
 1. **Think before coding** — 가정은 명시. 해석이 갈리면 묻는다(임의 선택 금지). 더 단순한 길이 있으면 말한다. 모르면 멈추고 질문.
 2. **Simplicity first** — 문제를 푸는 최소 코드. 요청 안 한 기능·추상화·"유연성"·불가능 케이스 방어 금지. 200줄이 50줄로 되면 다시 쓴다.
