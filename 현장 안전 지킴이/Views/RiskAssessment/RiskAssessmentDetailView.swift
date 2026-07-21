@@ -583,15 +583,6 @@ struct RiskAssessmentDetailView: View {
         assessment.updatedAt = Date()
         try? modelContext.save()
     }
-
-    private func infoRow(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label).foregroundStyle(.secondary)
-            Spacer()
-            Text(value).multilineTextAlignment(.trailing)
-        }
-        .font(.subheadline)
-    }
 }
 
 /// 항목 편집 시트의 대상 — 새 항목(add) 또는 기존 항목(edit). 기존 `RiskAssessmentItemEditorView` 를

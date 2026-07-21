@@ -284,16 +284,6 @@ struct SafetyBriefingDetailView: View {
         }
     }
 
-    // MARK: - Helpers
-
-    private func infoRow(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label).foregroundStyle(.secondary)
-            Spacer()
-            Text(value).multilineTextAlignment(.trailing)
-        }
-        .font(.subheadline)
-    }
 }
 
 // MARK: - Row views
@@ -388,7 +378,7 @@ private struct BriefingCancelSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(LocalizationKey.commonBack.localized) { dismiss() }
+                    Button(LocalizationKey.commonCancel.localized) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(LocalizationKey.commonConfirm.localized) { cancel() }
