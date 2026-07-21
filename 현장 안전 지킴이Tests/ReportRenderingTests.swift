@@ -478,6 +478,85 @@ final class ReportRenderingTests: XCTestCase {
             "an assessment with no sharing history must show the shared empty-state message")
     }
 
+    // MARK: - WO LEGAL-TBM-3: 브리핑 PDF — 값 스냅샷 기반, 참석자 PII 미포함(집계만)
+
+    /// BriefingParticipant/BriefingRiskItemSnapshot 의 생성자는 SafetyWalkCore 패키지 내부
+    /// 전용이라(WO LEGAL-TBM-1 §4 "sealed로 Core 우회 불가") 앱 레벨 테스트는 실제 Core 원자
+    /// 연산 체인(create→conduct→participant 추가→finalize)으로만 픽스처를 만들 수 있다 — 화면이
+    /// 쓰는 것과 같은 경로라 렌더 대상이 실제 상태에 더 가깝다.
+    private func finalizedBriefingWithSnapshotAndParticipant(
+        in ctx: ModelContext, participantName: String
+    ) throws -> SafetyBriefing {
+        let assessment = try AssessmentAuthoring.create(
+            AssessmentDraft(kind: .regular, method: .frequencySeverity,
+                            siteId: UUID(), siteName: "○○건설 1현장", assessorName: "홍길동",
+                            items: [AssessmentDraft.ItemDraft(
+                                taskDescription: "굴착 작업 PDFMRK", hazardDescription: "붕괴 위험 HAZMRK",
+                                currentControls: "표지판 설치",
+                                likelihood: 3, severity: 3, riskLevel: .high,
+                                measure: "안전난간 설치 MEASUREMRK", responsibleName: "김담당")]),
+            now: Date(), in: ctx)
+
+        let briefing = try BriefingAuthoring.create(
+            BriefingDraft(siteId: UUID(), siteName: "○○건설 1현장", assessmentId: assessment.id,
+                         taskDescription: "굴착 작업 TASKMRK", occurredAt: Date(), location: "A동 1층"),
+            in: ctx)
+        try BriefingLifecycle.conduct(briefing, briefingContent: "전달내용 CONTENTMRK",
+                                      sourceAssessment: assessment, now: Date(), in: ctx)
+        try BriefingParticipantEditing.add(to: briefing, name: participantName, role: .worker,
+                                           at: Date(), context: ctx)
+        try BriefingLifecycle.finalize(briefing, now: Date(), in: ctx)
+        return briefing
+    }
+
+    func testSafetyBriefingReportRendersContentRiskSnapshotAndAttendanceSummary() throws {
+        let ctx = try makeContext()
+        let briefing = try finalizedBriefingWithSnapshotAndParticipant(in: ctx, participantName: "홍길동")
+
+        let url = try XCTUnwrap(SafetyBriefingReport.pdfURL(for: briefing), "briefing report URL nil")
+        attachPages(url, name: "briefing_report")
+        let whole = pageTexts(url).joined(separator: "\n")
+
+        XCTAssertTrue(whole.contains("○○건설 1현장"), "site must render")
+        // PDFKit 은 CJK+라틴 혼합 텍스트를 run 여러 개로 쪼개며 그 사이에 공백/줄바꿈을 끼워 넣을 수
+        // 있다(파일 상단 despaced() 주석 참고) — 라벨 매칭과 같은 방식으로 공백을 제거하고 비교한다.
+        XCTAssertTrue(despaced(whole).contains(despaced("굴착 작업 TASKMRK")), "briefing task description must render")
+        XCTAssertTrue(whole.contains("전달내용 CONTENTMRK"), "briefing content (locked at conduct) must render")
+        XCTAssertTrue(whole.contains("PDFMRK"), "the value-copied risk snapshot's task must render")
+        XCTAssertTrue(whole.contains("HAZMRK"), "the value-copied risk snapshot's hazard must render")
+        XCTAssertTrue(whole.contains("MEASUREMRK"),
+            "the snapshot's 1:N control measure must render (SCHEMA_V3 §4 '문자열 축약 금지')")
+        XCTAssertGreaterThanOrEqual(labelHits(["참석 요약", "Attendance Summary"], in: whole), 1,
+            "attendance summary section must render")
+        XCTAssertTrue(whole.contains("1"), "attendance count (1 participant) must render somewhere")
+    }
+
+    /// ★ 핵심 회귀 가드 — WO LEGAL-TBM-3 §3: 브리핑 PDF는 참석자 이름·서명(제3자 PII)을 포함하지
+    /// 않는다(2e 결정과 일관, 기본값). 참석 요약은 집계만 렌더한다.
+    func testSafetyBriefingReportExcludesParticipantPII() throws {
+        let ctx = try makeContext()
+        let briefing = try finalizedBriefingWithSnapshotAndParticipant(in: ctx, participantName: "김철수PIINAME")
+
+        let url = try XCTUnwrap(SafetyBriefingReport.pdfURL(for: briefing), "briefing report URL nil")
+        let whole = pageTexts(url).joined(separator: "\n")
+
+        XCTAssertFalse(whole.contains("김철수PIINAME"),
+            "participant name must NOT appear in the exported PDF (PII exclusion, WO LEGAL-TBM-3 §3)")
+    }
+
+    /// standalone(연결 평가 없음) + draft 브리핑 — 위험 항목·참석자 모두 빈 상태로 안전하게 렌더된다.
+    func testSafetyBriefingReportShowsEmptyStatesForStandaloneDraftBriefing() throws {
+        let ctx = try makeContext()
+        let briefing = try BriefingAuthoring.create(
+            BriefingDraft(siteId: UUID(), siteName: "Plant B"), in: ctx)
+
+        let url = try XCTUnwrap(SafetyBriefingReport.pdfURL(for: briefing), "briefing report URL nil")
+        let whole = pageTexts(url).joined(separator: "\n")
+
+        XCTAssertGreaterThanOrEqual(labelHits(["기록된 위험 항목이 없습니다", "No risk items recorded"], in: whole), 1,
+            "an unconducted briefing must show the shared empty risk-snapshot message")
+    }
+
     private func dummyImage() -> UIImage {
         UIGraphicsImageRenderer(size: CGSize(width: 320, height: 220)).image { ctx in
             UIColor.systemTeal.setFill()

@@ -79,6 +79,7 @@ struct MacRootView: View {
         case .inspections:     InspectionsBrowseView()
         case .hazards:         HazardsBrowseView()
         case .riskAssessments: RiskAssessmentsBrowseView()
+        case .briefings:       SafetyBriefingsBrowseView()
         case .reports:         ReportHubView()
         }
     }

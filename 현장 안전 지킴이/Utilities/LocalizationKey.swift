@@ -532,6 +532,10 @@ enum LocalizationKey: String {
     case tbmParticipantConfirmationHint  = "tbm.participant.confirmationHint"
     case tbmParticipantsLockedHint       = "tbm.participants.lockedHint"
     case tbmParticipantSaveFailedMessage = "tbm.participant.saveFailedMessage"
+    // 통합 공유 이력 · 참석 요약 (WO LEGAL-TBM-3)
+    case tbmUnifiedHistoryTbmLabel  = "tbm.unifiedHistory.tbmLabel"
+    case tbmAttendanceSummaryTitle     = "tbm.attendanceSummary.title"
+    case tbmAttendanceSummaryCountFmt  = "tbm.attendanceSummary.countFormat"
 
     // MARK: - Reports (WO-5b)
     case reportRaTitle          = "report.ra.title"
@@ -544,6 +548,7 @@ enum LocalizationKey: String {
     case reportJhaHazards       = "report.jha.hazards"
     case reportJhaControls      = "report.jha.controls"
     case reportJhaRisk          = "report.jha.risk"
+    case reportBriefingTitle    = "report.briefing.title"   // WO LEGAL-TBM-3
 
     // MARK: - macOS manager shell (WO-4)
     case macLanguage                    = "mac.language"
@@ -555,6 +560,7 @@ enum LocalizationKey: String {
     case macSectionInspections          = "mac.section.inspections"
     case macSectionHazards              = "mac.section.hazards"
     case macSectionRiskAssessments      = "mac.section.riskAssessments"
+    case macSectionBriefings            = "mac.section.briefings"   // WO LEGAL-TBM-3
     case macSectionReports              = "mac.section.reports"
     case macDashboardTitle              = "mac.dashboard.title"
     case macDashboardSubtitle           = "mac.dashboard.subtitle"
@@ -580,6 +586,7 @@ enum LocalizationKey: String {
     case macChooseReport                = "mac.chooseReport"
     case macAssessmentReports           = "mac.assessmentReports"
     case macInspectionReports           = "mac.inspectionReports"
+    case macBriefingReports             = "mac.briefingReports"   // WO LEGAL-TBM-3
     case macExportPDF                   = "mac.exportPDF"
     case macPrint                       = "mac.print"
 

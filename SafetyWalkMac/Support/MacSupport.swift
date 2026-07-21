@@ -30,6 +30,7 @@ enum MacSection: String, CaseIterable, Identifiable, Hashable {
     case inspections
     case hazards
     case riskAssessments
+    case briefings
     case reports
 
     var id: String { rawValue }
@@ -41,6 +42,7 @@ enum MacSection: String, CaseIterable, Identifiable, Hashable {
         case .inspections:     return .macSectionInspections
         case .hazards:         return .macSectionHazards
         case .riskAssessments: return .macSectionRiskAssessments
+        case .briefings:       return .macSectionBriefings
         case .reports:         return .macSectionReports
         }
     }
@@ -52,6 +54,7 @@ enum MacSection: String, CaseIterable, Identifiable, Hashable {
         case .inspections:     return "checklist"
         case .hazards:         return "exclamationmark.triangle"
         case .riskAssessments: return "tablecells"
+        case .briefings:       return "person.3"
         case .reports:         return "doc.text"
         }
     }

@@ -21,6 +21,9 @@
 		5AFE4000000000000000C009 /* RiskAssessmentReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AFE4000000000000000B009 /* RiskAssessmentReport.swift */; };
 		5AFE4000000000000000C010 /* JHAReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AFE4000000000000000B010 /* JHAReport.swift */; };
 		5AFE4000000000000000C011 /* InspectionReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AFE4000000000000000B011 /* InspectionReport.swift */; };
+		5AFE4000000000000000C012 /* AssessmentLifecycle+Display.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AFE4000000000000000B012 /* AssessmentLifecycle+Display.swift */; };
+		5AFE4000000000000000C013 /* SafetyBriefing+Display.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AFE4000000000000000B013 /* SafetyBriefing+Display.swift */; };
+		5AFE4000000000000000C014 /* SafetyBriefingReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AFE4000000000000000B014 /* SafetyBriefingReport.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +58,9 @@
 		5AFE4000000000000000B009 /* RiskAssessmentReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RiskAssessmentReport.swift; path = "현장 안전 지킴이/Views/Reports/RiskAssessmentReport.swift"; sourceTree = SOURCE_ROOT; };
 		5AFE4000000000000000B010 /* JHAReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = JHAReport.swift; path = "현장 안전 지킴이/Views/Reports/JHAReport.swift"; sourceTree = SOURCE_ROOT; };
 		5AFE4000000000000000B011 /* InspectionReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = InspectionReport.swift; path = "현장 안전 지킴이/Views/Reports/InspectionReport.swift"; sourceTree = SOURCE_ROOT; };
+		5AFE4000000000000000B012 /* AssessmentLifecycle+Display.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "AssessmentLifecycle+Display.swift"; path = "현장 안전 지킴이/Views/RiskAssessment/AssessmentLifecycle+Display.swift"; sourceTree = SOURCE_ROOT; };
+		5AFE4000000000000000B013 /* SafetyBriefing+Display.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "SafetyBriefing+Display.swift"; path = "현장 안전 지킴이/Views/Briefing/SafetyBriefing+Display.swift"; sourceTree = SOURCE_ROOT; };
+		5AFE4000000000000000B014 /* SafetyBriefingReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SafetyBriefingReport.swift; path = "현장 안전 지킴이/Views/Reports/SafetyBriefingReport.swift"; sourceTree = SOURCE_ROOT; };
 		9A05FC652FB742D2000C5D1A /* 현장 안전 지킴이.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "현장 안전 지킴이.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A05FC722FB742D4000C5D1A /* 현장 안전 지킴이Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "현장 안전 지킴이Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A05FC7C2FB742D4000C5D1A /* 현장 안전 지킴이UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "현장 안전 지킴이UITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -131,6 +137,9 @@
 				5AFE4000000000000000B009 /* RiskAssessmentReport.swift */,
 				5AFE4000000000000000B010 /* JHAReport.swift */,
 				5AFE4000000000000000B011 /* InspectionReport.swift */,
+				5AFE4000000000000000B012 /* AssessmentLifecycle+Display.swift */,
+				5AFE4000000000000000B013 /* SafetyBriefing+Display.swift */,
+				5AFE4000000000000000B014 /* SafetyBriefingReport.swift */,
 				5AFE4000000000000000A00D /* Localizable.strings */,
 			);
 			name = "Shared (macOS)";
@@ -354,6 +363,9 @@
 				5AFE4000000000000000C009 /* RiskAssessmentReport.swift in Sources */,
 				5AFE4000000000000000C010 /* JHAReport.swift in Sources */,
 				5AFE4000000000000000C011 /* InspectionReport.swift in Sources */,
+				5AFE4000000000000000C012 /* AssessmentLifecycle+Display.swift in Sources */,
+				5AFE4000000000000000C013 /* SafetyBriefing+Display.swift in Sources */,
+				5AFE4000000000000000C014 /* SafetyBriefingReport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

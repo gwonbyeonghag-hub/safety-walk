@@ -9,6 +9,7 @@ import SafetyWalkCore
 struct ReportHubView: View {
     @Query private var assessments: [RiskAssessment]
     @Query private var inspections: [Inspection]
+    @Query private var briefings: [SafetyBriefing]
 
     @State private var selection: String?
     @State private var currentURL: URL?
@@ -21,6 +22,9 @@ struct ReportHubView: View {
                 }
                 Section(LocalizationKey.macInspectionReports.localized) {
                     ForEach(inspectionEntries) { entry in row(entry).tag(entry.id) }
+                }
+                Section(LocalizationKey.macBriefingReports.localized) {
+                    ForEach(briefingEntries) { entry in row(entry).tag(entry.id) }
                 }
             }
             .listStyle(.sidebar)
@@ -71,11 +75,11 @@ struct ReportHubView: View {
             let site = ra.siteName.isEmpty ? ra.method.localizedLabel : ra.siteName
             if ra.method == .jsa {
                 out.append(ReportEntry(id: "jha-\(ra.id)", title: LocalizationKey.reportJhaTitle.localized,
-                                       subtitle: site, kind: .jha, assessment: ra, inspection: nil))
+                                       subtitle: site, kind: .jha, assessment: ra, inspection: nil, briefing: nil))
             } else {
                 out.append(ReportEntry(id: "ra-\(ra.id)", title: LocalizationKey.reportRaTitle.localized,
                                        subtitle: "\(site) · \(ra.method.localizedLabel)",
-                                       kind: .assessmentTable, assessment: ra, inspection: nil))
+                                       kind: .assessmentTable, assessment: ra, inspection: nil, briefing: nil))
             }
         }
         return out
@@ -87,7 +91,16 @@ struct ReportHubView: View {
             .map { insp in
                 ReportEntry(id: "insp-\(insp.id)", title: LocalizationKey.reportInspectionTitle.localized,
                             subtitle: "\(insp.siteName) · \(insp.areaName ?? "")",
-                            kind: .inspection, assessment: nil, inspection: insp)
+                            kind: .inspection, assessment: nil, inspection: insp, briefing: nil)
+            }
+    }
+
+    private var briefingEntries: [ReportEntry] {
+        briefings.sorted { ($0.occurredAt ?? $0.createdAt) > ($1.occurredAt ?? $1.createdAt) }
+            .map { b in
+                let subtitle = b.taskDescription.isEmpty ? b.siteName : "\(b.siteName) · \(b.taskDescription)"
+                return ReportEntry(id: "briefing-\(b.id)", title: LocalizationKey.reportBriefingTitle.localized,
+                                   subtitle: subtitle, kind: .briefing, assessment: nil, inspection: nil, briefing: b)
             }
     }
 
@@ -104,7 +117,7 @@ struct ReportHubView: View {
         .padding(.vertical, 2)
     }
 
-    private var allEntries: [ReportEntry] { assessmentEntries + inspectionEntries }
+    private var allEntries: [ReportEntry] { assessmentEntries + inspectionEntries + briefingEntries }
 
     // MARK: - Generation
 
@@ -126,6 +139,8 @@ struct ReportHubView: View {
             guard let insp = entry.inspection else { return nil }
             let photos = MacReportPhotos.photos(for: insp)
             return InspectionReport.pdfURL(inspection: insp, itemPhotos: photos.items, hazardPhotos: photos.hazards)
+        case .briefing:
+            return entry.briefing.flatMap { SafetyBriefingReport.pdfURL(for: $0) }
         }
     }
 
@@ -141,7 +156,7 @@ struct ReportHubView: View {
     }
 }
 
-enum ReportKind { case assessmentTable, jha, inspection }
+enum ReportKind { case assessmentTable, jha, inspection, briefing }
 
 struct ReportEntry: Identifiable {
     let id: String
@@ -150,4 +165,5 @@ struct ReportEntry: Identifiable {
     let kind: ReportKind
     let assessment: RiskAssessment?
     let inspection: Inspection?
+    let briefing: SafetyBriefing?
 }

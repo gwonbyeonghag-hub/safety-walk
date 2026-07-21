@@ -558,6 +558,7 @@
 "report.jha.hazards" = "Hazards";
 "report.jha.controls" = "Controls / Recommended";
 "report.jha.risk" = "Risk";
+"report.briefing.title" = "TBM Safety Briefing";
 
 /* macOS manager shell — WO-4 */
 "mac.language" = "Language";
@@ -569,6 +570,7 @@
 "mac.section.inspections" = "Inspections";
 "mac.section.hazards" = "Hazards";
 "mac.section.riskAssessments" = "Risk Assessments";
+"mac.section.briefings" = "Safety Briefings";
 "mac.section.reports" = "Reports";
 "mac.dashboard.title" = "Manager Dashboard";
 "mac.dashboard.subtitle" = "%d sites · safety status today";
@@ -594,6 +596,7 @@
 "mac.chooseReport" = "Choose a report";
 "mac.assessmentReports" = "Assessment Reports";
 "mac.inspectionReports" = "Inspection Reports";
+"mac.briefingReports" = "Briefing Reports";
 "mac.exportPDF" = "Export PDF";
 "mac.print" = "Print";
 
@@ -723,6 +726,9 @@
 "tbm.participant.confirmationHint" = "Attendance confirmation records that the content was received — it is not a liability waiver signature.";
 "tbm.participants.lockedHint" = "Participants can no longer be added after finalizing.";
 "tbm.participant.saveFailedMessage" = "Couldn't save the participant. Please try again.";
+"tbm.unifiedHistory.tbmLabel" = "TBM Briefing Finalized";
+"tbm.attendanceSummary.title" = "Attendance Summary";
+"tbm.attendanceSummary.countFormat" = "%d total participants";
 
 /* MARK: - Jurisdiction + item authoring path (WO LEGAL-2d-PATH) */
 "ra.jurisdiction" = "Jurisdiction";
