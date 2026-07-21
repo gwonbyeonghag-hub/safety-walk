@@ -11,6 +11,7 @@ struct RiskAssessmentDetailView: View {
     let assessment: RiskAssessment
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @State private var participantSheet: ParticipantSheet?
     @State private var showStartSheet = false
     @State private var showSaveError = false
@@ -21,6 +22,9 @@ struct RiskAssessmentDetailView: View {
     @State private var itemSheet: ItemSheet?
     @State private var showItemError = false
     @State private var finalizeErrorMessage = LocalizationKey.raFinalizeFailedMessage.localized
+    // WO LEGAL-2e — 평가 삭제.
+    @State private var showDeleteConfirm = false
+    @State private var showDeleteError = false
 
     // Sorted by sortOrder so JSA work steps display in their entered order
     // (CloudKit does not preserve to-many relationship order).
@@ -75,6 +79,7 @@ struct RiskAssessmentDetailView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
             }
+            deleteSection
         }
         .navigationTitle(LocalizationKey.raTitle.localized)
         .navigationBarTitleDisplayMode(.inline)
@@ -113,6 +118,17 @@ struct RiskAssessmentDetailView: View {
             Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
         } message: {
             Text(finalizeErrorMessage)
+        }
+        .alert(LocalizationKey.raDeleteTitle.localized, isPresented: $showDeleteConfirm) {
+            Button(LocalizationKey.commonCancel.localized, role: .cancel) { }
+            Button(LocalizationKey.commonDelete.localized, role: .destructive) { performDelete() }
+        } message: {
+            Text(deleteAlertMessage)
+        }
+        .alert(LocalizationKey.raDeleteFailedTitle.localized, isPresented: $showDeleteError) {
+            Button(LocalizationKey.commonConfirm.localized, role: .cancel) { }
+        } message: {
+            Text(LocalizationKey.raDeleteFailedMessage.localized)
         }
     }
 
@@ -236,7 +252,15 @@ struct RiskAssessmentDetailView: View {
             if let note = assessment.note, !note.isEmpty {
                 infoRow(LocalizationKey.raNote.localized, note)
             }
+            // WO LEGAL-2e — 3년 보존(시행규칙 제37조의4) 안내. 앱 가드일 뿐 자동 법 판정이 아니다.
+            infoRow(LocalizationKey.raRetainUntil.localized, retainUntilText)
         }
+    }
+
+    /// 보존 기한 표시 텍스트 — `RetentionPolicy` 가 유일한 계산 소스(단일 소스).
+    private var retainUntilText: String {
+        guard let until = RetentionPolicy.retainUntil(assessment) else { return "—" }
+        return until.formatted(date: .abbreviated, time: .omitted)
     }
 
     // MARK: - Lifecycle: planned → inProgress
@@ -504,6 +528,43 @@ struct RiskAssessmentDetailView: View {
             .foregroundStyle(.secondary)
         }
         .accessibilityIdentifier("ra_item_actions_link")
+    }
+
+    // MARK: - 삭제 (WO LEGAL-2e)
+
+    private var deleteSection: some View {
+        Section {
+            Button(role: .destructive) {
+                showDeleteConfirm = true
+            } label: {
+                Label(LocalizationKey.raDelete.localized, systemImage: "trash")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .accessibilityIdentifier("ra_delete_assessment")
+        }
+    }
+
+    /// 보존 기간 내면 경고를 앞에 얹는다 — 하드 차단이 아니라 사용자가 확인하면 그대로 삭제할 수 있다
+    /// (CLAUDE.md No legal judgment). 보존 기간이 지났으면 표준 삭제 안내만 보인다.
+    private var deleteAlertMessage: String {
+        guard RetentionPolicy.isWithinRetentionPeriod(assessment, now: Date()),
+              let until = RetentionPolicy.retainUntil(assessment) else {
+            return LocalizationKey.raDeleteMessage.localized
+        }
+        let untilText = until.formatted(date: .abbreviated, time: .omitted)
+        let warning = String(format: LocalizationKey.raDeleteRetentionWarningFmt.localized, untilText)
+        return warning + "\n\n" + LocalizationKey.raDeleteMessage.localized
+    }
+
+    /// 삭제는 Core 의 단일 원자 연산을 거친다 — cascade(기준·항목·참여자·공유이력)는 SwiftData 가 지운다.
+    private func performDelete() {
+        do {
+            try AssessmentDeletion.delete(assessment, in: modelContext)
+            dismiss()
+        } catch {
+            showDeleteError = true
+        }
     }
 
     // MARK: - Helpers

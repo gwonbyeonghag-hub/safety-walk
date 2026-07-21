@@ -619,6 +619,7 @@
 
 /* MARK: - 비TBM 공유 기록 + 평가 확정 (WO LEGAL-2d) */
 "ra.sharing.section" = "공유 기록";
+"ra.sharing.phase" = "구분";
 "ra.sharing.empty" = "아직 공유 기록이 없습니다.";
 "ra.sharing.pre" = "사전";
 "ra.sharing.post" = "사후";
@@ -658,6 +659,16 @@
 "ra.finalize.failedTitle" = "평가를 확정하지 못했습니다";
 "ra.finalize.failedMessage" = "확정에 실패해 평가 상태가 그대로입니다. 다시 시도해 주세요.";
 "ra.finalize.preSharingRequired" = "현재 일정에 대한 사전 공유 기록이 있어야 확정할 수 있습니다.";
+
+/* MARK: - 3년 보존 · 삭제 · 내보내기 (WO LEGAL-2e) */
+"ra.retainUntil" = "보존 기한";
+"ra.retainUntil.reportNotice" = "산업안전보건법 시행규칙 제37조의4에 따라 위험성평가 기록은 실시일로부터 3년간 보존됩니다. 이 안내는 법적 판정이 아니며 삭제를 자동으로 막지 않습니다.";
+"ra.delete" = "평가 삭제";
+"ra.deleteTitle" = "평가를 삭제하시겠습니까?";
+"ra.deleteMessage" = "평가와 항목, 참여자, 공유 이력이 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다.";
+"ra.deleteRetentionWarningFormat" = "⚠️ 이 평가는 보존 기한(%@) 이내입니다. 산업안전보건법 시행규칙 제37조의4는 위험성평가 기록을 실시 시기로부터 3년간 보존하도록 안내합니다.";
+"ra.deleteFailedTitle" = "평가를 삭제하지 못했습니다";
+"ra.deleteFailedMessage" = "삭제에 실패해 평가가 그대로 남아 있습니다. 다시 시도해 주세요.";
 
 /* MARK: - 법적 관할 + 항목 작성 경로 (WO LEGAL-2d-PATH) */
 "ra.jurisdiction" = "법적 관할";

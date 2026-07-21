@@ -18,6 +18,16 @@ enum RiskAssessmentReport {
         static let status: CGFloat = 38
     }
 
+    // WO LEGAL-2e — 공유 이력 표 column widths (pt), independent of the item table above.
+    private enum SharingCol {
+        static let phase: CGFloat = 46
+        static let method: CGFloat = 96
+        static let sharedAt: CGFloat = 110
+        static let target: CGFloat = 120
+        static let owner: CGFloat = 90
+        static let stale: CGFloat = 61
+    }
+
     static func pdfURL(for assessment: RiskAssessment) -> URL? {
         let items = (assessment.items ?? []).sorted { $0.sortOrder < $1.sortOrder }
         let url = FileManager.default.temporaryDirectory
@@ -31,6 +41,10 @@ enum RiskAssessmentReport {
         for (offset, item) in items.enumerated() {
             blocks += rowBlocks(index: offset + 1, item: item, method: assessment.method)
         }
+        // WO LEGAL-2e: 공유 이력 + 3년 보존 안내 — 참여자 이름·서명(제3자 PII)은 정책 미확정으로
+        // 이번 WO 범위에서 제외했다(오너 확인, 후속 WO).
+        blocks += sharingHistoryBlocks(assessment)
+        blocks.append(AnyView(retentionBlock(assessment)))
         blocks.append(AnyView(ReportDisclaimer()))
 
         return ReportRenderer.renderPDF(
@@ -51,6 +65,95 @@ enum RiskAssessmentReport {
             (LocalizationKey.raMethod.localized, a.method.localizedLabel),
             (LocalizationKey.commonDone.localized, (a.assessedAt ?? a.createdAt).formatted(date: .abbreviated, time: .shortened)),
         ])
+    }
+
+    // MARK: - WO LEGAL-2e: 보존 안내
+
+    /// 3년 보존(시행규칙 제37조의4) 안내 — 앱 가드일 뿐 자동 법 판정이 아니라는 점을 함께 적는다.
+    private static func retentionBlock(_ a: RiskAssessment) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            ReportInfoGrid(pairs: [
+                (LocalizationKey.raRetainUntil.localized, retainUntilText(a)),
+            ], columns: 1)
+            Text(LocalizationKey.raRetainUntilReportNotice.localized)
+                .font(.system(size: 7.5))
+                .foregroundStyle(.black.opacity(0.6))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 8)
+        }
+    }
+
+    private static func retainUntilText(_ a: RiskAssessment) -> String {
+        guard let until = RetentionPolicy.retainUntil(a) else { return "—" }
+        return until.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    // MARK: - WO LEGAL-2e: 공유 이력
+
+    /// 공유 이력 표 — 값 스냅샷(`SharingEventPolicy`)이 아니라 `SharingEvent` 모델 필드(사전/사후·방법·
+    /// 일시·대상·담당자)만 쓴다. 참여자 개인정보(이름·서명)는 포함하지 않는다(정책 미확정, 오너 확인 대기).
+    ///
+    /// WO LEGAL-2c 페이지 분할 교훈 재사용: 표 전체를 한 블록으로 묶지 않는다 — 기록이 많으면 한 블록
+    /// 안에서는 쪼개지지 않는 `ReportRenderer` 특성상 페이지 하단에서 잘려 보일 수 있다. 제목+열머리글은
+    /// 첫 행과 한 블록으로 묶어 헤더만 홀로 남지 않게 하고, 이후 행은 한 행당 한 블록으로 흘려보낸다.
+    private static func sharingHistoryBlocks(_ assessment: RiskAssessment) -> [AnyView] {
+        let events = SharingEventPolicy.sortedEvents(assessment)
+        guard !events.isEmpty else {
+            return [AnyView(sharingHistorySection {
+                Text(LocalizationKey.raSharingEmpty.localized)
+                    .font(.system(size: 8))
+                    .foregroundStyle(.black.opacity(0.6))
+                    .padding(8)
+            })]
+        }
+        let first = AnyView(sharingHistorySection {
+            VStack(spacing: 0) {
+                sharingColumnHeader()
+                sharingRow(events[0], in: assessment, isLast: events.count == 1)
+            }
+        })
+        let rest = events.dropFirst().enumerated().map { offset, event in
+            AnyView(sharingRow(event, in: assessment, isLast: offset == events.count - 2))
+        }
+        return [first] + rest
+    }
+
+    private static func sharingHistorySection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(LocalizationKey.raSharingSection.localized)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(Color.reportNavy)
+            content()
+        }
+    }
+
+    private static func sharingColumnHeader() -> some View {
+        HStack(spacing: 0) {
+            head(LocalizationKey.raSharingPhase.localized, SharingCol.phase)
+            head(LocalizationKey.raSharingMethod.localized, SharingCol.method)
+            head(LocalizationKey.raSharingSharedAt.localized, SharingCol.sharedAt)
+            head(LocalizationKey.raSharingTarget.localized, SharingCol.target)
+            head(LocalizationKey.raSharingOwner.localized, SharingCol.owner)
+            head(LocalizationKey.raSharingStale.localized, SharingCol.stale)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.reportNavy.opacity(0.12))
+    }
+
+    private static func sharingRow(_ event: SharingEvent, in assessment: RiskAssessment, isLast: Bool) -> some View {
+        HStack(alignment: .top, spacing: 0) {
+            actionCell(event.phase?.localizedLabel, SharingCol.phase)
+            actionCell(event.method?.localizedLabel, SharingCol.method)
+            actionCell(event.sharedAt?.formatted(date: .abbreviated, time: .shortened), SharingCol.sharedAt)
+            actionCell(event.target, SharingCol.target)
+            actionCell(event.ownerName, SharingCol.owner)
+            actionCell(SharingEventPolicy.isStale(event, in: assessment)
+                       ? LocalizationKey.raSharingStale.localized : nil, SharingCol.stale)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(.black.opacity(isLast ? 0.12 : 0.06)).frame(height: 0.5)
+        }
     }
 
     private static func columnHeader() -> some View {

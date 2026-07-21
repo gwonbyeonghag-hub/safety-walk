@@ -619,6 +619,7 @@
 
 /* MARK: - Non-TBM sharing records + assessment finalization (WO LEGAL-2d) */
 "ra.sharing.section" = "Sharing Records";
+"ra.sharing.phase" = "Phase";
 "ra.sharing.empty" = "No sharing records yet.";
 "ra.sharing.pre" = "Before";
 "ra.sharing.post" = "After";
@@ -658,6 +659,16 @@
 "ra.finalize.failedTitle" = "Couldn't finalize the assessment";
 "ra.finalize.failedMessage" = "Finalizing failed and the assessment status is unchanged. Please try again.";
 "ra.finalize.preSharingRequired" = "A sharing record for the current schedule is required before finalizing.";
+
+/* MARK: - 3-year retention · deletion · export (WO LEGAL-2e) */
+"ra.retainUntil" = "Retention until";
+"ra.retainUntil.reportNotice" = "Under Enforcement Rule Article 37-4 of the Occupational Safety and Health Act, risk assessment records are retained for 3 years from the date conducted. This notice is informational only and does not automatically block deletion.";
+"ra.delete" = "Delete Assessment";
+"ra.deleteTitle" = "Delete this assessment?";
+"ra.deleteMessage" = "This will delete the assessment along with its items, participants, and sharing history. This action cannot be undone.";
+"ra.deleteRetentionWarningFormat" = "⚠️ This assessment is still within its retention period (until %@). Enforcement Rule Article 37-4 calls for keeping risk assessment records for 3 years from the date conducted.";
+"ra.deleteFailedTitle" = "Couldn't delete the assessment";
+"ra.deleteFailedMessage" = "Deletion failed and the assessment is unchanged. Please try again.";
 
 /* MARK: - Jurisdiction + item authoring path (WO LEGAL-2d-PATH) */
 "ra.jurisdiction" = "Jurisdiction";

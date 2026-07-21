@@ -420,6 +420,7 @@ enum LocalizationKey: String {
 
     // MARK: - 비TBM 공유 기록 + 평가 확정 (WO LEGAL-2d)
     case raSharingSection       = "ra.sharing.section"
+    case raSharingPhase         = "ra.sharing.phase"          // 공유 이력 표의 사전/사후 열 제목 (LEGAL-2e)
     case raSharingEmpty         = "ra.sharing.empty"
     case raSharingPre           = "ra.sharing.pre"
     case raSharingPost          = "ra.sharing.post"
@@ -462,6 +463,16 @@ enum LocalizationKey: String {
     case raFinalizeFailedTitle  = "ra.finalize.failedTitle"
     case raFinalizeFailedMessage = "ra.finalize.failedMessage"
     case raFinalizePreSharingRequired = "ra.finalize.preSharingRequired"
+
+    // MARK: - 3년 보존 · 삭제 · 내보내기 (WO LEGAL-2e)
+    case raRetainUntil          = "ra.retainUntil"
+    case raRetainUntilReportNotice = "ra.retainUntil.reportNotice"
+    case raDelete                = "ra.delete"
+    case raDeleteTitle           = "ra.deleteTitle"
+    case raDeleteMessage         = "ra.deleteMessage"
+    case raDeleteRetentionWarningFmt = "ra.deleteRetentionWarningFormat"
+    case raDeleteFailedTitle     = "ra.deleteFailedTitle"
+    case raDeleteFailedMessage   = "ra.deleteFailedMessage"
 
     // MARK: - Reports (WO-5b)
     case reportRaTitle          = "report.ra.title"
