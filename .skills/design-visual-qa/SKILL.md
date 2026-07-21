@@ -1,3 +1,8 @@
+---
+name: design-visual-qa
+description: Use to verify the visual design quality of a SafetyWalk screen by rendering it, capturing a screenshot, and critiquing the result — not by reading code. Run on UI work needing a visual pass.
+---
+
 # Skill: Design Visual QA (render → screenshot → critique → iterate)
 
 Run this skill to verify the **visual design quality** of a screen by actually

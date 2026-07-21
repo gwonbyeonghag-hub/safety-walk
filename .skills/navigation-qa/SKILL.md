@@ -1,3 +1,8 @@
+---
+name: navigation-qa
+description: Use after any SafetyWalk navigation or screen-transition change to verify the actual push/pop/sheet/split flow behaves correctly.
+---
+
 # Skill: Navigation QA
 
 Run this skill after any navigation or screen transition change.

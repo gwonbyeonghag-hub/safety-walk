@@ -1,3 +1,8 @@
+---
+name: screen-implementation-review
+description: Use before marking any SafetyWalk screen task done — reviews screen implementation for readability, error states, and correctness. Pairs with swiftui-build-qa.
+---
+
 # Skill: Screen Implementation Review
 
 Run this skill before marking any Phase 2, 3, or 4 screen task as done in TASKS.md.

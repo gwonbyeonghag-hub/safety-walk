@@ -1,3 +1,8 @@
+---
+name: checklist-template-expansion
+description: Use when adding or modifying SafetyWalk checklist template items or categories (checklist_korea.json / checklist_global.json). Keeps template changes consistent and validated.
+---
+
 # Skill: Checklist Template Expansion
 
 Run this skill when adding or modifying checklist template items or categories.

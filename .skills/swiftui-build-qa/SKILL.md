@@ -1,3 +1,8 @@
+---
+name: swiftui-build-qa
+description: Use before reporting any SafetyWalk SwiftUI screen task complete — signed iOS/macOS build + test-destination verification + SwiftUI type-inference error rules. Apply proactively when writing new View code.
+---
+
 # Skill: SwiftUI Build QA
 
 Run this skill before reporting any SwiftUI screen task as complete.

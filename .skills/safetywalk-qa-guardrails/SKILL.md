@@ -1,3 +1,8 @@
+---
+name: safetywalk-qa-guardrails
+description: Use whenever working on SafetyWalk QA, simulator testing, seed-data injection, build cleanup, or pre-TestFlight verification. The project's QA + simulator/build hygiene checklist.
+---
+
 # Skill: SafetyWalk QA Guardrails
 
 Use this skill whenever working on SafetyWalk QA, simulator testing, seed data injection,
