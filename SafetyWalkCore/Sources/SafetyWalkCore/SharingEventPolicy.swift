@@ -214,7 +214,10 @@ public enum SharingEventPolicy {
     ///
     /// 모두 만족해야 한다:
     /// 1. `briefing.assessmentId` 가 이 평가를 가리킨다
-    /// 2. `.finalized` (TBM 공유 증명은 확정된 브리핑만 — `UnifiedSharingHistory` 와 같은 계약)
+    /// 2. `.finalized` + `finalizedAt` 존재 + `SafetyBriefing.validate()` 통과(업무상 완전한 레코드) —
+    ///    `isCurrent(SharingEvent)` 가 `isComplete(event)` 로 부분 동기화된 CloudKit 레코드를 막는 것과
+    ///    같은 이유(모든 속성이 optional 로 저장되므로 `.finalized` 만 동기화되고 나머지가 아직 안 왔을
+    ///    수 있다) — `UnifiedSharingHistory` 와 같은 계약(`.finalized` 만)
     /// 3. 위험 스냅샷 항목 집합이 평가의 **현재** 항목 집합과 정확히 같고(추가·삭제 없음), 각 항목의
     ///    위험도·현재조치·개선조치가 `BriefingRiskItemContent` 로 지금 다시 계산한 값과 일치
     ///    (개선조치가 바뀌면 stale)
@@ -222,7 +225,8 @@ public enum SharingEventPolicy {
     /// 어느 하나라도 확인할 수 없으면 fail-closed — 인정하지 않는다. 과거 브리핑은 이력에 그대로 남는다.
     public static func isCurrent(_ briefing: SafetyBriefing, in assessment: RiskAssessment) -> Bool {
         guard briefing.assessmentId == assessment.id else { return false }
-        guard briefing.status == .finalized else { return false }
+        guard briefing.status == .finalized, briefing.finalizedAt != nil else { return false }
+        guard (try? briefing.validate()) != nil else { return false }
 
         let currentItems = assessment.items ?? []
         let recordedSnapshots = briefing.riskSnapshots ?? []

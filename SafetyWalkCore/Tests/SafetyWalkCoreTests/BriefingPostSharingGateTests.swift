@@ -140,4 +140,31 @@ struct BriefingPostSharingGateTests {
         #expect(!SharingEventPolicy.isCurrent(briefing, in: ra))
         #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
+
+    // MARK: - fail-closed 완전성 (code-review Standards 반영 — isCurrent(SharingEvent)의 isComplete 와 대칭)
+
+    @Test("status=finalized 인데 finalizedAt 이 없는(부분 동기화) 브리핑은 isCurrent 가 아니다")
+    func finalizedWithoutTimestampIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try readyFinalizedAssessment(in: ctx, jurisdiction: .kr)
+        let briefing = try finalizedBriefing(for: ra, in: ctx)
+        #expect(SharingEventPolicy.isCurrent(briefing, in: ra))
+
+        // CloudKit 은 모든 속성을 optional 로 저장하므로 `.finalized` 만 먼저 동기화되고
+        // `finalizedAt` 이 아직 오지 않은 부분 레코드가 있을 수 있다 — internal(set) 이라
+        // 패키지 안(테스트)에서만 이 손상 상태를 재현할 수 있다.
+        briefing.finalizedAt = nil
+        #expect(!SharingEventPolicy.isCurrent(briefing, in: ra))
+    }
+
+    @Test("Site 정보가 없는(손상된) 브리핑은 validate() 에 걸려 isCurrent 가 아니다")
+    func briefingFailingValidateIsNotCurrent() throws {
+        let ctx = try makeContext()
+        let ra = try readyFinalizedAssessment(in: ctx, jurisdiction: .kr)
+        let briefing = try finalizedBriefing(for: ra, in: ctx)
+        #expect(SharingEventPolicy.isCurrent(briefing, in: ra))
+
+        briefing.siteId = nil
+        #expect(!SharingEventPolicy.isCurrent(briefing, in: ra))
+    }
 }
