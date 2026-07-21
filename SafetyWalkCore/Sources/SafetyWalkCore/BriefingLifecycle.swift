@@ -105,29 +105,25 @@ public enum BriefingLifecycle {
         return briefing
     }
 
-    /// 항목 하나의 값 스냅샷 — 정규 값(작업·유해위험요인·riskLevel?·likelihood/severity·현재조치)을
-    /// 그대로 복사하고, 1:N 개선조치는 `BriefingControlMeasuresSnapshot` 으로 인코딩한다.
-    /// `CorrectiveActionPolicy.sortedCorrectiveActions` 로 결정적 순서를 쓴다(CloudKit 은 to-many
-    /// 순서를 보장하지 않는다).
+    /// 항목 하나의 값 스냅샷 — `BriefingRiskItemContent.current(from:)` 이 계산한 값을 그대로 인코딩한다.
+    /// **같은 계산**을 `SharingEventPolicy.isCurrent(_:SafetyBriefing:in:)` 의 최신성 판정도 쓴다
+    /// (WO LEGAL-TBM-4 §2.1) — 이 함수와 그 판정이 서로 다른 계산으로 갈라지면 "지금 다시 진행했다면
+    /// 나올 값"과 "최신성 판정이 비교하는 값"이 어긋난다.
     private static func makeSnapshot(
         from item: RiskAssessmentItem,
         sourceAssessmentId: UUID
     ) throws -> BriefingRiskItemSnapshot {
-        let actions = CorrectiveActionPolicy.sortedCorrectiveActions(item).map {
-            BriefingControlMeasureSnapshot(
-                actionId: $0.id, measure: $0.measure, responsibleName: $0.responsibleName,
-                dueDate: $0.dueDate, status: $0.status.rawValue, postRiskLevel: $0.postRiskLevel?.rawValue)
-        }
-        let data = try BriefingControlMeasuresSnapshot(measures: actions).encoded()
+        let content = BriefingRiskItemContent.current(from: item)
+        let data = try BriefingControlMeasuresSnapshot(measures: content.measures).encoded()
         return BriefingRiskItemSnapshot(
             sourceAssessmentId: sourceAssessmentId,
             sourceItemId: item.id,
-            taskDescription: item.taskDescription,
-            hazardDescription: item.hazardDescription,
-            currentControls: item.currentControls ?? "",
-            riskLevel: item.riskLevel,
-            likelihood: item.likelihood,
-            severity: item.severity,
+            taskDescription: content.taskDescription,
+            hazardDescription: content.hazardDescription,
+            currentControls: content.currentControls,
+            riskLevel: content.riskLevel,
+            likelihood: content.likelihood,
+            severity: content.severity,
             controlMeasuresSnapshot: data,
             controlMeasuresFormatVersion: BriefingControlMeasuresSnapshot.currentFormatVersion)
     }

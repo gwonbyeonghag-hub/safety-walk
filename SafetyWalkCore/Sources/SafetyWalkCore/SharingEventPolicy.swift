@@ -195,9 +195,63 @@ public enum SharingEventPolicy {
         return currentEvent(phase: .pre, in: assessment) != nil
     }
 
-    /// KR 게이트 충족 여부 — 현재 평가·조치 상태와 일치하는 사후 공유가 있는가. 비KR은 항상 true.
-    public static func satisfiesPostSharingGate(_ assessment: RiskAssessment) -> Bool {
+    /// KR 게이트 충족 여부 — 현재 평가·조치 상태와 일치하는 사후 공유(`SharingEvent`) **또는** 확정
+    /// TBM 브리핑이 있는가(LEGAL_2_ARCH §3 "조회 모듈이 통합", WO LEGAL-TBM-4 §2.1). 비KR은 항상 true.
+    /// `briefing.assessmentId` 는 값 UUID라 조회에 `ModelContext` 가 필요하다(`UnifiedSharingHistory`
+    /// 와 같은 이유) — 그래서 이 함수(와 `AssessmentClosure.isClosed`/`openReason`)는 context 를 받는다.
+    public static func satisfiesPostSharingGate(_ assessment: RiskAssessment, in context: ModelContext) -> Bool {
         guard requiresPostSharingGate(assessment) else { return true }
-        return currentEvent(phase: .post, in: assessment) != nil
+        if currentEvent(phase: .post, in: assessment) != nil { return true }
+        return currentBriefing(for: assessment, in: context) != nil
+    }
+
+    // MARK: - TBM 브리핑 게이트 (WO LEGAL-TBM-4 §2.1)
+
+    /// 이 확정 브리핑이 연결된 평가의 **현재 상태와 일치하는 사후 공유 증명**인가 —
+    /// `isCurrent(_:SharingEvent:phase:in:)` 와 대칭인 완전성+최신성 단일 판정. TBM 은 확정 순간이
+    /// 유일한 공유 증명 시점이라(TBM_0_ARCH §8 · `UnifiedSharingHistory`) `SharingEvent` 의 사전/사후
+    /// 구분에서 **사후에만** 대응한다 — 브리핑에는 사전 공유에 해당하는 개념이 없다.
+    ///
+    /// 모두 만족해야 한다:
+    /// 1. `briefing.assessmentId` 가 이 평가를 가리킨다
+    /// 2. `.finalized` (TBM 공유 증명은 확정된 브리핑만 — `UnifiedSharingHistory` 와 같은 계약)
+    /// 3. 위험 스냅샷 항목 집합이 평가의 **현재** 항목 집합과 정확히 같고(추가·삭제 없음), 각 항목의
+    ///    위험도·현재조치·개선조치가 `BriefingRiskItemContent` 로 지금 다시 계산한 값과 일치
+    ///    (개선조치가 바뀌면 stale)
+    ///
+    /// 어느 하나라도 확인할 수 없으면 fail-closed — 인정하지 않는다. 과거 브리핑은 이력에 그대로 남는다.
+    public static func isCurrent(_ briefing: SafetyBriefing, in assessment: RiskAssessment) -> Bool {
+        guard briefing.assessmentId == assessment.id else { return false }
+        guard briefing.status == .finalized else { return false }
+
+        let currentItems = assessment.items ?? []
+        let recordedSnapshots = briefing.riskSnapshots ?? []
+        guard recordedSnapshots.count == currentItems.count else { return false }
+
+        var recordedByItem: [UUID: BriefingRiskItemContent] = [:]
+        for snapshot in recordedSnapshots {
+            guard let sourceItemId = snapshot.sourceItemId,
+                  let content = try? BriefingRiskItemContent.recorded(from: snapshot),
+                  recordedByItem[sourceItemId] == nil
+            else { return false }
+            recordedByItem[sourceItemId] = content
+        }
+
+        for item in currentItems {
+            guard let recorded = recordedByItem[item.id], recorded == BriefingRiskItemContent.current(from: item)
+            else { return false }
+        }
+        return true
+    }
+
+    /// 이 평가에 연결된 브리핑 중 `isCurrent` 를 만족하는 것 — `currentEvent(phase:in:)` 의 브리핑
+    /// 버전. `briefing.assessmentId` 는 관계가 아니라 값 UUID라 조회에 `ModelContext` 가 필요하다
+    /// (`UnifiedSharingHistory.entries` 와 같은 이유·같은 패턴).
+    public static func currentBriefing(for assessment: RiskAssessment, in context: ModelContext) -> SafetyBriefing? {
+        let assessmentId = assessment.id
+        let briefings = (try? context.fetch(FetchDescriptor<SafetyBriefing>(
+            predicate: #Predicate<SafetyBriefing> { $0.assessmentId == assessmentId }
+        ))) ?? []
+        return briefings.first { isCurrent($0, in: assessment) }
     }
 }

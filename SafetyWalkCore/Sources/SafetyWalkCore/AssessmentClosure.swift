@@ -1,8 +1,14 @@
 import Foundation
+import SwiftData
 
 /// 종결(closed) 파생 — `closed` 는 저장 상태가 아니라 계산이다(LEGAL_2_ARCH §1.1). WO LEGAL-2c 는
 /// finalize 전환을 소유하지 않고 이 파생만 제공한다: finalized 된 평가에서 모든 필수 개선조치의
 /// 이행·효과확인이 끝나야 "종결"로 표시할 수 있다. (finalize 버튼/상태 전환은 후속 슬라이스.)
+///
+/// `ModelContext` 를 받는 이유(WO LEGAL-TBM-4 §2.1·§3): KR 사후 공유 게이트는 이제 `SharingEvent`뿐
+/// 아니라 확정 TBM 브리핑도 인정한다. `SafetyBriefing.assessmentId` 는 관계가 아니라 값 UUID라
+/// (SCHEMA_V3 동결, 새 관계 추가 불가) 조회에 fetch 가 필요하다 — `UnifiedSharingHistory.entries` 가
+/// 이미 쓰는 것과 같은 "Core 안에서 읽기 전용 fetch" 패턴.
 public enum AssessmentClosure {
 
     /// `closed` ⇔
@@ -13,7 +19,7 @@ public enum AssessmentClosure {
     ///   있음(effective)이다. 부분 효과·효과 없음·미완료 → 미종결. 기준 초과 0건이면 finalized 즉시 종결.
     ///
     /// raw `criteriaDecision` 만으로 필수 조치·종결을 확정하지 않는다 — 잠긴 기준으로 재계산해 확인한다.
-    public static func isClosed(_ assessment: RiskAssessment) -> Bool {
+    public static func isClosed(_ assessment: RiskAssessment, in context: ModelContext) -> Bool {
         guard assessment.status == .finalized else { return false }
         guard let stored = assessment.criteria, stored.lockedAt != nil else { return false }
         guard let criteria = try? AcceptabilityCriteria.decode(
@@ -27,10 +33,10 @@ public enum AssessmentClosure {
             guard !actions.isEmpty else { return false }          // 계획 없음 → 미종결
             for action in actions where !CorrectiveActionPolicy.isEffectivelyResolved(action) { return false }
         }
-        // KR 관할 추가 조건(WO LEGAL-2d §4): 현재 평가·조치 상태와 일치하는 **사후 공유 기록**이 있어야
-        // 종결로 파생한다 — 개선조치가 바뀌면 이전 사후 공유는 현재 상태 공유가 아니므로 다시 미종결.
-        // US·관할 미설정의 기존 종결 규칙에는 이 조건을 강제하지 않는다.
-        guard SharingEventPolicy.satisfiesPostSharingGate(assessment) else { return false }
+        // KR 관할 추가 조건(WO LEGAL-2d §4): 현재 평가·조치 상태와 일치하는 **사후 공유 기록**(SharingEvent
+        // 또는 확정 TBM 브리핑, WO LEGAL-TBM-4 §2.1)이 있어야 종결로 파생한다 — 개선조치가 바뀌면 이전
+        // 사후 공유는 현재 상태 공유가 아니므로 다시 미종결. US·관할 미설정에는 이 조건을 강제하지 않는다.
+        guard SharingEventPolicy.satisfiesPostSharingGate(assessment, in: context) else { return false }
         return true
     }
 
@@ -47,7 +53,7 @@ public enum AssessmentClosure {
     }
 
     /// 종결이면 `nil`, 아니면 첫 번째로 걸린 사유.
-    public static func openReason(_ assessment: RiskAssessment) -> OpenReason? {
+    public static func openReason(_ assessment: RiskAssessment, in context: ModelContext) -> OpenReason? {
         guard assessment.status == .finalized else { return .notFinalized }
         guard let stored = assessment.criteria, stored.lockedAt != nil,
               let criteria = try? AcceptabilityCriteria.decode(
@@ -69,7 +75,7 @@ public enum AssessmentClosure {
         }
         if openActions > 0 { return .correctiveActionsOpen(count: openActions) }
 
-        guard SharingEventPolicy.satisfiesPostSharingGate(assessment) else { return .postSharingMissing }
+        guard SharingEventPolicy.satisfiesPostSharingGate(assessment, in: context) else { return .postSharingMissing }
         return nil
     }
 }

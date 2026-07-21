@@ -84,7 +84,7 @@ struct AssessmentClosureTests {
         let ra = try startedAssessment(in: ctx)
         try addItem(ra, likelihood: 1, severity: 1, level: .low, in: ctx)
         #expect(ra.status == .inProgress)
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test func finalizedWithNoExceedsItemsIsClosed() throws {
@@ -92,7 +92,7 @@ struct AssessmentClosureTests {
         let ra = try startedAssessment(in: ctx)
         try addItem(ra, likelihood: 1, severity: 1, level: .low, in: ctx)   // 기준 이내만
         ra.status = .finalized
-        #expect(AssessmentClosure.isClosed(ra))
+        #expect(AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test func finalizedExceedsAllEffectiveIsClosed() throws {
@@ -101,7 +101,7 @@ struct AssessmentClosureTests {
         let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
         try addEffectiveAction(item, in: ra, result: .effective, in: ctx)
         ra.status = .finalized
-        #expect(AssessmentClosure.isClosed(ra))
+        #expect(AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test func partiallyEffectiveIsNotClosed() throws {
@@ -110,7 +110,7 @@ struct AssessmentClosureTests {
         let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
         try addEffectiveAction(item, in: ra, result: .partiallyEffective, in: ctx)
         ra.status = .finalized
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test func ineffectiveIsNotClosed() throws {
@@ -119,7 +119,7 @@ struct AssessmentClosureTests {
         let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
         try addEffectiveAction(item, in: ra, result: .ineffective, in: ctx)
         ra.status = .finalized
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test func exceedsWithZeroActionsIsNotClosed() throws {
@@ -127,7 +127,7 @@ struct AssessmentClosureTests {
         let ra = try startedAssessment(in: ctx)
         try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
         ra.status = .finalized
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test func exceedsWithUnconfirmedActionIsNotClosed() throws {
@@ -136,7 +136,7 @@ struct AssessmentClosureTests {
         let item = try addItem(ra, likelihood: 2, severity: 2, level: .medium, in: ctx)
         try CorrectiveActionEditing.add(to: item, in: ra, measure: "난간 설치", at: when, context: ctx)  // .notStarted
         ra.status = .finalized
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     /// A completed-only effectiveness record that has been corrupted to a non-completed status must
@@ -153,7 +153,7 @@ struct AssessmentClosureTests {
         action.confirmedBy = "김확인"
         action.effectivenessConfirmedAt = when
         ra.status = .finalized
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     // MARK: - fail-closed (현재 결정 검증)
@@ -165,7 +165,7 @@ struct AssessmentClosureTests {
         try addEffectiveAction(item, in: ra, result: .effective, in: ctx)
         ra.status = .finalized
         ra.criteria = nil
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test func corruptCriteriaIsNotClosed() throws {
@@ -175,7 +175,7 @@ struct AssessmentClosureTests {
         try addEffectiveAction(item, in: ra, result: .effective, in: ctx)
         ra.status = .finalized
         ra.criteria?.matrixData = Data("garbage".utf8)   // fail-closed decode
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test func incompleteConfirmationIsNotClosed() throws {
@@ -185,7 +185,7 @@ struct AssessmentClosureTests {
         try addEffectiveAction(item, in: ra, result: .effective, in: ctx)
         ra.status = .finalized
         item.decisionConfirmedBy = nil   // incomplete confirmation
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test func staleDecisionIsNotClosed() throws {
@@ -198,6 +198,6 @@ struct AssessmentClosureTests {
         item.likelihood = 1
         item.severity = 1
         item.riskLevel = .low
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 }

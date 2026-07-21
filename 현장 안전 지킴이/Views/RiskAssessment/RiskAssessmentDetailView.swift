@@ -392,7 +392,7 @@ struct RiskAssessmentDetailView: View {
         HStack(alignment: .top) {
             Text(LocalizationKey.raStatusSection.localized).foregroundStyle(.secondary)
             Spacer(minLength: 8)
-            if let reason = AssessmentClosure.openReason(assessment) {
+            if let reason = AssessmentClosure.openReason(assessment, in: modelContext) {
                 Text(openReasonText(reason))
                     .multilineTextAlignment(.trailing)
                     .accessibilityIdentifier("ra_closed_no")

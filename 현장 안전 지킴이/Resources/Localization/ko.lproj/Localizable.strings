@@ -729,6 +729,7 @@
 "tbm.unifiedHistory.tbmLabel" = "TBM 브리핑 확정";
 "tbm.attendanceSummary.title" = "참석 요약";
 "tbm.attendanceSummary.countFormat" = "총 참석자 %d명";
+"tbm.satisfiesPostSharingGate" = "이 브리핑이 연결된 평가의 사후 공유 기록으로 인정됩니다.";
 
 /* MARK: - 법적 관할 + 항목 작성 경로 (WO LEGAL-2d-PATH) */
 "ra.jurisdiction" = "법적 관할";

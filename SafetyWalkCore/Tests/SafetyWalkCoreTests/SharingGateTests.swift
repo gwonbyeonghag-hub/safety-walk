@@ -216,24 +216,24 @@ struct SharingGateTests {
         }
         #expect(ra.status == .finalized)
         // 사후 공유도 없지만 US 의 기존 종결 규칙은 그대로 — 기준 초과 0건이면 종결이다.
-        #expect(AssessmentClosure.isClosed(ra))
-        #expect(AssessmentClosure.openReason(ra) == nil)
+        #expect(AssessmentClosure.isClosed(ra, in: ctx))
+        #expect(AssessmentClosure.openReason(ra, in: ctx) == nil)
     }
 
     @Test("KR 평가의 미종결 사유는 실제로 막고 있는 조건을 가리킨다")
     func openReasonNamesTheRealBlocker() throws {
         let ctx = try makeContext()
         let ra = try readyToFinalize(in: ctx, jurisdiction: .kr, withPreSharing: true)
-        #expect(AssessmentClosure.openReason(ra) == .notFinalized)
+        #expect(AssessmentClosure.openReason(ra, in: ctx) == .notFinalized)
 
         try AssessmentFinalization.finalize(ra, now: when, in: ctx)
         // 기준 초과 항목이 0건이므로 남은 조치는 없다 — 진짜 막는 것은 사후 공유 부재다.
-        #expect(AssessmentClosure.openReason(ra) == .postSharingMissing)
+        #expect(AssessmentClosure.openReason(ra, in: ctx) == .postSharingMissing)
 
         try SharingEventRecording.record(phase: .post, method: .written, in: ra,
                                          target: "전 근로자", ownerName: "홍길동",
                                          at: when, context: ctx)
-        #expect(AssessmentClosure.openReason(ra) == nil)
+        #expect(AssessmentClosure.openReason(ra, in: ctx) == nil)
     }
 
     @Test("관할 미설정 평가에도 KR 게이트를 강제하지 않지만 법규 충족을 주장하지도 않는다")
@@ -528,19 +528,19 @@ struct SharingGateTests {
         try AssessmentFinalization.finalize(ra, now: when, in: ctx)
 
         // 기준 초과 항목이 없어 필수 조치는 없지만, KR은 사후 공유가 없으면 아직 종결이 아니다.
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
 
         let post = try SharingEventRecording.record(phase: .post, method: .written, in: ra,
                                                     target: "전 근로자", ownerName: "홍길동",
                                                     at: when, context: ctx)
-        #expect(AssessmentClosure.isClosed(ra))
+        #expect(AssessmentClosure.isClosed(ra, in: ctx))
 
         // 조치가 바뀌면 그 사후 공유는 현재 상태 공유가 아니므로 다시 미종결.
         let item = try #require(ra.items?.first)
         try CorrectiveActionEditing.add(to: item, in: ra, measure: "사후 추가 대책",
                                         at: when.addingTimeInterval(60), context: ctx)
         #expect(SharingEventPolicy.isStale(post, in: ra))
-        #expect(!AssessmentClosure.isClosed(ra))
+        #expect(!AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test("US 평가의 기존 closed 규칙에는 KR 전용 사후공유 조건을 강제하지 않는다")
@@ -549,7 +549,7 @@ struct SharingGateTests {
         let ra = try readyToFinalize(in: ctx, jurisdiction: .us, withPreSharing: false)
         try AssessmentFinalization.finalize(ra, now: when, in: ctx)
         // 사후 공유 기록이 없어도 기준 초과 0건이면 종결로 파생된다 (LEGAL_2_ARCH §1.1).
-        #expect(AssessmentClosure.isClosed(ra))
+        #expect(AssessmentClosure.isClosed(ra, in: ctx))
     }
 
     @Test("관할 미설정 평가의 closed 파생에도 KR 전용 조건을 강제하지 않는다")
@@ -557,6 +557,6 @@ struct SharingGateTests {
         let ctx = try makeContext()
         let ra = try readyToFinalize(in: ctx, jurisdiction: nil, withPreSharing: false)
         try AssessmentFinalization.finalize(ra, now: when, in: ctx)
-        #expect(AssessmentClosure.isClosed(ra))
+        #expect(AssessmentClosure.isClosed(ra, in: ctx))
     }
 }

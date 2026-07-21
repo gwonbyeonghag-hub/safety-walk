@@ -536,6 +536,8 @@ enum LocalizationKey: String {
     case tbmUnifiedHistoryTbmLabel  = "tbm.unifiedHistory.tbmLabel"
     case tbmAttendanceSummaryTitle     = "tbm.attendanceSummary.title"
     case tbmAttendanceSummaryCountFmt  = "tbm.attendanceSummary.countFormat"
+    // 연결 평가 사후 공유 게이트 인정 (WO LEGAL-TBM-4 §2.2) — KR 이고 isCurrent 일 때만 표시.
+    case tbmSatisfiesPostSharingGate = "tbm.satisfiesPostSharingGate"
 
     // MARK: - Reports (WO-5b)
     case reportRaTitle          = "report.ra.title"

@@ -729,6 +729,7 @@
 "tbm.unifiedHistory.tbmLabel" = "TBM Briefing Finalized";
 "tbm.attendanceSummary.title" = "Attendance Summary";
 "tbm.attendanceSummary.countFormat" = "%d total participants";
+"tbm.satisfiesPostSharingGate" = "This briefing counts as the linked assessment's post-sharing record.";
 
 /* MARK: - Jurisdiction + item authoring path (WO LEGAL-2d-PATH) */
 "ra.jurisdiction" = "Jurisdiction";

@@ -303,7 +303,7 @@ struct SharingSnapshotTests {
                                                     at: fractional, context: ctx)
         #expect(!SharingEventPolicy.isStale(post, in: ra))
         #expect(SharingEventPolicy.currentEvent(phase: .post, in: ra) === post)
-        #expect(SharingEventPolicy.satisfiesPostSharingGate(ra))
+        #expect(SharingEventPolicy.satisfiesPostSharingGate(ra, in: ctx))
     }
 
     @Test("소수초 일정으로 기록한 사전 공유는 KR 시작 게이트를 곧바로 충족한다")

@@ -32,6 +32,10 @@ struct SafetyBriefingsBrowseView: View {
 
     @ViewBuilder
     private func detail(_ b: SafetyBriefing) -> some View {
+        // 연결 평가는 한 번만 조회해 라벨과 게이트 인정 표시가 같은 값을 쓰게 한다(WO LEGAL-TBM-3
+        // code-review 의 "반복 fetch 금지" 교훈, MacSharingHistoryCard 와 같은 관례).
+        let linkedAssessment = b.assessmentId != nil ? BriefingAssessmentLink.resolve(b, in: modelContext) : nil
+
         VStack(alignment: .leading, spacing: 16) {
             DetailHeader(title: b.taskDescription.isEmpty ? b.siteName : b.taskDescription,
                          subtitle: "\(b.siteName) · \(b.status.localizedLabel)")
@@ -45,10 +49,13 @@ struct SafetyBriefingsBrowseView: View {
                     DetailField(label: LocalizationKey.tbmProfile.localized, value: b.briefingProfile?.localizedLabel ?? "—")
                     DetailField(label: LocalizationKey.tbmStatus.localized, value: b.status.localizedLabel)
                     if b.assessmentId != nil {
-                        DetailField(label: LocalizationKey.tbmLinkedAssessment.localized, value: linkedAssessmentLabel(b))
+                        DetailField(label: LocalizationKey.tbmLinkedAssessment.localized,
+                                    value: linkedAssessmentLabel(linkedAssessment))
                     }
                 }
             }
+
+            postSharingGateNotice(b, linkedAssessment: linkedAssessment)
 
             if !b.briefingContent.isEmpty {
                 MacCard(title: LocalizationKey.tbmContent.localized, systemImage: "text.alignleft") {
@@ -68,12 +75,23 @@ struct SafetyBriefingsBrowseView: View {
         }
     }
 
-    /// `BriefingAssessmentLink`(SafetyWalkCore — iOS의 `SafetyBriefingDetailView.resolveLinkedAssessment`
-    /// 와 같은 헬퍼 공유, WO LEGAL-TBM-3 code-review 반영). 목록 규모가 작은 매니저 조회 화면이라
-    /// 행마다 즉시 fetch 해도 무리 없다(대량 리스트 아님).
-    private func linkedAssessmentLabel(_ b: SafetyBriefing) -> String {
-        guard let ra = BriefingAssessmentLink.resolve(b, in: modelContext) else { return "—" }
+    private func linkedAssessmentLabel(_ ra: RiskAssessment?) -> String {
+        guard let ra else { return "—" }
         return ra.siteName.isEmpty ? ra.method.localizedLabel : "\(ra.siteName) · \(ra.method.localizedLabel)"
+    }
+
+    /// 이 브리핑이 연결된 평가의 KR 사후 공유 게이트를 충족시키는가(WO LEGAL-TBM-4 §2.1·§2.2) —
+    /// iOS `SafetyBriefingDetailView.postSharingGateNotice` 와 같은 조건·같은 Core 판정
+    /// (`SharingEventPolicy.isCurrent`)을 쓴다. standalone·US·관할 미설정·stale 이면 표시 없음.
+    @ViewBuilder
+    private func postSharingGateNotice(_ b: SafetyBriefing, linkedAssessment: RiskAssessment?) -> some View {
+        if let ra = linkedAssessment,
+           SharingEventPolicy.jurisdictionState(ra) == .kr,
+           SharingEventPolicy.isCurrent(b, in: ra) {
+            Text(LocalizationKey.tbmSatisfiesPostSharingGate.localized)
+                .font(.caption)
+                .foregroundStyle(Color.macMuted)
+        }
     }
 
     private func riskSnapshotsCard(_ b: SafetyBriefing) -> some View {

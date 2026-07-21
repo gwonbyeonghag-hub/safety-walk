@@ -138,6 +138,24 @@ struct SafetyBriefingDetailView: View {
                                                                 : "\($0.siteName) · \($0.method.localizedLabel)" }
                         ?? "—")
         }
+        postSharingGateNotice
+    }
+
+    /// 이 브리핑이 연결된 평가의 KR 사후 공유 게이트를 충족시키는가(WO LEGAL-TBM-4 §2.1·§2.2) —
+    /// `SharingEventPolicy.isCurrent(_:SafetyBriefing:in:)` 를 그대로 소비한다(표시가 게이트 판정과
+    /// 어긋나면 안 된다). standalone(미연결)·US·관할 미설정·stale 이면 아무것도 보이지 않는다 —
+    /// "관할 미설정"은 여기서 쓰지 않는다: 이 줄은 관할 자체를 알리는 표시가 아니라 이 브리핑이 그
+    /// 평가의 게이트를 충족하는지만 말하므로, 조건을 만족하지 않으면 그냥 없음(N/A)이다.
+    @ViewBuilder
+    private var postSharingGateNotice: some View {
+        if let assessment = linkedAssessment,
+           SharingEventPolicy.jurisdictionState(assessment) == .kr,
+           SharingEventPolicy.isCurrent(briefing, in: assessment) {
+            Text(LocalizationKey.tbmSatisfiesPostSharingGate.localized)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("tbm_satisfies_post_sharing_gate")
+        }
     }
 
     // MARK: - 전달내용 (locked at conducted — TBM_0_ARCH §5)
