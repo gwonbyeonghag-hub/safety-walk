@@ -8,18 +8,21 @@ import SwiftData
 /// The initializer is deliberately **not** `public` (WO LEGAL-TBM-1 §4 "sealed로 Core 우회 불가",
 /// same pattern as `CorrectiveAction`/`SharingEvent`): outside the package a `BriefingParticipant`
 /// can only come from `BriefingParticipantEditing.add`, the single validated + atomic create gate.
+/// Business fields are `internal(set)` too — app code can read but never write them directly, so
+/// "finalized 후 잠금" (TBM_0_ARCH §5) can't be bypassed by mutating a fetched instance in place;
+/// a future in-module edit op (not part of this WO's scope) remains free to mutate them.
 @Model
 public final class BriefingParticipant {
     public var id: UUID = UUID()
-    public var name: String = ""              // 이름 필수(validate)
-    public var employeeId: String?
-    public var affiliation: String?
-    public var jobTitle: String?
-    public var role: ParticipantRole = ParticipantRole.worker
-    public var confirmationMethod: ConfirmationMethod?  // nil=미확인
-    public var confirmedAt: Date?
-    @Attribute(.externalStorage) public var signatureData: Data?
-    public var signedAt: Date?
+    public internal(set) var name: String = ""              // 이름 필수(validate)
+    public internal(set) var employeeId: String?
+    public internal(set) var affiliation: String?
+    public internal(set) var jobTitle: String?
+    public internal(set) var role: ParticipantRole = ParticipantRole.worker
+    public internal(set) var confirmationMethod: ConfirmationMethod?  // nil=미확인
+    public internal(set) var confirmedAt: Date?
+    @Attribute(.externalStorage) public internal(set) var signatureData: Data?
+    public internal(set) var signedAt: Date?
     // CloudKit-required inverse of SafetyBriefing.participants.
     public var briefing: SafetyBriefing?
 

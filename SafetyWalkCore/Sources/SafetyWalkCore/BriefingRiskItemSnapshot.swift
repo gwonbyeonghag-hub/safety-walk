@@ -9,22 +9,24 @@ import SwiftData
 ///
 /// The initializer is deliberately **not** `public` (WO LEGAL-TBM-1 §4 "sealed로 Core 우회 불가"):
 /// a snapshot only comes from `BriefingLifecycle.conduct`, the single moment a briefing copies its
-/// linked assessment's items.
+/// linked assessment's items. Every business field is `private(set)` too — a snapshot never gets
+/// updated after creation (no Core op ever will: that's the entire point of a snapshot), the same
+/// "생성 즉시 불변" contract `SharingEvent` already enforces on its own fields.
 @Model
 public final class BriefingRiskItemSnapshot {
     public var id: UUID = UUID()
-    public var sourceAssessmentId: UUID?          // 출처 추적용
-    public var sourceItemId: UUID?
-    public var taskDescription: String = ""
-    public var hazardDescription: String = ""
-    public var currentControls: String = ""
-    public var riskLevel: RiskLevel?              // ★정규 값 (nil=미평가)
-    public var likelihood: Int?
-    public var severity: Int?
+    public private(set) var sourceAssessmentId: UUID?          // 출처 추적용
+    public private(set) var sourceItemId: UUID?
+    public private(set) var taskDescription: String = ""
+    public private(set) var hazardDescription: String = ""
+    public private(set) var currentControls: String = ""
+    public private(set) var riskLevel: RiskLevel?              // ★정규 값 (nil=미평가)
+    public private(set) var likelihood: Int?
+    public private(set) var severity: Int?
     // ★1:N 조치 버전형 스냅샷 (JSON). 디코딩 실패 fail-closed.
-    public var controlMeasuresSnapshot: Data = Data()
-    public var controlMeasuresFormatVersion: Int = 1
-    public var displayTextAtBriefing: String?     // 당시 표시 문구(선택 보존)
+    public private(set) var controlMeasuresSnapshot: Data = Data()
+    public private(set) var controlMeasuresFormatVersion: Int = 1
+    public private(set) var displayTextAtBriefing: String?     // 당시 표시 문구(선택 보존)
     // CloudKit-required inverse of SafetyBriefing.riskSnapshots.
     public var briefing: SafetyBriefing?
 

@@ -9,7 +9,10 @@ import SwiftData
 ///
 /// WO LEGAL-TBM-1 §5 봉인: `status`/`conductedAt`/`finalizedAt`/`cancelledAt` 는 `internal(set)`
 /// — 수명주기 전환은 `BriefingLifecycle`(conduct/finalize/cancel)만 소유한다. `public init` 에
-/// `status` 인자가 없어 모든 브리핑은 항상 `.draft` 로 태어난다(아래 참고).
+/// `status` 인자가 없어 모든 브리핑은 항상 `.draft` 로 태어난다(아래 참고). `briefingContent` 도
+/// `internal(set)` — `conducted` 에 잠기는 전달내용(§2)을 `BriefingLifecycle.conduct` 밖에서 쓸 수
+/// 없게 한다. `riskSnapshots`(§3)는 스냅샷 자체가 불변(`BriefingRiskItemSnapshot` 참고)이라 배열
+/// 관계까지 봉인하지 않는다 — 다른 to-many 관계(`RiskAssessment.items` 등)와 같은 관례.
 @Model
 public final class SafetyBriefing {
     public var id: UUID = UUID()
@@ -23,7 +26,7 @@ public final class SafetyBriefing {
     public var occurredAt: Date?
     public var location: String = ""
     public internal(set) var status: BriefingStatus = BriefingStatus.draft
-    public var briefingContent: String = ""
+    public internal(set) var briefingContent: String = ""
     public var ownerName: String?
     public var createdAt: Date = Date()
     public var updatedAt: Date = Date()

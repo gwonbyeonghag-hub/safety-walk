@@ -19,14 +19,28 @@ public struct BriefingControlMeasureSnapshot: Codable, Equatable, Sendable {
     public let status: String            // CorrectiveActionStatus raw
     public let postRiskLevel: String?    // RiskLevel raw — nil = 미기록
 
+    /// `dueDate` 는 스냅샷 정밀도(초 단위)로 정규화된다 — `SharingSnapshot` 이 이미 고친 것과 같은
+    /// 문제(`.iso8601` 인코딩은 소수초를 버리지만 디코딩은 받아들여, 정규화 없이는
+    /// `decode(encode(x)) != x` 가 된다)를 여기서도 막는다.
     public init(actionId: UUID, measure: String?, responsibleName: String?, dueDate: Date?,
                 status: String, postRiskLevel: String?) {
         self.actionId = actionId
         self.measure = measure
         self.responsibleName = responsibleName
-        self.dueDate = dueDate
+        self.dueDate = dueDate?.sw_snapshotPrecision
         self.status = status
         self.postRiskLevel = postRiskLevel
+    }
+
+    /// Decoding routes through the normalizing initializer too (`SharingSnapshot.Action` 과 같은 이유).
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(actionId: try c.decode(UUID.self, forKey: .actionId),
+                  measure: try c.decodeIfPresent(String.self, forKey: .measure),
+                  responsibleName: try c.decodeIfPresent(String.self, forKey: .responsibleName),
+                  dueDate: try c.decodeIfPresent(Date.self, forKey: .dueDate),
+                  status: try c.decode(String.self, forKey: .status),
+                  postRiskLevel: try c.decodeIfPresent(String.self, forKey: .postRiskLevel))
     }
 }
 

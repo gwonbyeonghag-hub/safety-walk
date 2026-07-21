@@ -54,4 +54,22 @@ struct BriefingControlMeasuresSnapshotTests {
         let decoded = try BriefingControlMeasuresSnapshot.decode(Data(), formatVersion: 1)
         #expect(decoded.measures.isEmpty)
     }
+
+    /// `SharingSnapshot` 이 이미 고친 것과 같은 버그(반송 1차 P1-A): 소수초를 가진 `Date` 를
+    /// `.iso8601` 로 인코딩하면 초 단위로 잘리지만 디코딩은 소수초를 받아들여, 정규화 없이는
+    /// `decode(encode(x)) != x` 가 된다. 정규화가 있으면 인코딩 전에 이미 초 단위로 내림되므로
+    /// 왕복이 안정적이다.
+    @Test("소수초를 가진 dueDate 도 왕복이 안정적이다")
+    func fractionalSecondsDueDateRoundTripsStably() throws {
+        let fractional = Date(timeIntervalSince1970: 1_700_000_000.789)
+        let measure = BriefingControlMeasureSnapshot(actionId: UUID(), measure: "난간 설치",
+                                                      responsibleName: "김담당", dueDate: fractional,
+                                                      status: "notStarted", postRiskLevel: nil)
+        let snapshot = BriefingControlMeasuresSnapshot(measures: [measure])
+
+        let decoded = try BriefingControlMeasuresSnapshot.decode(try snapshot.encoded(), formatVersion: 1)
+
+        #expect(decoded.measures.first?.dueDate == measure.dueDate)
+        #expect(decoded.measures.first?.dueDate == fractional.sw_snapshotPrecision)
+    }
 }
