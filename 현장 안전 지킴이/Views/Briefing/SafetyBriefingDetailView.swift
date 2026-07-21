@@ -265,7 +265,8 @@ struct SafetyBriefingDetailView: View {
                 showCancelSheet = true
             } label: {
                 Label(LocalizationKey.tbmCancel.localized, systemImage: "xmark.circle")
-                    .frame(minHeight: 44)
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
             .accessibilityIdentifier("tbm_cancel")
         }
