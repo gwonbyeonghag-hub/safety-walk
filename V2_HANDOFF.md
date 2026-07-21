@@ -1750,3 +1750,10 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 
 ## ✅ 리뷰어 기준 — 러버스탬프 안 함
 1. 전용 브랜치. 2. iOS·Mac 서명 빌드 + 테스트 그린(**UI destination 혼용 금지**). 3. 스샷: 보존 경고·삭제 확인·공유이력 PDF. 4. **참여자 PII 내보내기 정책은 플래너 확인 후 착수**(임의 결정 금지). 검증 후 refspec 병합.
+
+---
+# ✅ WO LEGAL-TBM-1 — Safety Briefing Core 기반 — **병합 완료·검증 2026-07-21 (main c10214a)**
+> 스코프(Core 전용): BriefingAuthoring.create(원자·Site 필수·store+메모리 rollback) · BriefingLifecycle(conduct/finalize/cancel, lock timing Core 강제, finalized cancel 거부=정정 소관) · BriefingRiskItemSnapshot·BriefingControlMeasuresSnapshot(값 복사·불변) · BriefingParticipantEditing(참석자·봉인) · SafetyBriefing/Participant/Snapshot **프로퍼티 봉인**(internal(set)/private(set)).
+> 리뷰어 독립검증: 봉인·정밀도(P1-A 재발 차단)·원자 rollback·lock timing 정독 확인 · **Core 293/293**(258+35) · iOS·Mac 빌드. 실행자 자체 code-review(Agent 재현, 정직 명시)로 ①init만 봉인·프로퍼티 열림 ②dueDate 정밀도 P1-A 재발 스스로 잡음.
+> 📝 관찰(비블로커, 스키마 소관): `BriefingRiskItemSnapshot.currentControls`는 동결 V3에서 `String=""`(non-optional)이라 `SharingSnapshot`(optional)과 표현 다름 — 조치는 스키마 변경 별도 WO.
+> 남은 TBM: TBM-2(iOS UI 생성·참석·서명) · TBM-3(PDF·Mac·통합 조회) · TBM-4(관할 프로필 QA).
