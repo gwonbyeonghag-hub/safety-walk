@@ -1757,3 +1757,12 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 > 리뷰어 독립검증: 봉인·정밀도(P1-A 재발 차단)·원자 rollback·lock timing 정독 확인 · **Core 293/293**(258+35) · iOS·Mac 빌드. 실행자 자체 code-review(Agent 재현, 정직 명시)로 ①init만 봉인·프로퍼티 열림 ②dueDate 정밀도 P1-A 재발 스스로 잡음.
 > 📝 관찰(비블로커, 스키마 소관): `BriefingRiskItemSnapshot.currentControls`는 동결 V3에서 `String=""`(non-optional)이라 `SharingSnapshot`(optional)과 표현 다름 — 조치는 스키마 변경 별도 WO.
 > 남은 TBM: TBM-2(iOS UI 생성·참석·서명) · TBM-3(PDF·Mac·통합 조회) · TBM-4(관할 프로필 QA).
+
+---
+# ✅ WO LEGAL-TBM-2 — Safety Briefing iOS UI — **병합 완료·검증 2026-07-21 (main da922de)**
+> 스코프: 생성 화면(작업·일시·장소·Site·관할·**평가연결 선택**, BriefingAuthoring.create→draft) · 상세/수명주기(conduct 위험스냅샷·finalize·cancel) · 참석자(BriefingParticipantEditorView·서명) · 목록 · 공유 컴포넌트 추출(InfoRow·SignaturePad). 평가연결=**생성화면만**(오너 결정, Core 정합), 상세 읽기전용.
+> 리뷰어 독립검증: git 무결성(아래 사고 복구 확인)·InfoRow de-dup(RA·Briefing 공유)·SignaturePad 접근성 fix·취소 라벨 정독 · **Core 293/293**(불변) · iOS·Mac 빌드 · SafetyBriefingUITests 2/2(서명 골든패스=접근성 fix 확증·취소). **스킬 로딩 fix 실작동 확인**(실행자가 세션 중반부터 /swiftui-build-qa 등 실제 호출).
+> 🔴 **프로세스 사고(복구 완료·오염 0)**: 실행자가 §0 게이트 확인 후 `git checkout -b`를 빠뜨려 main 직커밋 → 자체 발견·복구, 복구 중 내 스킬커밋(97e9f51) 과다 reset → 재발견·`git branch -f`로 정정. 최종 local==origin main==97e9f51 온전, WO는 브랜치에만. 실행자 정직 최상위 보고.
+> 📌 **WO §0 강화(향후)**: "checkout 후 `git branch --show-current`가 브랜치명인지 확인, main이면 STOP·커밋 금지"를 게이트에 추가(확인만 하고 checkout 빠뜨리는 실수 방지).
+> 📝 마이너: AssessmentStartSheet에 세 번째 infoRow 복사본(2d 선재) — 공유 함수로 마저 접기 가능(저비용·비블로커).
+> 남은 TBM: TBM-3(PDF·Mac·통합 조회) · TBM-4(관할 프로필 QA) · CONTINUOUS(상시평가).
