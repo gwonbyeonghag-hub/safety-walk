@@ -7,11 +7,11 @@ import SafetyWalkCore
 // iPhone layout is unchanged. Uses only iOS/shared design assets (RiskChip, AccentColor,
 // LocalizationKey) — the macOS-only MacDesign tokens are intentionally NOT imported.
 
-/// Sidebar sections for the iPad shell. Mirrors the iPhone tabs plus 위험성평가, which on
-/// iPhone lives under Home; on iPad it is promoted to a first-class sidebar section
-/// (reusing `RiskAssessmentListView`).
+/// Sidebar sections for the iPad shell. Mirrors the iPhone tabs plus 위험성평가·TBM 안전
+/// 브리핑, which on iPhone live under Home; on iPad both are promoted to first-class sidebar
+/// sections (reusing `RiskAssessmentListView`/`SafetyBriefingListView` — WO LEGAL-TBM-2).
 enum IPadSection: String, CaseIterable, Identifiable, Hashable {
-    case home, inspection, hazards, history, riskAssessments, settings
+    case home, inspection, hazards, history, riskAssessments, briefings, settings
 
     var id: String { rawValue }
 
@@ -22,6 +22,7 @@ enum IPadSection: String, CaseIterable, Identifiable, Hashable {
         case .hazards:         return .tabHazards
         case .history:         return .tabHistory
         case .riskAssessments: return .raTitle
+        case .briefings:       return .tbmTitle
         case .settings:        return .tabSettings
         }
     }
@@ -33,6 +34,7 @@ enum IPadSection: String, CaseIterable, Identifiable, Hashable {
         case .hazards:         return "exclamationmark.triangle"
         case .history:         return "clock"
         case .riskAssessments: return "list.clipboard"
+        case .briefings:       return "person.3.fill"
         case .settings:        return "gear"
         }
     }
@@ -74,9 +76,11 @@ struct IPadRootView: View {
         case .inspection:      InspectionView()
         case .hazards:         HazardsTabView()
         case .history:         HistoryTabView()
-        // RiskAssessmentListView is designed to be pushed (owns no NavigationStack), so it
-        // gets one here to render its title/toolbar as a top-level section.
+        // RiskAssessmentListView/SafetyBriefingListView are designed to be pushed (own no
+        // NavigationStack), so they get one here to render their title/toolbar as a
+        // top-level section.
         case .riskAssessments: NavigationStack { RiskAssessmentListView() }
+        case .briefings:       NavigationStack { SafetyBriefingListView() }
         case .settings:        SettingsView()
         }
     }

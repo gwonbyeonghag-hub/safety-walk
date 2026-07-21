@@ -96,6 +96,7 @@ struct HomeView: View {
             inspectionSummary
             startInspectionButton
             riskAssessmentEntry
+            safetyBriefingEntry
             recentInspectionsSection
         }
     }
@@ -289,6 +290,38 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("ra_home_card")
+    }
+
+    // MARK: - TBM Safety Briefing entry (WO LEGAL-TBM-2) — same 2-tap placement as RA entry
+
+    private var safetyBriefingEntry: some View {
+        NavigationLink {
+            SafetyBriefingListView()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "person.3.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 28)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(LocalizationKey.tbmTitle.localized)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(LocalizationKey.tbmHomeCardSubtitle.localized)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .cardSurface()
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("tbm_home_card")
     }
 
     // MARK: - Recent inspections
