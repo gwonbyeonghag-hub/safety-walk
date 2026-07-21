@@ -1725,7 +1725,9 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 또 `RiskAssessmentUITests.testFrequencySeverityEndToEnd` 가 1회 "Lost connection to the application" 으로 실패했으나 재실행 시 통과 — 시뮬레이터 플레이크.
 
 ---
-# 🎫 WO LEGAL-2e — 3년 보존·삭제·내보내기 (LEGAL-2 마지막 슬라이스)
+# ✅ WO LEGAL-2e — 3년 보존·삭제·내보내기 — **병합 완료·검증 2026-07-21 (main fe9ac8e)**
+> 리뷰어 독립검증: RetentionPolicy(3년·fail-closed·no-judgment)·AssessmentDeletion(cascade·원자·삭제차단=사용자확인) 정독 · **Core 258/258** · iOS·Mac 빌드 · 2e UI 2/2(보존 안내+취소보존·확인삭제). PII 내보내기는 오너 결정대로 **보류**(리포트에 참여자 참조 0 확인). 실행자 정직: 참여자 PII 미착수 + **SwiftData rollback 크래시(SDK 이슈, 이미 병합된 코드도 걸림, 실무영향 낮음)** 스스로 발견·문서화 → 별도 task 분리.
+> 🏁 **LEGAL-2 코어 전체 완료** (2a·2b·2c·2d·2d-PATH·2e). 남은 LEGAL: TBM-1~4 + CONTINUOUS(상시평가).
 **정본**: docs/SCHEMA_V3.md·PRIVACY_AUDIT.md. **모델: Sonnet 5**.
 **⚠️ 착수 전**: `git branch --show-current` 확인 → main(d3200b1 이상)에서 `legal2e-retention` 전용 브랜치. main 직커밋 금지.
 
