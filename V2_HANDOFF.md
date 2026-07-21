@@ -1535,7 +1535,7 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 
 ---
 
-# 🎫 WO LEGAL-2d — 비TBM 공유 기록 + 평가 확정 — **구현 완료, 검수 대기** (브랜치 `legal2d-sharing`)
+# ✅ WO LEGAL-2d — 비TBM 공유 기록 + 평가 확정 — **병합 완료** (main d3200b1)
 
 기준점 `ffbdd6e`. 병합·push 하지 않음.
 
@@ -1662,7 +1662,8 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 
 ---
 
-# ✅ WO LEGAL-2d-PATH — 관할 배선 + 평가 작성 경로 — **구현 완료, 검수 대기** (브랜치 `legal2d-path`)
+# ✅ WO LEGAL-2d-PATH — 관할 배선 + 평가 작성 경로 — **병합 완료·검증 2026-07-18 (main d3200b1)**
+> 리뷰어 독립검증: 코드 spot-check(fail-closed·isCurrent 8조건·init(from:)정규화·원자 rollback·status/init 봉인 전부 실재) · **Core 251/251** · iOS·Mac 빌드 · 신규 UI 5/5(KR golden path 90초·2d 공유·lock-timing). 자체 /code-review 다라운드(P1-A/B 포함) 정확성 확인.
 
 기준점 `d353132`(= `legal2d-sharing` HEAD). main/origin-main 은 여전히 `ffbdd6e`. 병합·push 없음.
 
@@ -1722,3 +1723,28 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 ### 선재 실패 (이번 변경과 무관 — 기준점에서 재현 확인)
 `IPadRiskAssessmentSheetUITests` 2건(`testToolbarButtonOpensCreateSheet`, `testEmptyStateButtonOpensCreateSheet`)이 실패한다. **기준점 `d353132` 를 별도 워크트리에 꺼내 같은 iPad destination 으로 돌린 결과 동일하게 2건 실패** — LEGAL-2d-PATH 가 만든 문제가 아니다. iPad 생성 시트가 열리지 않는 별도 이슈로 남긴다(같은 파일의 세 번째 테스트는 통과).
 또 `RiskAssessmentUITests.testFrequencySeverityEndToEnd` 가 1회 "Lost connection to the application" 으로 실패했으나 재실행 시 통과 — 시뮬레이터 플레이크.
+
+---
+# 🎫 WO LEGAL-2e — 3년 보존·삭제·내보내기 (LEGAL-2 마지막 슬라이스)
+**정본**: docs/SCHEMA_V3.md·PRIVACY_AUDIT.md. **모델: Sonnet 5**.
+**⚠️ 착수 전**: `git branch --show-current` 확인 → main(d3200b1 이상)에서 `legal2e-retention` 전용 브랜치. main 직커밋 금지.
+
+## 스코프
+1. **3년 보존 가드** — `retainUntil` 계산·표시(시행규칙 제37조의4 3년 보존). 삭제 UX가 보존 기간 내 평가를 지우려 하면 **경고+사용자 확인**. ⚠️ **하드 차단 아님**("앱은 기록 도구지 판정 도구 아님" — 경고·안내이지 자동 법 판정/차단 금지). 사용자가 확인하면 삭제 가능.
+2. **삭제** — 평가 삭제(소유 자식 cascade). 보존 기간 내 경고 + **되돌릴 수 없음** 명시. AssessmentAuthoring/Editing과 동일한 원자·Core 봉인 패턴 준수.
+3. **내보내기** — PDF/리포트에 **공유 이력 추가**(2d에서 LEGAL-2e로 미룸). 평가 데이터 내보내기. 스냅샷은 값 기반(2d `SharingSnapshot` 재사용 검토).
+   - 🔴 **참여자 이름·서명 = 제3자 개인정보**(PRIVACY_AUDIT ②축). 내보내면 기기 밖으로 나감 → 처리 방침 필요. **결정 필요(플래너/오너)**: 내보내기에 참여자 신원 **포함 여부**(옵션 토글? 고지?). **실행자 임의 처리 말고 멈추고 보고.**
+
+## 불변식
+- 보존 = 앱 안내(retainUntil), **자동 법 판정/차단 아님**. 삭제 전 경고+확인.
+- 내보내기 스냅샷 값 기반(로컬라이즈 문자열 아닌 정규 값 + 표시는 렌더).
+- 제3자 PII 내보내기는 정책 확정 전 진행 금지.
+
+## 테스트(/tdd)
+- retainUntil 계산 정확(3년 경계).
+- 보존 기간 내 삭제 시 경고 발생·확인 후 삭제.
+- PDF에 공유 이력 포함(값 스냅샷).
+- (PII 내보내기 정책 확정 후) 그 정책대로 동작.
+
+## ✅ 리뷰어 기준 — 러버스탬프 안 함
+1. 전용 브랜치. 2. iOS·Mac 서명 빌드 + 테스트 그린(**UI destination 혼용 금지**). 3. 스샷: 보존 경고·삭제 확인·공유이력 PDF. 4. **참여자 PII 내보내기 정책은 플래너 확인 후 착수**(임의 결정 금지). 검증 후 refspec 병합.
