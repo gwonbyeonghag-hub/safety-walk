@@ -13,7 +13,7 @@
 | 프로젝트 | SafetyWalk / 현장안전 지킴이 (산업안전 점검 앱) |
 | git repo (코드) | `Desktop/02_개발/03_프로젝트/09_현장 안전 지킴이/현장 안전 지킴이/` |
 | GitHub 원격 | `https://github.com/gwonbyeonghag-hub/safety-walk.git` (origin) |
-| 기획 문서 (현재) | ✅ repo 루트에 편입 완료 (WO-0). `CLAUDE.md`/`V2_ROADMAP.md`/`CONTEXT.md` 등 + `docs/` + `.skills/` |
+| 기획 문서 (현재) | ✅ repo 루트에 편입 완료 (WO-0). `CLAUDE.md`/`V2_ROADMAP.md`/`CONTEXT.md` 등 + `docs/` + `.claude/skills/` |
 | 마스터 계획 | `V2_ROADMAP.md` (결정·아키텍처·빌드순서·사전요건) |
 | 규칙 | `CLAUDE.md` (행동지침 + v2 규칙) |
 
@@ -59,7 +59,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 **배경 (현재 문제):**
 - 기획문서 12개(`CONTEXT/PRD/DOMAIN_TERMS/CLAUDE/V2_ROADMAP/TASKS/LAUNCH_CHECKLIST/SWIFTDATA_MIGRATION/
   APP_STORE_SUBMISSION/SUBMISSION_RUNBOOK/MONETIZATION_STRATEGY/POST_LAUNCH_MONETIZATION_VALIDATION`)
-  + `docs/` + `.skills/` + `아이콘 이미지/` 가 모두 repo **바깥** 부모 폴더에 있어 GitHub에 없다.
+  + `docs/` + `.claude/skills/` + `아이콘 이미지/` 가 모두 repo **바깥** 부모 폴더에 있어 GitHub에 없다.
 - repo에 `.gitignore`가 없다 → `build/`, `xcuserdata`, `.DS_Store` 커밋 위험.
 - repo에는 현재 **미커밋 변경**(런치 폴리시·아이콘·배포타깃 수정 등 실제 작업물)이 쌓여 있다 → 버리지 말고 정리 커밋.
 
@@ -71,7 +71,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 │   DOMAIN_TERMS.md  TASKS.md  LAUNCH_CHECKLIST.md  SWIFTDATA_MIGRATION.md
 │   APP_STORE_SUBMISSION.md  SUBMISSION_RUNBOOK.md  MONETIZATION_STRATEGY.md
 │   POST_LAUNCH_MONETIZATION_VALIDATION.md      (부모에서 이동)
-├── docs/  .skills/  아이콘 이미지/             (부모에서 이동)
+├── docs/  .claude/skills/  아이콘 이미지/             (부모에서 이동)
 ├── 현장 안전 지킴이.xcodeproj
 └── 현장 안전 지킴이/ (Swift 소스)
     └── (미래) ../SafetyWalkCore/  ../macos/    ← WO-1·WO-4에서 추가
@@ -84,7 +84,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
    → `build/`, `*.xcuserstate`가 ignore되는지 `git status`로 확인.
 3. **기존 작업물 정리 커밋**: 의미 있는 미커밋 변경(소스·pbxproj·assets)을 명확한 메시지로 커밋.
    (App.swift placeholder 삭제, ContentView 워드마크, 아이콘, 배포타깃 17.0 등 — 한 커밋 또는 논리 단위로.)
-4. **문서·폴더 편입**: 부모 폴더(`09_현장 안전 지킴이/`)의 위 12개 `.md` + `docs/` + `.skills/` + `아이콘 이미지/`
+4. **문서·폴더 편입**: 부모 폴더(`09_현장 안전 지킴이/`)의 위 12개 `.md` + `docs/` + `.claude/skills/` + `아이콘 이미지/`
    를 repo 루트로 이동(`mv`) 후 `git add`. (이들은 git 미추적 → `git mv` 아님, 일반 mv 후 add.)
    - 단, 부모/자식 폴더명이 둘 다 "현장 안전 지킴이"라 혼동 주의. 자식(repo)으로 넣는다.
    - `CLAUDE.md`는 repo 루트에 둔다(Claude Code 자동 로드 위치).
@@ -95,7 +95,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 **Acceptance (증거 필수):**
 - [x] `.gitignore` 존재, `git status`에 `build/`·`*.xcuserstate`·`.DS_Store` 안 보임
 - [x] 기존 미커밋 작업물이 의미 있는 커밋으로 보존됨 (`bf63532`, 63파일)
-- [x] 13개 기획문서 + `docs/` + `.skills/` 가 repo 안에 있고 추적됨 (`5fcd239`)
+- [x] 13개 기획문서 + `docs/` + `.claude/skills/` 가 repo 안에 있고 추적됨 (`5fcd239`)
 - [x] GitHub에 푸시 완료, 원격 main = `5fcd239` (CLAUDE.md·V2_ROADMAP.md 원격 확인)
 - [x] iOS 앱 **빌드 그린** — `** BUILD SUCCEEDED **`
 
@@ -110,7 +110,7 @@ WO-6  iOS+macOS 동시 제출                              (동시출시)
 - 수행 커밋 (origin/main `5fcd239`까지 푸시 완료):
   - `03d1d1d` chore: `.gitignore` 추가(Xcode/SwiftPM/macOS) + `xcuserdata` 추적 해제 → `build/`(198MB)·xcuserdata 무시 확인(`check-ignore`)
   - `bf63532` feat: v1 앱 구현 전체 커밋 (63파일/+7952줄, Models/Views/ViewModels/Services/Utilities/템플릿/현지화/테스트/아이콘)
-  - `5fcd239` docs: 기획문서 13개 + `docs/` + `.skills/` + `아이콘 이미지/`를 repo 루트로 편입
+  - `5fcd239` docs: 기획문서 13개 + `docs/` + `.claude/skills/` + `아이콘 이미지/`를 repo 루트로 편입
 - Acceptance: `.gitignore` 작동(위험파일 스테이지 0), 작업물 보존, 문서 추적, **푸시 완료(원격=로컬 5fcd239)**, **iOS BUILD SUCCEEDED**(generic iOS Simulator, CODE_SIGNING_ALLOWED=NO) — 전부 충족.
 - 남은 정리(선택, 후순위): 부모/자식 "현장 안전 지킴이" 폴더 이중 중첩 — 이번 범위 밖.
 
@@ -226,7 +226,7 @@ xcodebuild -project "$PROJ" -scheme "$SCHEME" -destination 'generic/platform=iOS
 # 앱 실제 실행/화면 확인은 프로젝트 .skills 활용(아래)
 ```
 
-### Skills 호출 지점 (프로젝트 `.skills/` + 공용)
+### Skills 호출 지점 (프로젝트 `.claude/skills/` + 공용)
 - `/swiftui-build-qa` — 빌드/경고 검증 단계마다
 - `/safetywalk-qa-guardrails` — 스코프·도메인 규칙 위반 자가점검
 - `/checklist-template-expansion` — 템플릿 리소스 이동 후 로딩 정상 확인(KR/Global)

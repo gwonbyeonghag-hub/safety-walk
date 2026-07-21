@@ -36,7 +36,7 @@
   (미국 OSHA·imperial). → **해외(미국) 버전 뼈대 이미 있음.**
 - EN/KO 현지화 300=300, `LocalizationKey` 타입세이프 접근.
 - 흐름 완성: 점검(Inspection) → 위험요인(Hazard) → 시정조치 → 리포트 Export(이미지/단일 PDF).
-- QA 스킬 6종(`.skills/`), 도메인 문서(CONTEXT/PRD/DOMAIN_TERMS/TASKS) 정비.
+- QA 스킬 6종(`.claude/skills/`), 도메인 문서(CONTEXT/PRD/DOMAIN_TERMS/TASKS) 정비.
 
 ## 1.5 새로 필요한 것 (v2 신규)
 
