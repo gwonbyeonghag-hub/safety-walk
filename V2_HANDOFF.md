@@ -1766,3 +1766,13 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 > 📌 **WO §0 강화(향후)**: "checkout 후 `git branch --show-current`가 브랜치명인지 확인, main이면 STOP·커밋 금지"를 게이트에 추가(확인만 하고 checkout 빠뜨리는 실수 방지).
 > 📝 마이너: AssessmentStartSheet에 세 번째 infoRow 복사본(2d 선재) — 공유 함수로 마저 접기 가능(저비용·비블로커).
 > 남은 TBM: TBM-3(PDF·Mac·통합 조회) · TBM-4(관할 프로필 QA) · CONTINUOUS(상시평가).
+
+---
+# ✅ WO LEGAL-TBM-3 — 브리핑 PDF·통합 공유 이력·Mac 읽기 — **병합 완료·검증 2026-07-21 (main 8e37181)**
+> 스코프: ① SafetyBriefingReport(PDF, 값 스냅샷 기반·작업/일시/장소/관할/전달내용/위험스냅샷/참석집계) · ② UnifiedSharingHistory(Core: 확정 SafetyBriefing[TBM] + SharingEvent[비TBM]를 시간순 병합, finalizedAt/sharedAt 정렬, .finalized만 공유증명) · ③ SafetyBriefingsBrowseView(Mac 읽기 전용, 생성·수명주기 없음).
+> 리뷰어 독립검증: git 무결성(main 게이트 541d1dc 그대로·ff·16파일 +851/-23 보고일치) · **참석자 PII: Mac 조회+PDF 둘 다 이름 렌더 0, 인원·역할·확인방식 집계만**(§3·§4 일관) · PII 회귀가드 실 negative assert(마커이름 미출현) · BriefingAssessmentLink de-dup(iOS 상세+Mac 양쪽 사용) · MacSharingHistoryCard entries 1회 hoist · **Core 304/304**(신규 UnifiedSharingHistory 8+BriefingAssessmentLink 3) · iOS·Mac 서명 빌드 · ReportRenderingTests 브리핑 PDF 3(PII가드 포함) · SafetyBriefingUITests 2/2(회귀).
+> 🟢 실행자 자체발견·반영: **Mac 조회 화면 참석자 이름 노출(spec축 code-review)** = 내 §4 불변식이 PDF로 한정 안 됐는데 실행자가 Mac은 반쪽만 적용했던 것 → attendanceSummaryCard로 교체(이름 제거). + Standards축 중복 2건(평가조회 로직→BriefingAssessmentLink 통합·entries 다중fetch→hoist).
+> ✅ 강화된 §0 작동: checkout 직후 git branch --show-current 재확인 → 처음부터 tbm3에서만 작업(TBM-2 사고 재발 0).
+> 📝 스킬 정직보고: /code-review 실호출(2축), 나머지 QA스킬은 TBM-2에서 익힌 체크리스트 적용+서명빌드·PDFKit 텍스트추출·렌더이미지·Mac 수동실행으로 대체(부른 척 안 함). Mac XCUITest 타겟 부재는 선재(프로젝트에 iOS UI테스트만).
+> 📌 iOS 상세가 참여자 이름 표시하는 건 TBM-2 결정(이번 범위 밖) — 필요시 별도 검토.
+> 남은 TBM: TBM-4(관할 프로필 QA) · CONTINUOUS(상시평가, Program 소유).
