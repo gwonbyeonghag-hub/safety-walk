@@ -4,6 +4,10 @@ import SwiftData
 /// TBM 브리핑 참여자 (SCHEMA_V3 §4). Owned by the briefing; immutable once finalized. Uses
 /// only the 공유 confirmation vocabulary (순회/면담/설문은 재사용 안 함). `confirmationMethod`/
 /// `confirmedAt` optional — **nil=미확인**(교정 #3). CloudKit-ready.
+///
+/// The initializer is deliberately **not** `public` (WO LEGAL-TBM-1 §4 "sealed로 Core 우회 불가",
+/// same pattern as `CorrectiveAction`/`SharingEvent`): outside the package a `BriefingParticipant`
+/// can only come from `BriefingParticipantEditing.add`, the single validated + atomic create gate.
 @Model
 public final class BriefingParticipant {
     public var id: UUID = UUID()
@@ -20,7 +24,7 @@ public final class BriefingParticipant {
     public var briefing: SafetyBriefing?
 
     /// SCHEMA_V3 §4.1 생성자 계약: name·role are REQUIRED. `validate()` rejects a blank name.
-    public init(
+    init(
         name: String,
         role: ParticipantRole,
         employeeId: String? = nil,

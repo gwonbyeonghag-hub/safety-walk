@@ -6,6 +6,10 @@ import SwiftData
 /// participants/서명 lock at `finalized`. `retainUntil` is a policy-driven date — 자동 판정
 /// 안 함(교정). CloudKit-ready: attributes optional or defaulted, relationships optional with
 /// inverse, no `.unique`.
+///
+/// WO LEGAL-TBM-1 §5 봉인: `status`/`conductedAt`/`finalizedAt`/`cancelledAt` 는 `internal(set)`
+/// — 수명주기 전환은 `BriefingLifecycle`(conduct/finalize/cancel)만 소유한다. `public init` 에
+/// `status` 인자가 없어 모든 브리핑은 항상 `.draft` 로 태어난다(아래 참고).
 @Model
 public final class SafetyBriefing {
     public var id: UUID = UUID()
@@ -18,14 +22,14 @@ public final class SafetyBriefing {
     public var taskDescription: String = ""
     public var occurredAt: Date?
     public var location: String = ""
-    public var status: BriefingStatus = BriefingStatus.draft
+    public internal(set) var status: BriefingStatus = BriefingStatus.draft
     public var briefingContent: String = ""
     public var ownerName: String?
     public var createdAt: Date = Date()
     public var updatedAt: Date = Date()
-    public var conductedAt: Date?
-    public var finalizedAt: Date?
-    public var cancelledAt: Date?
+    public internal(set) var conductedAt: Date?
+    public internal(set) var finalizedAt: Date?
+    public internal(set) var cancelledAt: Date?
     public var cancellationReason: String?
     public var retainUntil: Date?                       // 정책 기반, 자동 판정 안 함
     public var supersedesBriefingId: UUID?

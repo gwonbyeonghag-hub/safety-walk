@@ -6,6 +6,10 @@ import SwiftData
 /// snapshot of the item's 1:N corrective actions (each measure·담당·기한·status·postRiskLevel
 /// value-copied; decode failure fail-closed). Source ids are kept for traceability only.
 /// CloudKit-ready.
+///
+/// The initializer is deliberately **not** `public` (WO LEGAL-TBM-1 §4 "sealed로 Core 우회 불가"):
+/// a snapshot only comes from `BriefingLifecycle.conduct`, the single moment a briefing copies its
+/// linked assessment's items.
 @Model
 public final class BriefingRiskItemSnapshot {
     public var id: UUID = UUID()
@@ -24,7 +28,7 @@ public final class BriefingRiskItemSnapshot {
     // CloudKit-required inverse of SafetyBriefing.riskSnapshots.
     public var briefing: SafetyBriefing?
 
-    public init(
+    init(
         sourceAssessmentId: UUID? = nil,
         sourceItemId: UUID? = nil,
         taskDescription: String = "",
