@@ -111,3 +111,12 @@ extension SharingMethod {
         }
     }
 }
+
+extension RiskAssessment {
+    /// 보존 기한 표시 텍스트 — 상세 화면·PDF 리포트가 공유하는 단일 포맷터(WO LEGAL-2e).
+    /// 계산은 `RetentionPolicy` 가 유일한 소스이며, 여기서는 표시만 한다.
+    var retainUntilDisplayText: String {
+        guard let until = RetentionPolicy.retainUntil(self) else { return "—" }
+        return until.formatted(date: .abbreviated, time: .omitted)
+    }
+}

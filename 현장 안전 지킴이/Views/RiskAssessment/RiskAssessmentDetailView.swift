@@ -253,14 +253,8 @@ struct RiskAssessmentDetailView: View {
                 infoRow(LocalizationKey.raNote.localized, note)
             }
             // WO LEGAL-2e — 3년 보존(시행규칙 제37조의4) 안내. 앱 가드일 뿐 자동 법 판정이 아니다.
-            infoRow(LocalizationKey.raRetainUntil.localized, retainUntilText)
+            infoRow(LocalizationKey.raRetainUntil.localized, assessment.retainUntilDisplayText)
         }
-    }
-
-    /// 보존 기한 표시 텍스트 — `RetentionPolicy` 가 유일한 계산 소스(단일 소스).
-    private var retainUntilText: String {
-        guard let until = RetentionPolicy.retainUntil(assessment) else { return "—" }
-        return until.formatted(date: .abbreviated, time: .omitted)
     }
 
     // MARK: - Lifecycle: planned → inProgress
@@ -547,13 +541,16 @@ struct RiskAssessmentDetailView: View {
 
     /// 보존 기간 내면 경고를 앞에 얹는다 — 하드 차단이 아니라 사용자가 확인하면 그대로 삭제할 수 있다
     /// (CLAUDE.md No legal judgment). 보존 기간이 지났으면 표준 삭제 안내만 보인다.
+    ///
+    /// `isWithinRetentionPeriod` 는 날짜 계산이 실패해도 fail-closed 로 true 를 반환한다
+    /// (`RetentionPolicy` 참고) — 그 경우에도 경고는 그대로 띄우고, 날짜 표시만 `retainUntilDisplayText`
+    /// 의 "—" 폴백을 쓴다. 두 계산을 따로 요구해 경고가 조용히 사라지지 않게 한다.
     private var deleteAlertMessage: String {
-        guard RetentionPolicy.isWithinRetentionPeriod(assessment, now: Date()),
-              let until = RetentionPolicy.retainUntil(assessment) else {
+        guard RetentionPolicy.isWithinRetentionPeriod(assessment, now: Date()) else {
             return LocalizationKey.raDeleteMessage.localized
         }
-        let untilText = until.formatted(date: .abbreviated, time: .omitted)
-        let warning = String(format: LocalizationKey.raDeleteRetentionWarningFmt.localized, untilText)
+        let warning = String(format: LocalizationKey.raDeleteRetentionWarningFmt.localized,
+                             assessment.retainUntilDisplayText)
         return warning + "\n\n" + LocalizationKey.raDeleteMessage.localized
     }
 

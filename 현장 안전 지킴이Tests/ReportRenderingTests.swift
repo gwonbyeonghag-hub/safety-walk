@@ -429,6 +429,55 @@ final class ReportRenderingTests: XCTestCase {
             "an empty Controls value must render the shared 미기록 / Not recorded label")
     }
 
+    // MARK: - WO LEGAL-2e: PDF 에 공유 이력 + 3년 보존 안내가 실제로 렌더되는지 (값 스냅샷 아님 —
+    // SharingEvent 모델 필드만 사용, 참여자 개인정보는 포함하지 않는다)
+
+    func testRiskAssessmentReportIncludesSharingHistoryAndRetentionNotice() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                        siteId: UUID(), siteName: "○○건설 1현장", assessorName: "홍길동")
+        assessment.scheduledAt = Date()   // 사전 공유 기록의 전제(SharingEventPolicy)
+        ctx.insert(assessment)
+        let item = RiskAssessmentItem(
+            taskDescription: "굴착 작업 PDFMRK", hazardDescription: "붕괴 위험",
+            likelihood: 1, severity: 1, riskLevel: .low, sortOrder: 0)
+        ctx.insert(item)
+        assessment.items = [item]
+        try ctx.save()
+
+        try SharingEventRecording.record(
+            phase: .pre, method: .posting, in: assessment,
+            target: "정문 게시판 SHRTGT", ownerName: "홍길동 SHROWN", at: Date(), context: ctx)
+
+        let url = try XCTUnwrap(RiskAssessmentReport.pdfURL(for: assessment), "report URL nil")
+        attachPages(url, name: "risk_sharing_retention")
+        let whole = pageTexts(url).joined(separator: "\n")
+
+        XCTAssertTrue(whole.contains("SHRTGT"), "recorded sharing target must render in the PDF")
+        XCTAssertTrue(whole.contains("SHROWN"), "recorded sharing owner must render in the PDF")
+        XCTAssertGreaterThanOrEqual(labelHits(["구분", "Phase"], in: whole), 1,
+            "sharing-history column header must render")
+        XCTAssertTrue(whole.contains(assessment.retainUntilDisplayText),
+            "the computed retainUntil date must render in the PDF")
+        XCTAssertGreaterThanOrEqual(labelHits(["보존 기한", "Retention until"], in: whole), 1,
+            "retention label must render")
+    }
+
+    /// 공유 기록이 없으면 "미기록" 이 아니라 빈 이력 안내 문구가 렌더된다(nil=미기록 오용 금지).
+    func testRiskAssessmentReportShowsEmptySharingHistoryMessageWhenNoRecords() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                        siteId: UUID(), siteName: "Plant B", assessorName: "홍길동")
+        ctx.insert(assessment)
+        try ctx.save()
+
+        let url = try XCTUnwrap(RiskAssessmentReport.pdfURL(for: assessment), "report URL nil")
+        let whole = pageTexts(url).joined(separator: "\n")
+
+        XCTAssertGreaterThanOrEqual(labelHits(["아직 공유 기록이 없습니다", "No sharing records yet"], in: whole), 1,
+            "an assessment with no sharing history must show the shared empty-state message")
+    }
+
     private func dummyImage() -> UIImage {
         UIGraphicsImageRenderer(size: CGSize(width: 320, height: 220)).image { ctx in
             UIColor.systemTeal.setFill()

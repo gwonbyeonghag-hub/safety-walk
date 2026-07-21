@@ -73,7 +73,7 @@ enum RiskAssessmentReport {
     private static func retentionBlock(_ a: RiskAssessment) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             ReportInfoGrid(pairs: [
-                (LocalizationKey.raRetainUntil.localized, retainUntilText(a)),
+                (LocalizationKey.raRetainUntil.localized, a.retainUntilDisplayText),
             ], columns: 1)
             Text(LocalizationKey.raRetainUntilReportNotice.localized)
                 .font(.system(size: 7.5))
@@ -81,11 +81,6 @@ enum RiskAssessmentReport {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 8)
         }
-    }
-
-    private static func retainUntilText(_ a: RiskAssessment) -> String {
-        guard let until = RetentionPolicy.retainUntil(a) else { return "—" }
-        return until.formatted(date: .abbreviated, time: .omitted)
     }
 
     // MARK: - WO LEGAL-2e: 공유 이력
@@ -147,8 +142,10 @@ enum RiskAssessmentReport {
             actionCell(event.sharedAt?.formatted(date: .abbreviated, time: .shortened), SharingCol.sharedAt)
             actionCell(event.target, SharingCol.target)
             actionCell(event.ownerName, SharingCol.owner)
-            actionCell(SharingEventPolicy.isStale(event, in: assessment)
-                       ? LocalizationKey.raSharingStale.localized : nil, SharingCol.stale)
+            // 미기록(raNotRecorded)은 "값이 없음"을 뜻한다 — 최신 기록에는 그 라벨이 아니라 빈 칸(—)이
+            // 맞는다. actionCell 대신 cell 을 써서 두 의미를 섞지 않는다.
+            cell(SharingEventPolicy.isStale(event, in: assessment)
+                 ? LocalizationKey.raSharingStale.localized : "", SharingCol.stale)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottom) {
