@@ -13,11 +13,11 @@ struct MacSharingHistoryCard: View {
     let assessment: RiskAssessment
     @Environment(\.modelContext) private var modelContext
 
-    private var entries: [UnifiedSharingHistoryEntry] {
-        UnifiedSharingHistory.entries(for: assessment, in: modelContext)
-    }
-
     var body: some View {
+        // 한 번만 조회한다 — 이전에는 SharingEventPolicy.sortedEvents(메모리 relationship, 공짜)를
+        // 감싸던 계산 프로퍼티였지만, 이제 UnifiedSharingHistory 가 매번 실제 ModelContext.fetch 를
+        // 실행하므로 body 안에서 여러 번(isEmpty·ForEach·last) 부르지 않는다.
+        let entries = UnifiedSharingHistory.entries(for: assessment, in: modelContext)
         MacCard(title: LocalizationKey.raSharingSection.localized, systemImage: "square.and.arrow.up") {
             VStack(alignment: .leading, spacing: 8) {
                 if SharingEventPolicy.jurisdictionState(assessment) == .unset {

@@ -58,22 +58,21 @@ struct SafetyBriefingsBrowseView: View {
 
             riskSnapshotsCard(b)
 
-            // 참석자 — 조회 전용 화면(내보내기 대상 아님)이라 이름을 그대로 보여준다. 내보내는
-            // 리포트(SafetyBriefingReport, ReportHubView)는 제3자 PII를 뺀 집계만 싣는다
-            // (WO LEGAL-TBM-3 §3 — 2e 결정과 일관, 익스포트 아티팩트에만 적용).
-            participantsCard(b)
+            // 참석 요약 — 참석자 이름·서명(제3자 PII)은 여기서도 보여주지 않는다. WO LEGAL-TBM-3 §4
+            // 불변식("참석자 PII는 2e 결정과 일관")은 PDF 로 한정하지 않으므로, 내보내는 리포트
+            // (SafetyBriefingReport)와 같은 집계만 조회 화면에도 적용한다 — iOS 상세 화면이 이름을
+            // 보여주는 것과는 별개(그 결정은 이번 WO 범위 밖, 재검토하지 않는다).
+            attendanceSummaryCard(b)
 
             ReportDisclaimerInline()
         }
     }
 
-    /// `assessmentId`는 관계가 아니라 값 UUID(SCHEMA_V3 §5) — 한 번만 조회해 표시용 라벨만 만든다.
-    /// 목록 규모가 작은 매니저 조회 화면이라 행마다 즉시 fetch 해도 무리 없다(대량 리스트 아님).
+    /// `BriefingAssessmentLink`(SafetyWalkCore — iOS의 `SafetyBriefingDetailView.resolveLinkedAssessment`
+    /// 와 같은 헬퍼 공유, WO LEGAL-TBM-3 code-review 반영). 목록 규모가 작은 매니저 조회 화면이라
+    /// 행마다 즉시 fetch 해도 무리 없다(대량 리스트 아님).
     private func linkedAssessmentLabel(_ b: SafetyBriefing) -> String {
-        guard let targetId = b.assessmentId else { return "—" }
-        let descriptor = FetchDescriptor<RiskAssessment>(
-            predicate: #Predicate<RiskAssessment> { $0.id == targetId })
-        guard let ra = try? modelContext.fetch(descriptor).first else { return "—" }
+        guard let ra = BriefingAssessmentLink.resolve(b, in: modelContext) else { return "—" }
         return ra.siteName.isEmpty ? ra.method.localizedLabel : "\(ra.siteName) · \(ra.method.localizedLabel)"
     }
 
@@ -113,29 +112,34 @@ struct SafetyBriefingsBrowseView: View {
         }
     }
 
-    private func participantsCard(_ b: SafetyBriefing) -> some View {
-        let participants = (b.participants ?? []).sorted {
-            if $0.role != $1.role { return $0.role == .workerRep }
-            return $0.name.localizedCompare($1.name) == .orderedAscending
-        }
-        return MacCard(title: LocalizationKey.tbmParticipants.localized, systemImage: "person.2") {
-            if participants.isEmpty {
-                Text(LocalizationKey.tbmParticipantsEmpty.localized)
-                    .font(.callout).foregroundStyle(Color.macMuted)
-            } else {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(participants) { p in
-                        HStack(spacing: 8) {
-                            Text(p.name).font(.callout.weight(.medium))
-                            Text(p.role.localizedLabel).font(.caption).foregroundStyle(.secondary)
-                            if let confirm = p.confirmationMethod {
-                                Text(confirm.localizedLabel).font(.caption2).foregroundStyle(Color.macMuted)
-                            }
-                            Spacer(minLength: 0)
-                        }
+    /// 인원·역할·확인방식 집계만 — 참석자 이름은 렌더하지 않는다(`SafetyBriefingReport.attendanceSummaryBlock`
+    /// 과 같은 계약).
+    private func attendanceSummaryCard(_ b: SafetyBriefing) -> some View {
+        let participants = b.participants ?? []
+        let byRole = Dictionary(grouping: participants, by: \.role)
+        let byConfirmation = Dictionary(grouping: participants.compactMap(\.confirmationMethod), by: { $0 })
+
+        return MacCard(title: LocalizationKey.tbmAttendanceSummaryTitle.localized, systemImage: "person.2") {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(String(format: LocalizationKey.tbmAttendanceSummaryCountFmt.localized, participants.count))
+                    .font(.callout).foregroundStyle(Color.macInk)
+                if !participants.isEmpty {
+                    WrappingHStack(ParticipantRole.allCases) { role in
+                        summaryPill("\(role.localizedLabel) \(byRole[role]?.count ?? 0)")
+                    }
+                    WrappingHStack(ConfirmationMethod.allCases) { method in
+                        summaryPill("\(method.localizedLabel) \(byConfirmation[method]?.count ?? 0)")
                     }
                 }
             }
         }
+    }
+
+    private func summaryPill(_ text: String) -> some View {
+        Text(text)
+            .font(.caption)
+            .foregroundStyle(Color.macMuted)
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(Color.macSurface2, in: Capsule())
     }
 }

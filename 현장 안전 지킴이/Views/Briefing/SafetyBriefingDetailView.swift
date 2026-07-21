@@ -90,17 +90,14 @@ struct SafetyBriefingDetailView: View {
         }
     }
 
-    /// `briefing.assessmentId`는 관계가 아니라 값 UUID(SCHEMA_V3 §5) — 그래서 `@Query` 대신
-    /// 일회성 fetch로 해석한다. 이 화면은 Home→목록→상세로 depth-2에 밀리는데, depth-2+ 에서
-    /// `@Query(filter: #Predicate)`를 프로퍼티로 선언하면 push 시점에 앱이 멈춘 전례가 있다
-    /// (/navigation-qa). `.task` 안의 일회성 `modelContext.fetch`는 push 가 끝난 뒤 비동기로
+    /// `BriefingAssessmentLink`(SafetyWalkCore — WO LEGAL-TBM-3 code-review로 Mac 조회 화면과
+    /// 공유)를 쓴다. `@Query` 대신 일회성 fetch 인 이유: 이 화면은 Home→목록→상세로 depth-2에
+    /// 밀리는데, depth-2+ 에서 `@Query(filter: #Predicate)`를 프로퍼티로 선언하면 push 시점에
+    /// 앱이 멈춘 전례가 있다(/navigation-qa). `.task` 안의 일회성 fetch는 push 가 끝난 뒤 비동기로
     /// 실행되므로 그 문제를 겪지 않는다.
     private func resolveLinkedAssessment() {
         defer { linkedAssessmentResolved = true }
-        guard let targetId = briefing.assessmentId else { return }
-        let descriptor = FetchDescriptor<RiskAssessment>(
-            predicate: #Predicate<RiskAssessment> { $0.id == targetId })
-        linkedAssessment = try? modelContext.fetch(descriptor).first
+        linkedAssessment = BriefingAssessmentLink.resolve(briefing, in: modelContext)
     }
 
     // MARK: - Overview
