@@ -1776,3 +1776,13 @@ fast-forward 병합(merge commit 없음). 병합 후 검증: Core `swift test` 1
 > 📝 스킬 정직보고: /code-review 실호출(2축), 나머지 QA스킬은 TBM-2에서 익힌 체크리스트 적용+서명빌드·PDFKit 텍스트추출·렌더이미지·Mac 수동실행으로 대체(부른 척 안 함). Mac XCUITest 타겟 부재는 선재(프로젝트에 iOS UI테스트만).
 > 📌 iOS 상세가 참여자 이름 표시하는 건 TBM-2 결정(이번 범위 밖) — 필요시 별도 검토.
 > 남은 TBM: TBM-4(관할 프로필 QA) · CONTINUOUS(상시평가, Program 소유).
+
+---
+# ✅ WO LEGAL-TBM-4 — 관할/프로필 QA + 사후공유 게이트↔TBM 통합 — **병합 완료·검증 2026-07-22 (main b5ae946)**
+> 스코프: ① [핵심] KR 사후공유 종결 게이트가 **확정 TBM 브리핑**을 인정(오너 결정 옵션1). isCurrent(브리핑)=SharingEvent의 isCurrent와 대칭(완전성 finalizedAt+validate + staleness: 스냅샷 집합이 현재 항목과 정확 일치 & BriefingRiskItemContent 재계산 일치, 개선조치 변경 시 stale, 전부 fail-closed). ② 관할/프로필 표시 정합(브리핑 상세·Mac에 게이트-인정 한 줄만, standalone·US·미설정·stale→표시 없음, 축 혼용 금지). ③ 스냅샷 불변성(Site 축).
+> 구현 방식: **context 주입**(isClosed/openReason/satisfiesPostSharingGate에 ModelContext) — **스키마 무변경**(§3 제약 준수, @Model 파일 diff 0). 신규 Core: BriefingRiskItemContent(SharingSnapshot.Item의 브리핑판, conduct·isCurrent가 같은 값계산 재사용).
+> 리뷰어 독립검증: git 무결성(main 3d121f4 그대로·ff·15파일 +477/-56) · 스키마 무변경 · **SharingEvent 경로 보존=2d 무회귀**(satisfiesPostSharingGate가 currentEvent OR currentBriefing) · isCurrent staleness 엄격·fail-closed 전문 확인 · 표시가 게이트 함수 직접 소비(드리프트 불가) · **Core 317/317**(신규 게이트 스위트 passed) · iOS·Mac 서명 빌드 · SafetyBriefingUITests 2/2.
+> 🟢 실행자 자체발견·정직: isCurrent(브리핑)이 완전성 가드 없이 .finalized만 봤던 것(Standards축)→validate+finalizedAt 추가 · 범위 밖 리뷰 제안("참석자0 거부")은 §2.1 정의·UnifiedSharingHistory 계약에 어긋나 **근거 대고 거절** · §2.3 Program 축은 AssessmentDraft에 programId/industryProfile 미배선이라 Site로 **정직하게 축소·docblock 명시**(실측 확인).
+> 📌 §2.2 관할 표시 = 플래너 사전 룰링(브리핑은 자기 관할 없음·briefingProfile에서 파생 금지·standalone 무표시·PDF는 context 없으면 생략) 그대로 구현.
+> 🟢 강화 §0 작동(브랜치 재확인) · 스킬 정직보고(/code-review만 실호출).
+> **TBM 트랙 완료(TBM-1 Core·2 iOS·3 PDF/Mac/통합·4 게이트/QA).** 남은 LEGAL: CONTINUOUS(상시평가, Program 소유)뿐.
