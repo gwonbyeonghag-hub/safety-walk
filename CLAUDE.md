@@ -70,7 +70,7 @@ Run these before completing any relevant task:
 | SWIFTDATA_MIGRATION.md | Frozen schema baseline + post-launch model-change/migration policy |
 | APP_STORE_SUBMISSION.md | App Store metadata / privacy / screenshots / reviewer notes drafts + pre-submit checklist |
 | SafetyWalkCore/Sources/SafetyWalkCore/Resources/ | Checklist JSON templates (korea + global) |
-| Utilities/LocalizationKey.swift | Type-safe string access |
+| 현장 안전 지킴이/Utilities/LocalizationKey.swift | Type-safe string access |
 
 ---
 
