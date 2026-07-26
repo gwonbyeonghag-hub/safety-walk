@@ -53,6 +53,8 @@ Run these before completing any relevant task:
 - `/screen-implementation-review` — before marking any screen task done
 - `/checklist-template-expansion` — when adding or modifying template items
 - `/design-visual-qa` — after functional QA passes, before marking any screen done (render → screenshot → critique loop)
+- `/swiftui-build-qa` — before reporting any SwiftUI screen task complete: signed iOS/macOS build + test-destination verification + SwiftUI type-inference error rules (apply proactively when writing new View code)
+- `/safetywalk-qa-guardrails` — whenever doing QA, simulator testing, seed-data injection, build cleanup, or pre-TestFlight verification (the project's QA + simulator/build hygiene checklist)
 
 ---
 
@@ -67,23 +69,19 @@ Run these before completing any relevant task:
 | TASKS.md | Dev task list |
 | SWIFTDATA_MIGRATION.md | Frozen schema baseline + post-launch model-change/migration policy |
 | APP_STORE_SUBMISSION.md | App Store metadata / privacy / screenshots / reviewer notes drafts + pre-submit checklist |
-| Resources/Templates/ | Checklist JSON templates (korea + global) |
+| SafetyWalkCore/Sources/SafetyWalkCore/Resources/ | Checklist JSON templates (korea + global) |
 | Utilities/LocalizationKey.swift | Type-safe string access |
 
 ---
 
 ## SwiftData Models (v1 — v2에서 CloudKit/위험성평가로 개정 중)
 
-```
-Site:          id, name, address?, createdAt, areas
-Area:          id, name, siteId
-Inspection:    id, siteId, areaId?, inspectorName, startedAt, completedAt?, status, templateId, items, hazards
-ChecklistItem: id, inspectionId, templateItemId, title, category, result, note?, photoData?(externalStorage), linkedHazardId?
-Hazard:        id, inspectionId?, siteId, location, type, riskLevel, description, photoData?(externalStorage), correctiveActionStatus, createdAt, updatedAt
-RiskAssessment(v2): id, kind(최초/정기/수시), siteId, assessorName, date, method, items, disclaimer  ← 설계: V2_ROADMAP.md AD-3
-```
+모델: Site · Area · Inspection · ChecklistItem · Hazard · RiskAssessment(v2). 컨테이너에 등록된 전체 목록은 `SafetyWalkCore/Sources/SafetyWalkCore/Migration/SchemaV3.swift`.
+필드 정의의 진실은 `SafetyWalkCore/Sources/SafetyWalkCore/` 소스이며, 설계 근거는 `V2_ROADMAP.md` AD-3, 마이그레이션 정책은 `SWIFTDATA_MIGRATION.md`.
 
-**CloudKit 제약 (WO-3에서 실제 적용, 크래시로 검증됨):** 모든 속성은 optional 또는 **기본값 보유**; 관계는 **optional**(`[ChecklistItem]?`); **모든 관계는 inverse 필수**(`@Relationship(inverse:)` — 없으면 "CloudKit integration requires that all relationships have an inverse" 런타임 크래시. 문서/역할상 관계를 안 쓰는 쪽에도 inverse 전용 프로퍼티를 추가해야 함, 예: `Area.site: Site?`, `ChecklistItem.inspection: Inspection?` — 앱 코드는 계속 UUID 필드로 조회, inverse 프로퍼티는 읽지 않음); `@Attribute(.unique)` 금지; 사진은 `photoPath` 대신 `@Attribute(.externalStorage) Data`(`photoData`)로 동기화. 마이그레이션은 VersionedSchema(`SafetyWalkCore/Migration/`)로 — 자세한 내용은 SWIFTDATA_MIGRATION.md.
+**CloudKit 제약 (WO-3에서 실제 적용, 크래시로 검증됨):** 모든 속성은 optional 또는 **기본값 보유**; 관계는 **optional**(`[ChecklistItem]?`); **모든 관계는 inverse 필수**(`@Relationship(inverse:)` — 없으면 "CloudKit integration requires that all relationships have an inverse" 런타임 크래시. 문서/역할상 관계를 안 쓰는 쪽에도 inverse 전용 프로퍼티를 추가해야 함, 예: `Area.site: Site?`, `ChecklistItem.inspection: Inspection?` — 앱 코드는 계속 UUID 필드로 조회, inverse 프로퍼티는 읽지 않음); `@Attribute(.unique)` 금지; 사진은 `photoPath` 대신 `@Attribute(.externalStorage) Data`(`photoData`)로 동기화. 마이그레이션은 VersionedSchema(`SafetyWalkCore/Sources/SafetyWalkCore/Migration/`)로 — 자세한 내용은 SWIFTDATA_MIGRATION.md.
+
+**기본값과 미기록은 다르다 (교정 #3 / LEGAL-0):** 위 "기본값 보유"는 CloudKit 요구사항이지 값 설계 지침이 아니다. **사용자가 기록하는 사실 필드(위험도·평가값·참여자 등)는 `Optional` + `nil = 미기록`으로 두고, 자동 기본값이 미기록을 대신하지 않게 한다.** 렌더링은 `nil`을 "미기록 / Not recorded"로 표시하고 실제 값처럼 계산에 넣지 않는다. 적용 예: `RiskAssessmentItem.riskLevel`, `BriefingRiskItemSnapshot.riskLevel` — 리포트 렌더 테스트가 이 표시를 강제한다.
 
 ---
 
