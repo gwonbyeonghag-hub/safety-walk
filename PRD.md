@@ -268,7 +268,7 @@
 **Acceptance Criteria:**
 - [ ] Region profile follows the Language toggle (not a separate control)
 - [ ] Korea profile loads the KOSHA-oriented Korean template
-- [ ] Global profile loads the U.S./OSHA-oriented template (imperial units, English)
+- [ ] Global profile offers **two** Federal OSHA-cited templates — General Industry (29 CFR 1910) and Construction (29 CFR 1926), imperial units, user picks explicitly (WO LEGAL-3B; no auto-selection, unlike Korea)
 - [ ] Changing language offers the new default template on the next inspection
 
 ---

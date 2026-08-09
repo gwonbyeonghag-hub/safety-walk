@@ -21,6 +21,7 @@ Shipped after this checklist was finalized (2026-06-23); these **reverse/update*
 - **App icon replaced (2026-06-26)** — new Liquid-Glass-style shield + orange check on navy glass (AI-generated reference, resized to a compliant 1024 square / no-alpha; old shield+route icon backed up at `/tmp/AppIcon-1024.orig.png`). Builds with no icon warnings; renders on the simulator home screen.
 - **EN/KO key parity now 300=300** (was 280).
 - `APP_STORE_SUBMISSION.md` metadata updated to match (2026-06-25). See `SUBMISSION_RUNBOOK.md` for the human submission steps.
+- **WO LEGAL-3B (2026-08-09) supersedes the "Global" content/label decisions below** (line ~126's "KEEP (no change)" ruling and the single-template description at line ~130): `.global` no longer resolves one mixed `checklist_global.json` — it now resolves **two** versioned US Federal templates (`us-federal-general-industry-v1` General Industry / `us-federal-construction-v1` Construction), each OSHA/eCFR-cited (`docs/LEGAL_3B_US_TEMPLATE_SOURCE_AUDIT.md`). The **display label** also changed: `settings.region.global` is now "United States (Federal baseline)" / "미국(연방 기준)" (was "Global"/"글로벌") — the `RegionProfile.global` enum case, rawValue, and storage code (`RegionProfileStore` "GLOBAL") are unchanged. `checklist_global.json` itself is retained, untouched, and still decodable for legacy `Inspection.templateId` records — it is simply no longer offered in the template picker.
 
 ---
 

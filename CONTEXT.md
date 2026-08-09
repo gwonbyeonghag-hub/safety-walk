@@ -46,7 +46,7 @@ Both primary roles must be equally well-served. The UX must accommodate varying 
 ## Market Context
 
 - Primary market: Korea (construction, manufacturing, facilities management)
-- Secondary market: United States (English) — the Global profile uses a U.S./OSHA-oriented checklist template with imperial units
+- Secondary market: United States ("United States (Federal baseline)" region profile) — two Federal OSHA-cited checklist templates, General Industry (29 CFR 1910) and Construction (29 CFR 1926), imperial units (WO LEGAL-3B; see `docs/LEGAL_3B_US_TEMPLATE_SOURCE_AUDIT.md`)
 - Legal context: The app does **not** determine legal violations. It supports field recording only.
 - Regulatory references (Korea: KOSHA themes, Global: U.S. OSHA themes) are treated as "review required," not binding judgments. No regulation numbers or compliance verdicts appear in app content.
 

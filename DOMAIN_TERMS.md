@@ -36,7 +36,7 @@ Use these names consistently — do not invent synonyms.
 | In Progress | 진행중 | Corrective action is underway. |
 | Completed | 완료 | Corrective action has been finished. |
 | Evidence Photo | 증거 사진 | A photo taken to document a hazard or checklist item result. |
-| Region Profile | 지역 프로파일 | Selects which **checklist template and reference text** are used. Values: Korea, Global. A **separate user-facing control** in Settings (`settings_region_picker`), independent of the display language — see the three-axis rule below. Korea = KOSHA-oriented template; Global = U.S. / OSHA-oriented site-inspection template. |
+| Region Profile | 지역 프로파일 | Selects which **checklist template(s) and reference text** are used. Values: Korea, Global. A **separate user-facing control** in Settings (`settings_region_picker`), independent of the display language — see the three-axis rule below. Korea = one KOSHA-oriented template; Global = **two** Federal OSHA/eCFR-cited templates, General Industry (29 CFR 1910) and Construction (29 CFR 1926) (WO LEGAL-3B; display label "United States (Federal baseline)" / "미국(연방 기준)", `RegionProfile.global`/storage code unchanged). |
 | Disclaimer | 면책 고지 | Legal notice that the app does not provide compliance determinations. Required on all exports and in Settings. |
 
 ---
