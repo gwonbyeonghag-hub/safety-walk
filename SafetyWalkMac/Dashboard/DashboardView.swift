@@ -141,7 +141,7 @@ struct DashboardView: View {
                                     .foregroundStyle(Color.macMuted)
                             }
                             Spacer(minLength: MacTheme.s2)
-                            if let at = ra.assessedAt { DueBadge(assessedAt: at) }
+                            DueBadge(status: ra.dueStatus())
                         }
                     }
                 }
@@ -212,11 +212,9 @@ struct DashboardView: View {
 
     private var completedInspections: [Inspection] { inspections.filter { $0.status == .completed } }
     private var openHazards: [Hazard] { hazards.filter { $0.correctiveActionStatus != .completed } }
+    // WO LEGAL-3A: shared, jurisdiction-aware rule — only KR 관할이 자동 알림 대상이다.
     private var dueAssessments: [RiskAssessment] {
-        assessments.filter {
-            guard $0.kind == .regular, let at = $0.assessedAt else { return false }
-            return RiskAssessment.dueStatus(assessedAt: at) != .notDue
-        }
+        assessments.filter { $0.kind == .regular && $0.dueStatus() != .notDue }
     }
 
     private func distribution(for site: Site) -> [RiskLevel: Int] {
@@ -309,18 +307,16 @@ private struct RiskDistributionBar: View {
     }
 }
 
-/// Assessment-due pill — signature risk color as a soft-tinted pill (mockup `.pill.over`).
+/// Review-reminder pill — signature risk color as a soft-tinted pill (mockup `.pill.over`).
+/// Status comes from the single shared, jurisdiction-aware Core rule (SafetyWalkCore
+/// RiskAssessment.dueStatus, WO LEGAL-3A — KR only, 365d + 30d grace) — no macOS-local copy.
+/// Parity with iOS is covered by AssessmentDueTests (SafetyWalkCore). The copy itself is a
+/// product review reminder, never "Overdue" (P0-4 — no legal deadline verdict).
 private struct DueBadge: View {
-    let assessedAt: Date
-
-    // Deadline urgency comes from the single shared rule (SafetyWalkCore
-    // RiskAssessment.dueStatus, 365d + 30d grace) — no macOS-local copy. Parity is
-    // covered by AssessmentDueTests.matchesMacDueBadgeRule (0–420 day sweep).
-    private var overdue: Bool {
-        RiskAssessment.dueStatus(assessedAt: assessedAt) == .overdue
-    }
+    let status: AssessmentDueStatus
 
     var body: some View {
+        let overdue = status == .overdue
         let color = overdue ? RiskLevel.high.uiColor : RiskLevel.medium.uiColor
         Text(overdue ? LocalizationKey.macOverdue.localized : LocalizationKey.macDueSoon.localized)
             .font(.system(size: 11, weight: .semibold))

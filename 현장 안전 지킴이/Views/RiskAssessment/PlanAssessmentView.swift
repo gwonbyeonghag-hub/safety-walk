@@ -24,12 +24,17 @@ struct PlanAssessmentView: View {
     @State private var showSaveError = false
     /// 사용자가 확인해야 하는 값 — 비어 있는 상태로 시작하고 추천이 자동으로 채우지 않는다(§3).
     @State private var jurisdiction: JurisdictionCode?
+    /// US 관할에서만 필수(WO LEGAL-3A) — KR·미설정은 요구되지 않는다.
+    @State private var industryProfile: IndustryProfileCode?
     // 지역 프로파일은 추천 문구에만 쓰인다. 저장 접근은 RegionProfileStore 만 사용한다(직접 UserDefaults 금지).
     private let regionProfile = RegionProfileStore.get()
 
     /// SCHEMA_V3 §4.1: 현장 필수. WO LEGAL-2d-PATH §3: 관할은 저장 전 **사용자가 명시적으로 확인**해야
-    /// 하므로 선택 전에는 저장할 수 없다.
-    private var canSave: Bool { selectedSite != nil && jurisdiction != nil }
+    /// 하므로 선택 전에는 저장할 수 없다. WO LEGAL-3A: US 관할은 업종 범위도 함께 확인해야 한다.
+    private var canSave: Bool {
+        selectedSite != nil && jurisdiction != nil
+            && (!JurisdictionPolicy.requiresIndustry(jurisdiction) || industryProfile != nil)
+    }
 
     var body: some View {
         NavigationStack {
@@ -69,6 +74,11 @@ struct PlanAssessmentView: View {
                 }
 
                 JurisdictionSection(jurisdiction: $jurisdiction, regionProfile: regionProfile)
+
+                // WO LEGAL-3A: US 관할은 업종 범위도 저장 전 사용자가 확인해야 한다.
+                if JurisdictionPolicy.requiresIndustry(jurisdiction) {
+                    IndustrySection(industryProfile: $industryProfile)
+                }
 
                 Section {
                     Text(LocalizationKey.raPlanHint.localized)
@@ -125,6 +135,7 @@ struct PlanAssessmentView: View {
             siteName: site.name,
             assessorName: assessorName,
             jurisdiction: jurisdiction,
+            industryProfile: industryProfile,
             scheduledAt: scheduledAt)
         do {
             try AssessmentAuthoring.create(draft, now: Date(), in: modelContext)

@@ -69,6 +69,11 @@ struct RiskAssessmentCreateView: View {
                     }
                 }
 
+                // WO LEGAL-3A: US 관할은 업종 범위도 저장 전 사용자가 확인해야 한다.
+                if JurisdictionPolicy.requiresIndustry(viewModel.jurisdiction) {
+                    IndustrySection(industryProfile: $viewModel.industryProfile)
+                }
+
                 itemsSection
             }
             .navigationTitle(LocalizationKey.raNew.localized)

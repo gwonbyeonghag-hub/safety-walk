@@ -57,8 +57,9 @@ final class RiskAssessment2aUITests: XCTestCase {
         row.tap()
 
         // --- Detail (planned): status badge · 평가 시작 · 근로자대표 · 참여자 ---
+        // WO LEGAL-3A: US 관할 평가는 업종 정보 행이 개요에 추가돼 아래 요소가 밀려날 수 있다.
         let addParticipant = app.buttons["ra_add_participant"]
-        XCTAssertTrue(addParticipant.waitForExistence(timeout: 10), "detail not shown")
+        XCTAssertTrue(scrollToElement(addParticipant, in: app), "detail not shown")
         snap(app, "2a_03_detail_planned")
 
         // --- Add a participant: name required, role, method, confirmation, optional signature ---

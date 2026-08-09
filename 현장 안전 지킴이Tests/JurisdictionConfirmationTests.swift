@@ -42,6 +42,7 @@ struct JurisdictionConfirmationTests {
         let vm = readyVM(ctx)
         #expect(!vm.canSave)                    // 나머지 조건은 모두 충족했는데도 막힌다
         vm.jurisdiction = .us
+        vm.industryProfile = .general            // WO LEGAL-3A: US 는 업종도 필요
         #expect(vm.canSave)
     }
 
@@ -52,6 +53,7 @@ struct JurisdictionConfirmationTests {
         #expect(JurisdictionPolicy.suggested(for: .korea) == .kr)
         let vm = readyVM(ctx)
         vm.jurisdiction = .us
+        vm.industryProfile = .construction       // WO LEGAL-3A
         try vm.save(context: ctx)
 
         let saved = try #require(try ctx.fetch(FetchDescriptor<RiskAssessment>()).first)
@@ -76,8 +78,40 @@ struct JurisdictionConfirmationTests {
         let ctx = try makeContext()
         let vm = readyVM(ctx)
         vm.jurisdiction = .us
+        vm.industryProfile = .general             // WO LEGAL-3A
         try vm.save(context: ctx)
         let saved = try #require(try ctx.fetch(FetchDescriptor<RiskAssessment>()).first)
         #expect(saved.scheduledAt == nil)
+    }
+
+    // MARK: - WO LEGAL-3A: 업종 확인 계약 (관할과 같은 패턴)
+
+    @Test("US 관할은 업종을 확인하기 전에는 저장할 수 없다")
+    func saveBlockedUntilIndustryConfirmedForUS() throws {
+        let ctx = try makeContext()
+        let vm = readyVM(ctx)
+        vm.jurisdiction = .us
+        #expect(!vm.canSave)                     // 관할은 있지만 업종이 없다
+        vm.industryProfile = .construction
+        #expect(vm.canSave)
+    }
+
+    @Test("KR 관할은 업종이 없어도 저장할 수 있다 — US 관할만 업종을 요구한다")
+    func krDoesNotRequireIndustry() throws {
+        let ctx = try makeContext()
+        let vm = readyVM(ctx)
+        vm.jurisdiction = .kr
+        #expect(vm.canSave)                      // 업종 없이도 막히지 않는다(VM 이 일정은 항상 동봉)
+    }
+
+    @Test("US + 업종을 함께 저장하면 업종 스냅샷 값으로 복사된다")
+    func usIndustryIsSnapshotted() throws {
+        let ctx = try makeContext()
+        let vm = readyVM(ctx)
+        vm.jurisdiction = .us
+        vm.industryProfile = .electric
+        try vm.save(context: ctx)
+        let saved = try #require(try ctx.fetch(FetchDescriptor<RiskAssessment>()).first)
+        #expect(saved.industryProfileSnapshot == .electric)
     }
 }

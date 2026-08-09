@@ -24,7 +24,7 @@ struct AssessmentItemEditingTests {
         try AssessmentAuthoring.create(
             AssessmentDraft(kind: .regular, method: .frequencySeverity,
                             siteId: UUID(), siteName: "1공장", assessorName: "홍길동",
-                            jurisdiction: .us, items: items),
+                            jurisdiction: .us, industryProfile: .construction, items: items),
             now: when, in: ctx)
     }
 

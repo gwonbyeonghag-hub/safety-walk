@@ -19,6 +19,14 @@ public enum JurisdictionPolicy {
     public static func requiresSchedule(_ jurisdiction: JurisdictionCode?) -> Bool {
         jurisdiction == .kr
     }
+
+    /// US 는 업종 범위(General Industry vs Construction 등) 없이 저장할 수 없다 — 위험 임계값이
+    /// 업종마다 달라 범위 없는 US 기록은 어떤 기준을 참조했는지 알 수 없다(WO LEGAL-3A, P0-3/P0-6).
+    /// KR·미설정은 업종을 요구하지 않으며 지역 프로파일·언어로 자동 확정되지도 않는다. 저장 버튼
+    /// 활성화와 Core 검증이 공유하는 단일 소스(`requiresSchedule` 과 같은 패턴).
+    public static func requiresIndustry(_ jurisdiction: JurisdictionCode?) -> Bool {
+        jurisdiction == .us
+    }
 }
 
 /// 평가 생성 입력 — 화면이 모은 값을 담는 **순수 값 타입**. SwiftData 를 모르므로 ViewModel 이 자유롭게
@@ -33,13 +41,17 @@ public struct AssessmentDraft: Equatable, Sendable {
     public var linkedInspectionId: UUID?
     /// **사용자가 확인한** 관할. 기본값은 `nil`(미설정) — 프로파일 추천이 자동으로 채우지 않는다.
     public var jurisdiction: JurisdictionCode?
+    /// **사용자가 확인한** 업종 범위. US 관할은 필수(`JurisdictionPolicy.requiresIndustry`), KR·미설정은
+    /// 요구되지 않으며 지역 프로파일·언어로 자동 확정되지도 않는다(WO LEGAL-3A).
+    public var industryProfile: IndustryProfileCode?
     public var scheduledAt: Date?
     public var items: [ItemDraft]
 
     public init(kind: RiskAssessmentKind, method: RiskAssessmentMethod,
                 siteId: UUID, siteName: String, assessorName: String,
                 note: String? = nil, linkedInspectionId: UUID? = nil,
-                jurisdiction: JurisdictionCode? = nil, scheduledAt: Date? = nil,
+                jurisdiction: JurisdictionCode? = nil, industryProfile: IndustryProfileCode? = nil,
+                scheduledAt: Date? = nil,
                 items: [ItemDraft] = []) {
         self.kind = kind
         self.method = method
@@ -49,6 +61,7 @@ public struct AssessmentDraft: Equatable, Sendable {
         self.note = note
         self.linkedInspectionId = linkedInspectionId
         self.jurisdiction = jurisdiction
+        self.industryProfile = industryProfile
         self.scheduledAt = scheduledAt
         self.items = items
     }
@@ -93,6 +106,7 @@ public enum AssessmentAuthoringError: Error, Equatable {
     case emptyHazardDescription
     case unassessedItem                     // 위험성 수준 미입력 — 미평가는 저장하지 않는다
     case missingScheduleForJurisdiction     // KR 인데 일정 없음
+    case missingIndustryForJurisdiction     // US 인데 업종 범위 없음 (WO LEGAL-3A)
     case incompleteAction                   // 담당/기한만 있고 감소대책이 비어 있음
 }
 
@@ -136,6 +150,7 @@ public enum AssessmentAuthoring {
             note: draft.note?.trimmedOrNil,
             linkedInspectionId: draft.linkedInspectionId,
             jurisdictionSnapshot: draft.jurisdiction,     // 사용자가 확인한 값만 값 복사
+            industryProfileSnapshot: draft.industryProfile,
             scheduledAt: draft.scheduledAt)
         context.insert(assessment)
 
@@ -197,6 +212,9 @@ public enum AssessmentAuthoring {
         guard !draft.assessorName.sw_isBlank else { throw AssessmentAuthoringError.emptyAssessorName }
         if JurisdictionPolicy.requiresSchedule(draft.jurisdiction), draft.scheduledAt == nil {
             throw AssessmentAuthoringError.missingScheduleForJurisdiction
+        }
+        if JurisdictionPolicy.requiresIndustry(draft.jurisdiction), draft.industryProfile == nil {
+            throw AssessmentAuthoringError.missingIndustryForJurisdiction
         }
         for d in draft.items {
             guard !d.taskDescription.sw_isBlank else { throw AssessmentAuthoringError.emptyTaskDescription }

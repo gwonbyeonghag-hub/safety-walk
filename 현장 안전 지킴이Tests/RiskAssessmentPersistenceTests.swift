@@ -33,6 +33,7 @@ struct RiskAssessmentPersistenceTests {
         vm.kind = .regular
         vm.assessorName = "Tester"
         vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
+        vm.industryProfile = .general              // WO LEGAL-3A: US 는 업종도 필수
         vm.selectedSite = seededSite(in: ctx)
 
         var item = RiskAssessmentViewModel.DraftItem()
@@ -64,6 +65,7 @@ struct RiskAssessmentPersistenceTests {
         vm.kind = .initial
         vm.assessorName = "Tester"
         vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
+        vm.industryProfile = .general              // WO LEGAL-3A: US 는 업종도 필수
         vm.selectedSite = seededSite(in: ctx)
 
         var item = RiskAssessmentViewModel.DraftItem()
@@ -89,10 +91,12 @@ struct RiskAssessmentPersistenceTests {
         vm.method = .threeLevel
         vm.assessorName = ""
         vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
+        vm.industryProfile = .general              // WO LEGAL-3A: US 는 업종도 필수
         #expect(vm.canSave == false)           // no site, no assessor, no items
         vm.selectedSite = Site(name: "현장")    // SCHEMA_V3 §4.1: site required
         vm.assessorName = "Tester"
         vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
+        vm.industryProfile = .general              // WO LEGAL-3A: US 는 업종도 필수
         #expect(vm.canSave == false)           // still no items
 
         var item = RiskAssessmentViewModel.DraftItem(taskDescription: "x")

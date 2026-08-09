@@ -49,7 +49,10 @@ final class RiskAssessmentLegal2cUITests: XCTestCase {
         pickUSJurisdiction(app)
 
         // Add a 빈도×강도 item 2×2 = 4 → exceeds the default threshold 2.
-        app.buttons["항목 추가"].tap()
+        // WO LEGAL-3A: US 관할을 고르면 업종 섹션이 추가로 렌더돼 "항목 추가" 가 화면 밖으로 밀릴 수 있다.
+        let addItem = app.buttons["항목 추가"]
+        XCTAssertTrue(scrollToElement(addItem, in: app), "항목 추가 버튼을 찾지 못했다")
+        addItem.tap()
         fillItem(app, task: "용접 작업", hazard: "화재·폭발", likelihood: "2", severity: "2")
 
         // Save → planned 평가가 만들어진다 (즉시 시작 경로는 제거됨).

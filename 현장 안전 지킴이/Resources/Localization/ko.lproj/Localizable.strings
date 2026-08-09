@@ -20,8 +20,8 @@
 "home.noOpenHazards"        = "미처리 위험요인 없음";
 "home.quickActions"         = "빠른 작업";
 "home.assessmentsDue"       = "위험성평가 기한";
-"home.overdue"              = "기한 초과";
-"home.dueSoon"              = "기한 임박";
+"home.overdue"              = "검토 필요";
+"home.dueSoon"              = "검토 시점 임박";
 "home.noDueAssessments"     = "임박한 위험성평가 없음";
 "ipad.sidebar.section"      = "현장";
 "ipad.sidebar.role"         = "현장 감독";
@@ -588,8 +588,8 @@
 "mac.recentInspections" = "최근 점검";
 "mac.noData" = "데이터 없음";
 "mac.noOpenItems" = "미조치 항목 없음";
-"mac.overdue" = "기한 초과";
-"mac.dueSoon" = "기한 임박";
+"mac.overdue" = "검토 필요";
+"mac.dueSoon" = "검토 시점 임박";
 "mac.selectItem" = "왼쪽에서 항목을 선택하세요";
 "mac.areas" = "구역";
 "mac.relatedInspections" = "관련 점검";
@@ -739,6 +739,12 @@
 "ra.jurisdiction.suggestedFormat" = "추천: %@";
 "ra.jurisdiction.hint" = "관할에 따라 이 평가에 필요한 기록이 달라집니다. 지역 프로파일은 추천만 하며 자동으로 선택되지 않습니다.";
 "ra.jurisdiction.scheduleHint" = "대한민국 관할은 평가 일정이 필요합니다.";
+"ra.industry" = "업종";
+"ra.industry.select" = "선택하세요";
+"ra.industry.general" = "일반산업";
+"ra.industry.construction" = "건설업";
+"ra.industry.electric" = "전기 작업";
+"ra.industry.hint" = "업종 범위는 자동으로 선택되지 않습니다 — 안전 기준이 업종마다 달라 미국 관할은 반드시 확인해야 합니다.";
 "ra.item.delete" = "항목 삭제";
 "ra.item.saveFailed" = "항목을 저장하지 못했습니다. 작업과 유해위험요인을 입력하고 위험성을 선택했는지 확인해 주세요.";
 "ra.status.closed" = "종결";

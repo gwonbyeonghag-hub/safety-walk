@@ -23,14 +23,12 @@ struct HomeView: View {
 
     private var recentInspections: [Inspection] { Array(inspections.prefix(5)) }
 
-    /// 정기 assessments at/near their annual deadline — shared rule (SafetyWalkCore).
+    /// 정기 assessments at/near their annual review reminder — shared, jurisdiction-aware rule
+    /// (SafetyWalkCore, WO LEGAL-3A). Only KR 관할이 자동 알림 대상이다 — US·미설정은 항상
+    /// notDue 이므로 여기서 걸러진다(nil assessedAt 도 마찬가지, 교정 #3).
     private var dueAssessments: [RiskAssessment] {
         assessments
-            .filter {
-                // nil assessedAt = 아직 평가 안 함 → 기한 계산 대상 아님(교정 #3).
-                guard $0.kind == .regular, let at = $0.assessedAt else { return false }
-                return RiskAssessment.dueStatus(assessedAt: at) != .notDue
-            }
+            .filter { $0.kind == .regular && $0.dueStatus() != .notDue }
             .sorted { ($0.assessedAt ?? .distantPast) < ($1.assessedAt ?? .distantPast) }
     }
 
@@ -387,8 +385,9 @@ struct HomeView: View {
         .cardSurface()
     }
 
-    /// Assessments due (WO-7 mockup): 정기 assessments at/near their annual deadline, using
-    /// the shared `RiskAssessment.dueStatus` rule. Read-only; taps route to the RA list.
+    /// Assessments due (WO-7 mockup, WO LEGAL-3A): 정기 assessments at/near their annual review
+    /// reminder, using the shared, jurisdiction-aware `RiskAssessment.dueStatus` rule (KR only —
+    /// US/미설정 never appear here). Read-only; taps route to the RA list.
     private var assessmentsDueCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(LocalizationKey.homeAssessmentsDue.localized)
@@ -417,7 +416,7 @@ struct HomeView: View {
                                     .lineLimit(1)
                             }
                             Spacer(minLength: 8)
-                            DuePill(status: ra.assessedAt.map { RiskAssessment.dueStatus(assessedAt: $0) } ?? .notDue)
+                            DuePill(status: ra.dueStatus())
                         }
                         .padding(.vertical, 4)
                     }
@@ -433,8 +432,10 @@ struct HomeView: View {
 
 // MARK: - DuePill
 
-/// Soft-tinted deadline pill for the assessments-due card. Colors are the risk-semantic
-/// ramp (overdue = high, due-soon = medium) — urgency, not decoration (DESIGN_DIRECTION).
+/// Soft-tinted review-reminder pill for the assessments-due card. Colors are the risk-semantic
+/// ramp (overdue = high, due-soon = medium) — urgency, not decoration (DESIGN_DIRECTION). The
+/// copy itself is a product review reminder, never "Overdue" (WO LEGAL-3A P0-4 — no legal
+/// deadline verdict).
 private struct DuePill: View {
     let status: AssessmentDueStatus
     var body: some View {

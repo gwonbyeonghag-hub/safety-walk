@@ -70,6 +70,7 @@ struct RiskAssessmentLegal0Tests {
         vm.assessorName = "평가자"
         vm.selectedSite = Site(name: "현장")           // SCHEMA_V3 §4.1: site required
         vm.jurisdiction = .us                          // LEGAL-2d-PATH §3: 관할 확인은 저장 전제
+        vm.industryProfile = .general                   // WO LEGAL-3A: US 는 업종도 필수
 
         var assessed = RiskAssessmentViewModel.DraftItem(taskDescription: "a")
         assessed.hazardDescription = "위험요인 a"       // LEGAL-2d-PATH §4: 비공백 필수

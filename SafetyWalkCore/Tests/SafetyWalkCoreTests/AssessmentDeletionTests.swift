@@ -32,7 +32,7 @@ struct AssessmentDeletionTests {
         let ra = try AssessmentAuthoring.create(
             AssessmentDraft(kind: .regular, method: .frequencySeverity,
                             siteId: UUID(), siteName: "1공장", assessorName: "홍길동",
-                            jurisdiction: .us, scheduledAt: when,
+                            jurisdiction: .us, industryProfile: .construction, scheduledAt: when,
                             items: [AssessmentDraft.ItemDraft(taskDescription: "굴착", hazardDescription: "붕괴",
                                                               likelihood: 1, severity: 1, riskLevel: .low)]),
             now: when, in: ctx)

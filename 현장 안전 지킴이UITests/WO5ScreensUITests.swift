@@ -56,11 +56,15 @@ final class WO5ScreensUITests: XCTestCase {
             card.tap()
             home.buttons["새 위험성평가"].firstMatch.tap()
             XCTAssertTrue(home.buttons["항목 추가"].waitForExistence(timeout: 10))
-            selectSeededSite(home)
+            // WO LEGAL-3A: 항목을 먼저 채운 뒤 관할(+US 업종)을 마지막에 고른다 — RiskMethodsUITests
+            // 의 검증된 순서와 같다. 관할을 먼저 고르면 업종 섹션이 추가로 렌더돼 그 아래 "항목 추가"
+            // 가 항목이 쌓일수록 계속 더 밀려나는데, 이 화면은 시트 전환(탭→편집기→완료)이 반복되는
+            // 구조라 스크롤 직후의 탭이 이전 시트 전환 애니메이션과 겹쳐 놓치는 경우가 재현됐다.
             // default method = 빈도×강도; add 3 items spanning low/med/high
             addFreqItem(home, likelihood: "1", severity: "1", task: "낮음 작업")  // 1 → 하
             addFreqItem(home, likelihood: "2", severity: "2", task: "보통 작업")  // 4 → 중
             addFreqItem(home, likelihood: "3", severity: "3", task: "높음 작업")  // 9 → 상
+            selectSeededSite(home)
             snap(home, "after_ra_create_\(mode)")
             home.buttons["저장"].tap()
             let row = home.cells.firstMatch
@@ -73,9 +77,13 @@ final class WO5ScreensUITests: XCTestCase {
     }
 
     private func addFreqItem(_ app: XCUIApplication, likelihood: String, severity: String, task: String) {
-        app.buttons["항목 추가"].tap()
+        // WO LEGAL-3A: US 관할을 고르면 업종 섹션이 추가로 렌더돼 "항목 추가" 가 화면 밖으로 밀릴 수
+        // 있고, 항목이 쌓일수록 그 버튼이 더 아래로 밀린다.
+        let addItem = app.buttons["항목 추가"]
         let lk = app.segmentedControls["ra_likelihood"]
-        XCTAssertTrue(lk.waitForExistence(timeout: 10))
+        XCTAssertTrue(scrollToElement(addItem, in: app), "항목 추가 버튼을 찾지 못했다")
+        addItem.tap()
+        XCTAssertTrue(lk.waitForExistence(timeout: 15))
         lk.buttons[likelihood].tap()
         app.segmentedControls["ra_severity"].buttons[severity].tap()
         let field = app.textFields["공정·작업"]

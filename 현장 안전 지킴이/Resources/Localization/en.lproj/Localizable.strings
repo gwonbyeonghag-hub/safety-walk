@@ -20,8 +20,8 @@
 "home.noOpenHazards"        = "No open hazards";
 "home.quickActions"         = "Quick actions";
 "home.assessmentsDue"       = "Assessments due";
-"home.overdue"              = "Overdue";
-"home.dueSoon"              = "Due soon";
+"home.overdue"              = "Review due";
+"home.dueSoon"              = "Review soon";
 "home.noDueAssessments"     = "No assessments due";
 "ipad.sidebar.section"      = "Site";
 "ipad.sidebar.role"         = "Field supervisor";
@@ -588,8 +588,8 @@
 "mac.recentInspections" = "Recent Inspections";
 "mac.noData" = "No data";
 "mac.noOpenItems" = "No open items";
-"mac.overdue" = "Overdue";
-"mac.dueSoon" = "Due soon";
+"mac.overdue" = "Review due";
+"mac.dueSoon" = "Review soon";
 "mac.selectItem" = "Select an item on the left";
 "mac.areas" = "Areas";
 "mac.relatedInspections" = "Related Inspections";
@@ -739,6 +739,12 @@
 "ra.jurisdiction.suggestedFormat" = "Suggested: %@";
 "ra.jurisdiction.hint" = "The jurisdiction determines which records this assessment needs. The region profile only suggests one — nothing is selected for you.";
 "ra.jurisdiction.scheduleHint" = "A South Korea assessment needs a scheduled date.";
+"ra.industry" = "Industry";
+"ra.industry.select" = "Select";
+"ra.industry.general" = "General Industry";
+"ra.industry.construction" = "Construction";
+"ra.industry.electric" = "Electrical Work";
+"ra.industry.hint" = "The industry scope is never auto-selected — a United States assessment requires it, since safety thresholds differ by industry.";
 "ra.item.delete" = "Delete Item";
 "ra.item.saveFailed" = "Couldn't save the item. Check that the task and hazard are filled in and a risk level is chosen.";
 "ra.status.closed" = "Closed";

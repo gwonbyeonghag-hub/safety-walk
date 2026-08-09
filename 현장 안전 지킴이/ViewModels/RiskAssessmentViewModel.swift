@@ -20,6 +20,9 @@ final class RiskAssessmentViewModel {
     /// 사용자가 확인한 법적 관할. **처음은 nil** — 지역 프로파일 추천이 자동으로 채우지 않는다
     /// (WO LEGAL-2d-PATH §3). 저장 전 반드시 선택돼야 한다.
     var jurisdiction: JurisdictionCode?
+    /// 사용자가 확인한 업종 범위. **US 관할에서만 필수**(WO LEGAL-3A) — KR·미설정은 요구되지 않으며
+    /// 지역 프로파일·언어로 자동 확정되지도 않는다.
+    var industryProfile: IndustryProfileCode?
     /// KR 관할이면 필수인 평가 일정. 관할이 KR 이 아니면 무시된다.
     var scheduledAt = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
 
@@ -65,6 +68,8 @@ final class RiskAssessmentViewModel {
               !draftItems.isEmpty else { return false }
         // WO LEGAL-2d-PATH §3: 관할은 저장 전 사용자가 명시적으로 확인해야 한다 — 추천만으로는 저장 불가.
         guard jurisdiction != nil else { return false }
+        // WO LEGAL-3A: US 관할은 업종 범위도 확인해야 한다 — 관할과 같은 단일 소스(JurisdictionPolicy).
+        guard !JurisdictionPolicy.requiresIndustry(jurisdiction) || industryProfile != nil else { return false }
         // LEGAL-0: every item must have a resolved 위험성 수준 (no 미평가 items may be saved).
         // 작업·유해위험요인은 Core 가 비공백을 요구하므로 화면도 같은 기준으로 막는다.
         return draftItems.allSatisfy { d in
@@ -165,6 +170,7 @@ final class RiskAssessmentViewModel {
             note: note.trimmedOrNil,
             linkedInspectionId: linkedInspectionId,
             jurisdiction: jurisdiction,
+            industryProfile: industryProfile,
             scheduledAt: JurisdictionPolicy.requiresSchedule(jurisdiction) ? scheduledAt : nil,
             items: draftItems.map { d in
                 AssessmentDraft.ItemDraft(

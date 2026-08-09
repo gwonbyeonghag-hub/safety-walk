@@ -31,6 +31,7 @@ struct RiskAssessmentCreateFlowTests {
         vm.assessorName = "홍길동"
         vm.selectedSite = site
         vm.jurisdiction = .us        // 사용자가 확인한 관할 (US 는 일정 선택)
+        vm.industryProfile = .construction   // WO LEGAL-3A: US 는 업종도 필수
         return vm
     }
 

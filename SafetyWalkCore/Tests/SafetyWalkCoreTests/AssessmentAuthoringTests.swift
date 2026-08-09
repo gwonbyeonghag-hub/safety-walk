@@ -19,13 +19,18 @@ struct AssessmentAuthoringTests {
     private let when = Date(timeIntervalSince1970: 1_700_000_000)
     private let scheduled = Date(timeIntervalSince1970: 1_700_600_000)
 
+    /// `industryProfile` defaults to `.general` so every existing `.us` fixture in this suite stays
+    /// valid without threading the new WO LEGAL-3A parameter through each call site — the tests that
+    /// specifically exercise the missing-industry gate pass `industryProfile: nil` explicitly.
     private func draft(jurisdiction: JurisdictionCode?,
+                       industryProfile: IndustryProfileCode? = .general,
                        scheduledAt: Date? = nil,
                        items: [AssessmentDraft.ItemDraft] = []) -> AssessmentDraft {
         AssessmentDraft(
             kind: .regular, method: .frequencySeverity,
             siteId: UUID(), siteName: "1공장", assessorName: "홍길동",
-            jurisdiction: jurisdiction, scheduledAt: scheduledAt, items: items)
+            jurisdiction: jurisdiction, industryProfile: industryProfile,
+            scheduledAt: scheduledAt, items: items)
     }
 
     private func itemDraft(task: String = "굴착", hazard: String = "붕괴",
@@ -127,6 +132,62 @@ struct AssessmentAuthoringTests {
         #expect(JurisdictionPolicy.requiresSchedule(.kr))
         #expect(!JurisdictionPolicy.requiresSchedule(.us))
         #expect(!JurisdictionPolicy.requiresSchedule(nil))
+    }
+
+    // MARK: - 업종 계약 (WO LEGAL-3A)
+
+    @Test("US 관할만 업종을 요구한다 — 화면이 저장 버튼을 가늠하는 단일 소스")
+    func industryRequirementIsJurisdictionDriven() {
+        #expect(JurisdictionPolicy.requiresIndustry(.us))
+        #expect(!JurisdictionPolicy.requiresIndustry(.kr))
+        #expect(!JurisdictionPolicy.requiresIndustry(nil))
+    }
+
+    @Test("US 관할은 업종이 없으면 생성이 거부되고 아무것도 남지 않는다")
+    func usRequiresIndustryProfile() throws {
+        let ctx = try makeContext()
+        #expect(throws: AssessmentAuthoringError.missingIndustryForJurisdiction) {
+            try AssessmentAuthoring.create(draft(jurisdiction: .us, industryProfile: nil),
+                                           now: when, in: ctx)
+        }
+        #expect(try ctx.fetch(FetchDescriptor<RiskAssessment>()).isEmpty)
+    }
+
+    @Test("US + 업종을 함께 지정하면 스냅샷에 값으로 복사된다")
+    func usWithIndustryIsSnapshotted() throws {
+        let ctx = try makeContext()
+        let ra = try AssessmentAuthoring.create(
+            draft(jurisdiction: .us, industryProfile: .construction), now: when, in: ctx)
+        #expect(ra.industryProfileSnapshot == .construction)
+    }
+
+    @Test("KR·미설정 관할은 업종이 없어도 생성된다 — 자동 확정하지 않을 뿐 요구하지도 않는다")
+    func nonUSDoesNotRequireIndustry() throws {
+        let ctx = try makeContext()
+        #expect(throws: Never.self) {
+            try AssessmentAuthoring.create(
+                draft(jurisdiction: .kr, industryProfile: nil, scheduledAt: scheduled),
+                now: when, in: ctx)
+        }
+        #expect(throws: Never.self) {
+            try AssessmentAuthoring.create(draft(jurisdiction: nil, industryProfile: nil),
+                                           now: when, in: ctx)
+        }
+    }
+
+    @Test("업종 선택을 나중에 바꿔도 이미 저장된 평가의 industryProfileSnapshot 은 그대로다")
+    func industryProfileSnapshotIsImmutableAfterCreation() throws {
+        let ctx = try makeContext()
+        var d = draft(jurisdiction: .us, industryProfile: .construction)
+        let ra = try AssessmentAuthoring.create(d, now: when, in: ctx)
+        #expect(ra.industryProfileSnapshot == .construction)
+
+        // 같은 초안 값을 바꿔 새 평가를 만들어도 기존 평가의 스냅샷은 흔들리지 않는다 — 매 생성은
+        // 그 시점 값의 독립적인 값 복사다(§4.1 생성자 계약, jurisdictionSnapshot 과 같은 불변성).
+        d.industryProfile = .general
+        let ra2 = try AssessmentAuthoring.create(d, now: when, in: ctx)
+        #expect(ra.industryProfileSnapshot == .construction)
+        #expect(ra2.industryProfileSnapshot == .general)
     }
 
     // MARK: - 검증 (저장 전 차단 · 유령 데이터 0)

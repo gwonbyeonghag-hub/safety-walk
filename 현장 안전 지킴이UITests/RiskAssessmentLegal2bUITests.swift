@@ -49,7 +49,10 @@ final class RiskAssessmentLegal2bUITests: XCTestCase {
         snap(app, "2b_01_create_criteria")   // criteria section shows the default 1~2 within
 
         // Add a 빈도×강도 item: likelihood 2 × severity 2 = 4 → exceeds the default threshold 2.
-        app.buttons["항목 추가"].tap()
+        // WO LEGAL-3A: US 관할을 고르면 업종 섹션이 추가로 렌더돼 "항목 추가" 가 화면 밖으로 밀릴 수 있다.
+        let addItem = app.buttons["항목 추가"]
+        XCTAssertTrue(scrollToElement(addItem, in: app), "항목 추가 버튼을 찾지 못했다")
+        addItem.tap()
         let task = app.textFields["공정·작업"]
         XCTAssertTrue(task.waitForExistence(timeout: 10), "task field not found")
         task.tap(); task.typeText("용접 작업")

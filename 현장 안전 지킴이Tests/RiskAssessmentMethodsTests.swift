@@ -64,6 +64,7 @@ struct RiskAssessmentMethodsTests {
         vm.method = .checklist
         vm.assessorName = "평가자"
         vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
+        vm.industryProfile = .general              // WO LEGAL-3A: US 는 업종도 필수
         vm.selectedSite = { let s = Site(name: "현장A"); ctx.insert(s); return s }()
         vm.seedFromInspection(insp)
 
@@ -89,6 +90,7 @@ struct RiskAssessmentMethodsTests {
         vm.method = .jsa
         vm.assessorName = "평가자"
         vm.jurisdiction = .us                     // LEGAL-2d-PATH §3
+        vm.industryProfile = .general              // WO LEGAL-3A: US 는 업종도 필수
         vm.selectedSite = { let s = Site(name: "현장C"); ctx.insert(s); return s }()
         for name in ["단계1", "단계2", "단계3"] {
             var d = RiskAssessmentViewModel.DraftItem()

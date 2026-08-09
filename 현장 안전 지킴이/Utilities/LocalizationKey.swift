@@ -408,6 +408,15 @@ enum LocalizationKey: String {
     case raJurisdictionSuggestedFmt = "ra.jurisdiction.suggestedFormat"
     case raJurisdictionHint     = "ra.jurisdiction.hint"
     case raJurisdictionScheduleHint = "ra.jurisdiction.scheduleHint"
+
+    // MARK: - 미국 업종 범위 (WO LEGAL-3A)
+    case raIndustry              = "ra.industry"
+    case raIndustrySelect        = "ra.industry.select"
+    case raIndustryGeneral       = "ra.industry.general"
+    case raIndustryConstruction  = "ra.industry.construction"
+    case raIndustryElectric      = "ra.industry.electric"
+    case raIndustryHint          = "ra.industry.hint"
+
     case raItemDelete           = "ra.item.delete"
     case raItemSaveFailed       = "ra.item.saveFailed"
     case raStatusSection        = "ra.status.section"

@@ -118,7 +118,10 @@ final class RiskAssessmentLegal2dUITests: XCTestCase {
         pickUSJurisdiction(app)   // WO LEGAL-2d-PATH §3: 관할 확인 필수
 
         // 1×1 = 1 → 기준 이내라 필수 개선조치가 없다 → 결정 확인만으로 확정 가능해진다.
-        app.buttons["항목 추가"].tap()
+        // WO LEGAL-3A: US 관할을 고르면 업종 섹션이 추가로 렌더돼 "항목 추가" 가 화면 밖으로 밀릴 수 있다.
+        let addItem = app.buttons["항목 추가"]
+        XCTAssertTrue(scrollToElement(addItem, in: app), "항목 추가 버튼을 찾지 못했다")
+        addItem.tap()
         fillItem(app, task: "운반 작업", hazard: "협착", likelihood: "1", severity: "1")
 
         let save = app.buttons["저장"]
