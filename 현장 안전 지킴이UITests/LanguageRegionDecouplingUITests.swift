@@ -34,10 +34,11 @@ final class LanguageRegionDecouplingUITests: XCTestCase {
         // UI is Korean (both the section header 지역 and the language option 한국어 are present).
         XCTAssertTrue(app.buttons["한국어"].exists, "language should be 한국어")
 
+        // WO LEGAL-3B: "글로벌" → "미국(연방 기준)" (표시 문구만 변경, storage code/rawValue 그대로).
         let regionPicker = app.segmentedControls["settings_region_picker"]
         XCTAssertTrue(regionPicker.waitForExistence(timeout: 5), "region picker not found")
-        regionPicker.buttons["글로벌"].tap()
-        XCTAssertTrue(regionPicker.buttons["글로벌"].isSelected, "region should now be 글로벌")
+        regionPicker.buttons["미국(연방 기준)"].tap()
+        XCTAssertTrue(regionPicker.buttons["미국(연방 기준)"].isSelected, "region should now be 미국(연방 기준)")
         // Language is still 한국어 — proves the two are decoupled.
         XCTAssertTrue(app.buttons["한국어"].isSelected, "language must remain 한국어 after region change")
         snap(app, "legal1_01_settings_ko_lang_global_region")
@@ -61,10 +62,12 @@ final class LanguageRegionDecouplingUITests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "label == '다음'")).firstMatch.tap()   // site → area
         app.buttons.matching(NSPredicate(format: "label == '다음'")).firstMatch.tap()   // area → template
 
-        // Template selection: both region templates listed, Global badge present + pre-selected.
-        let globalBadge = app.staticTexts["글로벌"].firstMatch
+        // Template selection: both region templates listed, 미국(연방 기준) badge present.
+        // WO LEGAL-3B: US no longer pre-selects a template (2 US Federal templates now exist),
+        // so this only asserts the region badge is reflected, not a pre-selection.
+        let globalBadge = app.staticTexts["미국(연방 기준)"].firstMatch
         XCTAssertTrue(globalBadge.waitForExistence(timeout: 10),
-                      "Global template badge not found — region not reflected")
+                      "미국(연방 기준) template badge not found — region not reflected")
         snap(app, "legal1_02_template_selection_global_reflected")
     }
 }

@@ -417,6 +417,16 @@ enum LocalizationKey: String {
     case raIndustryElectric      = "ra.industry.electric"
     case raIndustryHint          = "ra.industry.hint"
 
+    // MARK: - 미국 Federal 점검 템플릿 (WO LEGAL-3B)
+    // 템플릿 표시 이름 — 신규 US Federal 템플릿만 로컬라이즈 키를 쓴다(§C: 기존 literal name은
+    // 레거시 fallback으로 유지).
+    case inspectionTemplateUSGeneralName      = "checklist.template.usFederalGeneral.name"
+    case inspectionTemplateUSConstructionName = "checklist.template.usFederalConstruction.name"
+    // Federal OSHA 범위 + State Plan 경고 — US Federal 점검 템플릿·US 관할 위험성평가/JHA 7곳이
+    // 공유하는 단일 문구(§E).
+    case usFederalNoticeTitle    = "us.federalNotice.title"
+    case usFederalNoticeText     = "us.federalNotice.text"
+
     case raItemDelete           = "ra.item.delete"
     case raItemSaveFailed       = "ra.item.saveFailed"
     case raStatusSection        = "ra.status.section"

@@ -630,4 +630,145 @@ final class ReportRenderingTests: XCTestCase {
             ctx.fill(CGRect(x: 0, y: 0, width: 320, height: 220))
         }
     }
+
+    // MARK: - WO LEGAL-3B §E: Federal OSHA 범위/State Plan 경고 — PDF 정확히 1회, KR/미설정 표시 없음
+    //
+    // 경고 문구(`us.federalNotice.title`/`.text`)는 이번 WO에서 새로 추가된 문자열이라 다른 필드가
+    // 우연히 같은 문구를 낼 가능성이 없다 — 위양성 위험은 "다른 필드가 같은 라벨을 낸다"가 아니라
+    // "게이트가 실제로 조건을 걸었는가"이므로, 양성(정확히 1회)과 음성(정확히 0회) 케이스를 모두
+    // 검증해 게이트의 양방향을 고정한다.
+    //
+    // 마커로 제목("Federal OSHA Baseline"/"연방 OSHA 기준")을 쓰지 않는다 — 본문이 같은 문구로
+    // 시작해("Federal OSHA baseline reference only..."/"연방 OSHA 기준 참고용입니다...") despaced
+    // 텍스트에서 제목·본문 두 곳이 모두 매치돼 위양성 "2"가 나온다(실측 확인). 대신 본문에만 있고
+    // en/ko 모두 원어 그대로 남는 "State Plan"(고유명사, 두 언어 다 괄호 안 영문 그대로) 하나만 쓴다.
+    private var federalNoticeMarkerForms: [String] { ["State Plan"] }
+
+    func testInspectionReportShowsFederalNoticeExactlyOnceForUSFederalTemplate() throws {
+        let ctx = try makeContext()
+        let insp = Inspection(siteId: UUID(), siteName: "Plant US-1",
+                              inspectorName: "J. Park", templateId: "us-federal-general-industry-v1")
+        insp.status = .completed
+        ctx.insert(insp)
+        let item = ChecklistItem(inspectionId: insp.id, templateItemId: "usgi-house-001",
+                                 title: "checklist.item.usGeneral.house.001",
+                                 category: "checklist.category.housekeeping", sortOrder: 0)
+        item.result = .pass
+        ctx.insert(item); insp.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(
+            InspectionReport.pdfURL(inspection: insp, itemPhotos: [:], hazardPhotos: [:]),
+            "inspection report URL nil")
+        let whole = pageTexts(url).joined(separator: "\n")
+        XCTAssertEqual(labelHits(federalNoticeMarkerForms, in: whole), 1,
+            "US Federal 템플릿 점검 PDF는 Federal OSHA 경고를 정확히 1회 표시해야 한다")
+    }
+
+    func testInspectionReportOmitsFederalNoticeForNonUSFederalTemplates() throws {
+        let ctx = try makeContext()
+        let koreaTemplateId = try ChecklistTemplateLoader().load(for: .korea)[0].id
+
+        for templateId in [koreaTemplateId, "global-general-v1"] {
+            let insp = Inspection(siteId: UUID(), siteName: "Plant KR-1",
+                                  inspectorName: "김점검", templateId: templateId)
+            insp.status = .completed
+            ctx.insert(insp)
+            let item = ChecklistItem(inspectionId: insp.id, templateItemId: "t0",
+                                     title: "점검 항목", category: "checklist.category.housekeeping", sortOrder: 0)
+            item.result = .pass
+            ctx.insert(item); insp.items = [item]
+            try? ctx.save()
+
+            let url = try XCTUnwrap(
+                InspectionReport.pdfURL(inspection: insp, itemPhotos: [:], hazardPhotos: [:]),
+                "inspection report URL nil for templateId \(templateId)")
+            let whole = pageTexts(url).joined(separator: "\n")
+            XCTAssertEqual(labelHits(federalNoticeMarkerForms, in: whole), 0,
+                "templateId '\(templateId)' must NOT show the Federal OSHA notice")
+        }
+    }
+
+    func testJHAReportShowsFederalNoticeExactlyOnceForUSJurisdiction() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .jsa,
+                                        siteId: UUID(), siteName: "Plant US-2", assessorName: "J. Park",
+                                        jurisdictionSnapshot: .us)
+        ctx.insert(assessment)
+        let item = RiskAssessmentItem(
+            taskDescription: "Job step FEDJHA", hazardDescription: "Pinch point",
+            currentControls: "Guardrail installed",
+            likelihood: 1, severity: 1, riskLevel: .low, sortOrder: 0)
+        ctx.insert(item)
+        assessment.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(JHAReport.pdfURL(for: assessment), "JHA URL nil")
+        let whole = pageTexts(url).joined(separator: "\n")
+        XCTAssertEqual(labelHits(federalNoticeMarkerForms, in: whole), 1,
+            "US 관할 JHA PDF는 Federal OSHA 경고를 정확히 1회 표시해야 한다")
+    }
+
+    func testJHAReportOmitsFederalNoticeForNonUSJurisdiction() throws {
+        let ctx = try makeContext()
+        for jurisdiction in [JurisdictionCode.kr, nil] {
+            let assessment = RiskAssessment(kind: .regular, method: .jsa,
+                                            siteId: UUID(), siteName: "Plant KR-2", assessorName: "홍길동",
+                                            jurisdictionSnapshot: jurisdiction)
+            ctx.insert(assessment)
+            let item = RiskAssessmentItem(
+                taskDescription: "굴착 작업", hazardDescription: "붕괴 위험", currentControls: "표지판 설치",
+                likelihood: 1, severity: 1, riskLevel: .low, sortOrder: 0)
+            ctx.insert(item)
+            assessment.items = [item]
+            try? ctx.save()
+
+            let url = try XCTUnwrap(JHAReport.pdfURL(for: assessment),
+                "JHA URL nil for jurisdiction \(String(describing: jurisdiction))")
+            let whole = pageTexts(url).joined(separator: "\n")
+            XCTAssertEqual(labelHits(federalNoticeMarkerForms, in: whole), 0,
+                "jurisdiction \(String(describing: jurisdiction))는 Federal OSHA 경고를 보이면 안 된다")
+        }
+    }
+
+    func testRiskAssessmentReportShowsFederalNoticeExactlyOnceForUSJurisdiction() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                        siteId: UUID(), siteName: "Plant US-3", assessorName: "J. Park",
+                                        jurisdictionSnapshot: .us)
+        ctx.insert(assessment)
+        let item = RiskAssessmentItem(
+            taskDescription: "Task FEDRA", hazardDescription: "Fall hazard", currentControls: "Guardrail",
+            likelihood: 1, severity: 1, riskLevel: .low, sortOrder: 0)
+        ctx.insert(item)
+        assessment.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(RiskAssessmentReport.pdfURL(for: assessment), "report URL nil")
+        let whole = pageTexts(url).joined(separator: "\n")
+        XCTAssertEqual(labelHits(federalNoticeMarkerForms, in: whole), 1,
+            "US 관할 위험성평가 PDF는 Federal OSHA 경고를 정확히 1회 표시해야 한다")
+    }
+
+    func testRiskAssessmentReportOmitsFederalNoticeForNonUSJurisdiction() throws {
+        let ctx = try makeContext()
+        for jurisdiction in [JurisdictionCode.kr, nil] {
+            let assessment = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                            siteId: UUID(), siteName: "Plant KR-3", assessorName: "홍길동",
+                                            jurisdictionSnapshot: jurisdiction)
+            ctx.insert(assessment)
+            let item = RiskAssessmentItem(
+                taskDescription: "굴착 작업2", hazardDescription: "붕괴 위험2", currentControls: "표지판",
+                likelihood: 1, severity: 1, riskLevel: .low, sortOrder: 0)
+            ctx.insert(item)
+            assessment.items = [item]
+            try? ctx.save()
+
+            let url = try XCTUnwrap(RiskAssessmentReport.pdfURL(for: assessment),
+                "report URL nil for jurisdiction \(String(describing: jurisdiction))")
+            let whole = pageTexts(url).joined(separator: "\n")
+            XCTAssertEqual(labelHits(federalNoticeMarkerForms, in: whole), 0,
+                "jurisdiction \(String(describing: jurisdiction))는 Federal OSHA 경고를 보이면 안 된다")
+        }
+    }
 }

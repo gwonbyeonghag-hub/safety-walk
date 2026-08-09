@@ -100,6 +100,45 @@ struct ReportDisclaimer: View {
     }
 }
 
+/// Federal OSHA baseline + State Plan disclaimer (WO LEGAL-3B §E) — printed on every PDF tied to
+/// a US Federal checklist template or a US-jurisdiction risk assessment/JHA. Mirrors
+/// `ReportDisclaimer`'s look so it reads as part of the same legal-notice family, not a separate
+/// design. `USFederalNoticeInline` below renders the identical string on-screen; both consumers
+/// read the same shared `LocalizationKey.usFederalNoticeText` so no site holds its own copy.
+struct USFederalNotice: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(LocalizationKey.usFederalNoticeTitle.localized)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(Color.reportNavy)
+            Text(LocalizationKey.usFederalNoticeText.localized)
+                .font(.system(size: 8))
+                .foregroundStyle(.black.opacity(0.7))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(Color.reportNavy.opacity(0.3), lineWidth: 0.5)
+        )
+    }
+}
+
+/// On-screen echo of `USFederalNotice` (Dynamic Type, not fixed pt) — reused across the iOS
+/// authoring/detail screens and the macOS browse screen (this file is already cross-included to
+/// both targets), so no screen writes its own copy of the notice text (WO LEGAL-3B §E).
+struct USFederalNoticeInline: View {
+    var body: some View {
+        Text(LocalizationKey.usFederalNoticeText.localized)
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(6)
+            .background(Color.reportNavy.opacity(0.06), in: RoundedRectangle(cornerRadius: 4))
+    }
+}
+
 /// Key/value header grid used by report headers (site, assessor, date, …).
 struct ReportInfoGrid: View {
     let pairs: [(String, String)]

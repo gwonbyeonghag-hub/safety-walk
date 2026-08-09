@@ -79,6 +79,10 @@ struct PlanAssessmentView: View {
                 if JurisdictionPolicy.requiresIndustry(jurisdiction) {
                     IndustrySection(industryProfile: $industryProfile)
                 }
+                // WO LEGAL-3B §E: 업종 선택 부근 — US 관할에서만 Federal/State Plan 경고를 보인다.
+                if JurisdictionPolicy.showsFederalNotice(jurisdiction) {
+                    Section { USFederalNoticeInline() }
+                }
 
                 Section {
                     Text(LocalizationKey.raPlanHint.localized)

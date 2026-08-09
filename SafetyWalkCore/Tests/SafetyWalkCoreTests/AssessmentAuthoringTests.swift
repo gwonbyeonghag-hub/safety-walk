@@ -143,6 +143,15 @@ struct AssessmentAuthoringTests {
         #expect(!JurisdictionPolicy.requiresIndustry(nil))
     }
 
+    // MARK: - Federal OSHA 범위/State Plan 경고 (WO LEGAL-3B §E)
+
+    @Test("US 관할만 Federal/State Plan 경고를 보인다 — KR·미설정은 표시하지 않는다")
+    func federalNoticeIsJurisdictionDriven() {
+        #expect(JurisdictionPolicy.showsFederalNotice(.us))
+        #expect(!JurisdictionPolicy.showsFederalNotice(.kr))
+        #expect(!JurisdictionPolicy.showsFederalNotice(nil))
+    }
+
     @Test("US 관할은 업종이 없으면 생성이 거부되고 아무것도 남지 않는다")
     func usRequiresIndustryProfile() throws {
         let ctx = try makeContext()

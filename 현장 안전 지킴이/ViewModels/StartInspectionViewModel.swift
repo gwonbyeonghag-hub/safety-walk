@@ -123,8 +123,10 @@ final class StartInspectionViewModel {
 
     // MARK: - Template loading
 
-    /// Loads templates for all region profiles and pre-selects the one matching
-    /// the stored RegionProfileStore value. Called from TemplateSelectionView.onAppear.
+    /// Loads templates for all region profiles. Korea still pre-selects its single template
+    /// (unchanged behavior). The US region (`.global`) now offers two templates — General
+    /// Industry and Construction — with **no auto-selection**: the user must explicitly tap
+    /// one before Next unlocks (WO LEGAL-3B §A). Called from TemplateSelectionView.onAppear.
     func loadTemplates() {
         let loader = ChecklistTemplateLoader()
         var loaded: [ChecklistTemplate] = []
@@ -134,7 +136,9 @@ final class StartInspectionViewModel {
         templates = loaded
 
         let currentRegion = RegionProfileStore.get()
-        selectedTemplate = loaded.first { $0.regionProfile == currentRegion } ?? loaded.first
+        selectedTemplate = currentRegion == .korea
+            ? loaded.first { $0.regionProfile == .korea }
+            : nil
     }
 
     // MARK: - Inspection creation

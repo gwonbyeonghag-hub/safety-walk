@@ -205,7 +205,10 @@
 "language.english"          = "English";
 "settings.regionProfile"    = "Region";
 "settings.region.korea"     = "Korea";
-"settings.region.global"    = "Global";
+// WO LEGAL-3B: display text only — RegionProfile.global's enum case/rawValue/storage code
+// (RegionProfileStore.storageCode "GLOBAL") are unchanged. The two new US Federal checklist
+// templates still live under .global.
+"settings.region.global"    = "United States (Federal baseline)";
 "settings.siteManagement"   = "Manage Sites";
 "settings.appVersion"       = "Version";
 
@@ -406,6 +409,94 @@
 "checklist.item.global.eap.001" = "Written emergency action plan available and evacuation routes posted";
 "checklist.item.global.eap.002" = "Exit routes and assembly points marked and unobstructed";
 "checklist.item.global.eap.003" = "First aid kits stocked and emergency contacts posted";
+
+// MARK: - US Federal checklist templates (WO LEGAL-3B) — replace the retired mixed
+// checklist_global.json in the template picker. General Industry (29 CFR 1910) and
+// Construction (29 CFR 1926) are separate templates so no item mixes their thresholds —
+// see docs/LEGAL_3B_US_TEMPLATE_SOURCE_AUDIT.md for the full prompt-by-prompt source table.
+// Reviewed against official OSHA/eCFR text on 2026-08-09.
+"checklist.template.usFederalGeneral.name"      = "U.S. Federal — General Industry";
+"checklist.template.usFederalConstruction.name" = "U.S. Federal — Construction";
+"us.federalNotice.title" = "Federal OSHA Baseline";
+"us.federalNotice.text"  = "Federal OSHA baseline reference only. This tool is not exhaustive and does not determine compliance. OSHA-approved State Plans may have different or more protective requirements; local requirements and employer rules may also apply. Confirm the rules for this workplace.";
+
+// Construction-only category — hand & power tools (29 CFR 1926.300), distinct from general
+// industry's stationary-machine "Machine Guarding" (29 CFR 1910.212, Subpart O).
+"checklist.category.handPowerTools" = "Hand & Power Tools";
+
+// U.S. Federal — General Industry (us-federal-general-industry-v1)
+// Housekeeping — 29 CFR 1910.22
+"checklist.item.usGeneral.house.001" = "Are walking-working surfaces kept clean, orderly, and free of hazards such as sharp/protruding objects, loose boards, or spills (29 CFR 1910.22)?";
+// Walking-Working Surfaces — 29 CFR 1910.28
+"checklist.item.usGeneral.wws.001" = "Are unprotected sides or edges 4 feet (1.2 m) or more above a lower level guarded by a guardrail, safety net, or personal fall protection system (29 CFR 1910.28(b)(1)(i))?";
+"checklist.item.usGeneral.wws.002" = "Are holes 4 feet (1.2 m) or more above a lower level covered, guarded, or otherwise protected (29 CFR 1910.28(b)(3)(i))?";
+// Ladders — 29 CFR 1910.23
+"checklist.item.usGeneral.ladder.001" = "Do portable ladders used for access extend at least 3 feet (0.9 m) above the upper landing surface, or is an equivalent secured handhold provided (29 CFR 1910.23(c)(11))?";
+"checklist.item.usGeneral.ladder.002" = "Do employees face the ladder and keep at least one hand in contact with it while climbing (29 CFR 1910.23(b)(11)-(12))?";
+// PPE — 29 CFR 1910.132
+"checklist.item.usGeneral.ppe.001" = "Has the employer assessed the workplace for hazards requiring PPE and selected PPE appropriate to those hazards (29 CFR 1910.132(d)(1))?";
+"checklist.item.usGeneral.ppe.002" = "Is the PPE hazard assessment documented in a written certification (29 CFR 1910.132(d)(2))?";
+// Respiratory Protection — 29 CFR 1910.134 (applies only where respirators are necessary/required)
+"checklist.item.usGeneral.resp.001" = "Where respirators are necessary to protect employee health or are required by the employer, is there a written respiratory protection program (29 CFR 1910.134(c)(1))?";
+"checklist.item.usGeneral.resp.002" = "Where respirators are used, has each wearer completed a medical evaluation and fit test before initial use (29 CFR 1910.134(e), (f))?";
+// Hazard Communication — 29 CFR 1910.1200
+"checklist.item.usGeneral.hazcom.001" = "Is there a written hazard communication program describing labeling, SDS, and training practices (29 CFR 1910.1200(e))?";
+"checklist.item.usGeneral.hazcom.002" = "Are hazardous chemical containers labeled with a product identifier, signal word, hazard statements, and pictograms (29 CFR 1910.1200(f))?";
+"checklist.item.usGeneral.hazcom.003" = "Are safety data sheets (SDS) readily accessible to employees during each work shift (29 CFR 1910.1200(g))?";
+// Lockout/Tagout — 29 CFR 1910.147
+"checklist.item.usGeneral.loto.001" = "For servicing/maintenance where unexpected energization or release of stored energy could injure an employee, is there an energy control (lockout/tagout) procedure (29 CFR 1910.147(c)(1))?";
+"checklist.item.usGeneral.loto.002" = "Is lockout/tagout performed only by authorized employees (29 CFR 1910.147(c)(8))?";
+// Machine Guarding — 29 CFR 1910.212
+"checklist.item.usGeneral.guard.001" = "Are points of operation, ingoing nip points, rotating parts, and other hazardous machine motions guarded (29 CFR 1910.212(a)(1))?";
+// Electrical — 29 CFR 1910.303 / 1910.333
+"checklist.item.usGeneral.elec.001" = "Is sufficient access and working space maintained around electrical equipment for safe operation and maintenance (29 CFR 1910.303(g)(1))?";
+"checklist.item.usGeneral.elec.002" = "Do only qualified persons work on electric circuit parts that have not been deenergized, and do unqualified persons keep the minimum distance from exposed energized parts set out in 29 CFR 1910.333(c)(3)?";
+// Powered Industrial Trucks — 29 CFR 1910.178(l)
+"checklist.item.usGeneral.pit.001" = "Do only operators who have completed the required training and evaluation operate powered industrial trucks (29 CFR 1910.178(l))?";
+// Permit-Required Confined Spaces — 29 CFR 1910.146 (general industry only; excludes construction)
+"checklist.item.usGeneral.conf.001" = "Where a permit-required confined space is present, is a written permit space program in place, or is entry effectively prevented (29 CFR 1910.146(c)(3)-(4))?";
+// Fire Protection — 29 CFR 1910.157
+"checklist.item.usGeneral.fire.001" = "Are portable fire extinguishers provided and mounted/located so they are readily accessible without exposing employees to injury (29 CFR 1910.157(c)(1))?";
+"checklist.item.usGeneral.fire.002" = "Where portable fire extinguishers are provided for employee use, have employees been trained in the general principles of their use (29 CFR 1910.157(g)(1))?";
+// Hot Work — 29 CFR 1910.252
+"checklist.item.usGeneral.hotwork.001" = "Is welding/cutting performed only in areas made fire-safe, with combustibles removed or protected within the required radius (29 CFR 1910.252(a)(2)(vii), (xv))?";
+"checklist.item.usGeneral.hotwork.002" = "Is a fire watch assigned when required, e.g. combustibles within 35 feet that cannot be relocated (29 CFR 1910.252(a)(2)(iii))?";
+// Emergency Action Plan — 29 CFR 1910.38
+"checklist.item.usGeneral.eap.001" = "Where an OSHA standard requires one, is there a written emergency action plan covering reporting, evacuation, and employee accountability (29 CFR 1910.38(a), (c))?";
+"checklist.item.usGeneral.eap.002" = "Is an employee alarm system with a distinctive signal maintained and understood by employees (29 CFR 1910.38(d))?";
+
+// U.S. Federal — Construction (us-federal-construction-v1)
+// Housekeeping — 29 CFR 1926.25
+"checklist.item.usConstruction.house.001" = "Is form/scrap lumber with protruding nails and other debris kept cleared from work areas, passageways, and stairs (29 CFR 1926.25(a))?";
+// Fall Protection — 29 CFR 1926.501 (6 ft — distinct from general industry's 4 ft threshold)
+"checklist.item.usConstruction.fall.001" = "Are unprotected sides or edges 6 feet (1.8 m) or more above a lower level guarded by a guardrail system, safety net, or personal fall arrest system (29 CFR 1926.501(b)(1))?";
+"checklist.item.usConstruction.fall.002" = "Are holes, leading edges, and ramps/runways 6 feet (1.8 m) or more above a lower level protected per the applicable provision of 29 CFR 1926.501(b)?";
+// Ladders & Scaffolds — 29 CFR 1926.1053 / 1926.451
+"checklist.item.usConstruction.ladder.001" = "Do portable ladder side rails extend at least 3 feet (0.9 m) above the upper landing surface (29 CFR 1926.1053(b)(1))?";
+"checklist.item.usConstruction.scaffold.001" = "Is each scaffold, and each part of it, designed by a qualified person and capable of supporting at least 4 times the maximum intended load (29 CFR 1926.451(a)(1), (a)(6))?";
+"checklist.item.usConstruction.scaffold.002" = "Is the scaffold inspected by a competent person before each work shift and after any occurrence that could affect its structural integrity (29 CFR 1926.451(f)(3))?";
+// PPE — 29 CFR 1926.95
+"checklist.item.usConstruction.ppe.001" = "Is PPE provided at no cost to employees wherever necessary because of process, environmental, chemical, or mechanical hazards (29 CFR 1926.95(a), (d)(1))?";
+// Respiratory Protection — 29 CFR 1926.103 (applies 29 CFR 1910.134 to construction)
+"checklist.item.usConstruction.resp.001" = "Where respirators are necessary or required, is a written respiratory protection program maintained per 29 CFR 1910.134, as applied to construction by 29 CFR 1926.103?";
+// Hazard Communication — 29 CFR 1926.59 (applies 29 CFR 1910.1200 to construction)
+"checklist.item.usConstruction.hazcom.001" = "Are hazardous chemicals on site labeled and are SDS accessible per 29 CFR 1910.1200, as applied to construction by 29 CFR 1926.59?";
+// Hand & Power Tools — 29 CFR 1926.300
+"checklist.item.usConstruction.tools.001" = "Are power-operated tools designed to accommodate guards equipped with those guards when in use (29 CFR 1926.300(b)(1))?";
+// Electrical — 29 CFR 1926.416 / 1926.404
+"checklist.item.usConstruction.elec.001" = "Are employees protected from contact with energized circuits by deenergizing and grounding, or by effective guarding (29 CFR 1926.416(a)(1))?";
+"checklist.item.usConstruction.elec.002" = "Do temporary 125-volt, single-phase, 15/20/30-amp receptacles that are not part of the permanent wiring have GFCI protection, or does the employer use an Assured Equipment Grounding Conductor Program (29 CFR 1926.404(b)(1))?";
+// Lockout/Tagout — 29 CFR 1926.417 (construction has no general multi-energy LOTO standard; scoped to electrical circuits only)
+"checklist.item.usConstruction.loto.001" = "Are deenergized circuits and their deactivated controls tagged at every point where they could be re-energized while work is performed on them (29 CFR 1926.417(a), (b))?";
+// Powered Industrial Trucks — 29 CFR 1926.602(d) (applies 29 CFR 1910.178(l) to construction)
+"checklist.item.usConstruction.pit.001" = "Do only operators who have completed the training required by 29 CFR 1910.178(l), as applied to construction by 29 CFR 1926.602(d), operate powered industrial trucks?";
+// Fire Protection — 29 CFR 1926.150
+"checklist.item.usConstruction.fire.001" = "Is a fire protection program maintained throughout all phases of the construction and demolition work (29 CFR 1926.150(a)(1))?";
+// Hot Work — 29 CFR 1926.352
+"checklist.item.usConstruction.hotwork.001" = "Are objects to be welded, cut, or heated moved to a designated safe location, or are heat/sparks/slag confined when they cannot be moved (29 CFR 1926.352(a), (b))?";
+"checklist.item.usConstruction.hotwork.002" = "Is a fire watch assigned with suitable fire-extinguishing equipment immediately available (29 CFR 1926.352(d), (e))?";
+// Emergency Action Plan — 29 CFR 1926.35
+"checklist.item.usConstruction.eap.001" = "Is there a written employee emergency action plan covering evacuation procedures, an alarm system, and employee accountability (29 CFR 1926.35(b), (c))?";
 
 
 /* Risk Assessment (위험성평가) — WO-2 */

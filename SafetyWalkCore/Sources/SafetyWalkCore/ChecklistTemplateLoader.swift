@@ -20,7 +20,6 @@ public enum ChecklistTemplateLoaderError: LocalizedError {
 // MARK: - Loader
 
 /// Loads checklist templates from JSON files bundled with the package.
-/// One JSON file per RegionProfile; each file contains a single ChecklistTemplate object.
 /// Inject a custom `bundle` in unit tests to supply fixture JSON without touching the module bundle.
 public struct ChecklistTemplateLoader {
 
@@ -34,13 +33,28 @@ public struct ChecklistTemplateLoader {
         self.bundle = bundle ?? .module
     }
 
-    /// Loads all templates for the given region.
-    /// Currently one file per region; returns a single-element array to support
-    /// multiple templates per region in future without changing the call site.
+    /// Loads all templates for the given region. Korea stays single-template (auto-selectable
+    /// by the caller). `.global` now resolves the two US Federal templates (WO LEGAL-3B) instead
+    /// of the retired single General/Construction-mixed template — `checklist_global.json` itself
+    /// is untouched on disk and still independently decodable (see `loadTemplate(filename:region:)`)
+    /// so any past `Inspection.templateId` referencing it keeps resolving its category/item
+    /// titleKeys through `Localizable.strings` unchanged; it just no longer appears in the
+    /// user-facing template picker.
     /// nonisolated: file I/O with no main-actor dependency; callable from any actor context.
     public nonisolated func load(for region: RegionProfile) throws -> [ChecklistTemplate] {
-        let filename = Self.bundleFilename(for: region)
+        switch region {
+        case .korea:
+            return [try loadTemplate(filename: Self.bundleFilename(for: region), region: region)]
+        case .global:
+            return try Self.usFederalTemplateFilenames.map { try loadTemplate(filename: $0, region: region) }
+        }
+    }
 
+    /// Decodes a single template JSON file by its bundle filename (without extension). Exposed
+    /// publicly — not just used internally by `load(for:)` — so a filename outside the current
+    /// per-region selection list, e.g. the retired `checklist_global.json`, can still be
+    /// decode-verified directly (WO LEGAL-3B legacy-record compatibility test).
+    public nonisolated func loadTemplate(filename: String, region: RegionProfile) throws -> ChecklistTemplate {
         guard let url = bundle.url(forResource: filename, withExtension: "json") else {
             throw ChecklistTemplateLoaderError.fileNotFound(region: region)
         }
@@ -53,8 +67,7 @@ public struct ChecklistTemplateLoader {
         }
 
         do {
-            let template = try JSONDecoder().decode(ChecklistTemplate.self, from: data)
-            return [template]
+            return try JSONDecoder().decode(ChecklistTemplate.self, from: data)
         } catch {
             throw ChecklistTemplateLoaderError.decodingFailed(region: region, underlying: error)
         }
@@ -62,11 +75,21 @@ public struct ChecklistTemplateLoader {
 
     // MARK: - Internal
 
-    /// Maps a RegionProfile to the JSON filename (without extension) in the bundle.
+    /// Maps a RegionProfile to its legacy single-file JSON filename (without extension). Korea
+    /// still resolves through this in `load(for:)`; the `.global` case continues to correctly
+    /// name the retired `checklist_global.json` file (still present, still decodable) even though
+    /// `load(for: .global)` no longer resolves through it — kept, not repurposed (WO LEGAL-3B).
     public nonisolated static func bundleFilename(for region: RegionProfile) -> String {
         switch region {
         case .korea:  return "checklist_korea"
         case .global: return "checklist_global"
         }
     }
+
+    /// The two US Federal template filenames `.global` now resolves, in fixed display order
+    /// (General Industry, then Construction) — WO LEGAL-3B §A.
+    public nonisolated static let usFederalTemplateFilenames = [
+        "checklist_us_federal_general_industry",
+        "checklist_us_federal_construction"
+    ]
 }

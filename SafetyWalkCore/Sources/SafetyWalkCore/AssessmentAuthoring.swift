@@ -27,6 +27,12 @@ public enum JurisdictionPolicy {
     public static func requiresIndustry(_ jurisdiction: JurisdictionCode?) -> Bool {
         jurisdiction == .us
     }
+
+    /// US 관할 위험성평가·JHA에만 Federal OSHA 범위/State Plan 경고를 보인다 — KR·미설정은 거짓
+    /// (WO LEGAL-3B §E, `ChecklistTemplatePolicy.showsFederalNotice`와 같은 패턴).
+    public static func showsFederalNotice(_ jurisdiction: JurisdictionCode?) -> Bool {
+        jurisdiction == .us
+    }
 }
 
 /// 평가 생성 입력 — 화면이 모은 값을 담는 **순수 값 타입**. SwiftData 를 모르므로 ViewModel 이 자유롭게

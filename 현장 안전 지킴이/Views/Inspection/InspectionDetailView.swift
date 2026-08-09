@@ -48,6 +48,11 @@ struct InspectionDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 headerCard
+                // WO LEGAL-3B §E: US Federal 점검 템플릿으로 만든 기록에만 표시(templateId 판별,
+                // KR·미설정·레거시 global 템플릿 기록에는 나타나지 않는다).
+                if ChecklistTemplatePolicy.showsFederalNotice(forTemplateId: inspection.templateId) {
+                    USFederalNoticeInline()
+                }
                 progressCard
                 if inspection.status == .inProgress {
                     continueButton

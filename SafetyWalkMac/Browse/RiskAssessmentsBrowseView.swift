@@ -45,6 +45,11 @@ struct RiskAssessmentsBrowseView: View {
                 }
             }
 
+            // WO LEGAL-3B §E: US 관할 평가에만 Federal/State Plan 경고를 보인다.
+            if JurisdictionPolicy.showsFederalNotice(ra.jurisdictionSnapshot) {
+                USFederalNoticeInline()
+            }
+
             MacCard(title: LocalizationKey.macSectionRiskAssessments.localized, systemImage: "tablecells") {
                 let items = (ra.items ?? []).sorted { $0.sortOrder < $1.sortOrder }
                 VStack(spacing: 8) {

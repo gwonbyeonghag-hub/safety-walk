@@ -205,7 +205,10 @@
 "language.english"          = "English";
 "settings.regionProfile"    = "지역";
 "settings.region.korea"     = "한국";
-"settings.region.global"    = "글로벌";
+// WO LEGAL-3B: 표시 문구만 변경 — RegionProfile.global enum case/rawValue/저장 코드
+// (RegionProfileStore.storageCode "GLOBAL")는 그대로다. 신규 US Federal 점검 템플릿 2개도 여전히
+// .global 하위에 있다.
+"settings.region.global"    = "미국(연방 기준)";
 "settings.siteManagement"   = "현장 관리";
 "settings.appVersion"       = "버전";
 
@@ -406,6 +409,94 @@
 "checklist.item.global.eap.001" = "서면 비상조치 계획 비치 및 대피 경로 게시";
 "checklist.item.global.eap.002" = "피난 경로·집결지 표시 및 장애물 없음";
 "checklist.item.global.eap.003" = "구급함 구비 및 비상 연락처 게시";
+
+// MARK: - 미국 Federal 점검 템플릿 (WO LEGAL-3B) — 폐지된 혼합 checklist_global.json을 대체.
+// General Industry(29 CFR 1910)와 Construction(29 CFR 1926)을 별도 템플릿으로 분리해 어느 항목도
+// 두 기준의 임계값을 섞지 않는다 — 전체 prompt별 출처표는 docs/LEGAL_3B_US_TEMPLATE_SOURCE_AUDIT.md.
+// 검토 기준일: 2026-08-09 (공식 OSHA/eCFR 원문 대조).
+"checklist.template.usFederalGeneral.name"      = "미국 연방 — 일반산업";
+"checklist.template.usFederalConstruction.name" = "미국 연방 — 건설업";
+"us.federalNotice.title" = "연방 OSHA 기준";
+"us.federalNotice.text"  = "연방 OSHA 기준 참고용입니다. 이 도구는 모든 요구사항을 포함하지 않으며 법규 준수 여부를 판단하지 않습니다. OSHA 승인 주 계획(State Plan)은 요구사항이 다르거나 더 엄격할 수 있고, 지역 요건과 사업장 규정도 적용될 수 있습니다. 이 현장에 적용되는 기준을 확인하세요.";
+
+// 건설업 전용 카테고리 — 수공구·동력공구(29 CFR 1926.300). 일반산업의 고정식 기계 방호
+// "Machine Guarding"(29 CFR 1910.212, Subpart O)와는 다른 범위다.
+"checklist.category.handPowerTools" = "수공구·동력공구";
+
+// 미국 연방 — 일반산업 (us-federal-general-industry-v1)
+// 정리정돈 — 29 CFR 1910.22
+"checklist.item.usGeneral.house.001" = "통행·작업 표면이 청결·정돈 상태이며 날카로운 돌출물·헐거운 바닥재·유출물 등의 위험 없이 관리되고 있습니까(29 CFR 1910.22)?";
+// 보행·작업면 — 29 CFR 1910.28
+"checklist.item.usGeneral.wws.001" = "바닥면 기준 4피트(1.2m) 이상 개방된 측면·모서리에 안전난간, 방망, 개인 추락방지장비 중 하나가 설치돼 있습니까(29 CFR 1910.28(b)(1)(i))?";
+"checklist.item.usGeneral.wws.002" = "바닥면 기준 4피트(1.2m) 이상 높이의 개구부(구멍)가 덮개·난간 등으로 방호돼 있습니까(29 CFR 1910.28(b)(3)(i))?";
+// 사다리 — 29 CFR 1910.23
+"checklist.item.usGeneral.ladder.001" = "출입용으로 쓰는 이동식 사다리가 상부 착지면 위로 최소 3피트(0.9m) 이상 연장돼 있거나, 그럴 수 없는 경우 고정된 손잡이 등 동등한 대체수단이 제공됩니까(29 CFR 1910.23(c)(11))?";
+"checklist.item.usGeneral.ladder.002" = "근로자가 사다리를 오르내릴 때 사다리를 정면으로 보고 최소 한 손으로 사다리를 잡고 있습니까(29 CFR 1910.23(b)(11)-(12))?";
+// 보호구 — 29 CFR 1910.132
+"checklist.item.usGeneral.ppe.001" = "사업주가 보호구 착용이 필요한 유해위험요인을 확인하기 위해 작업장을 평가하고, 그 요인에 맞는 보호구를 선정했습니까(29 CFR 1910.132(d)(1))?";
+"checklist.item.usGeneral.ppe.002" = "보호구 유해위험요인 평가 결과가 서면 인증(certification) 형태로 기록돼 있습니까(29 CFR 1910.132(d)(2))?";
+// 호흡 보호 — 29 CFR 1910.134 (호흡보호구가 필요한 경우에만 적용)
+"checklist.item.usGeneral.resp.001" = "호흡보호구가 근로자 건강보호를 위해 필요하거나 사업주가 요구하는 경우, 서면 호흡보호프로그램이 마련돼 있습니까(29 CFR 1910.134(c)(1))?";
+"checklist.item.usGeneral.resp.002" = "호흡보호구를 사용하는 경우, 착용자가 최초 사용 전 의학적 평가와 밀착도 검사(fit test)를 완료했습니까(29 CFR 1910.134(e), (f))?";
+// 위험물 정보전달 — 29 CFR 1910.1200
+"checklist.item.usGeneral.hazcom.001" = "라벨링·물질안전보건자료(SDS)·교육 방법을 설명하는 서면 위험성 고지(HazCom) 프로그램이 있습니까(29 CFR 1910.1200(e))?";
+"checklist.item.usGeneral.hazcom.002" = "유해화학물질 용기에 제품 식별자·신호어·유해성 문구·그림문자가 표시돼 있습니까(29 CFR 1910.1200(f))?";
+"checklist.item.usGeneral.hazcom.003" = "물질안전보건자료(SDS)를 근로자가 각 근무시간 동안 즉시 열람할 수 있습니까(29 CFR 1910.1200(g))?";
+// 잠금·표지(LOTO) — 29 CFR 1910.147
+"checklist.item.usGeneral.loto.001" = "장비의 예기치 못한 기동이나 저장에너지 방출이 근로자를 다치게 할 수 있는 정비·보수 작업에 대해, 에너지 제어(lockout/tagout) 절차가 마련돼 있습니까(29 CFR 1910.147(c)(1))?";
+"checklist.item.usGeneral.loto.002" = "Lockout/tagout이 승인된(authorized) 근로자에 의해서만 수행됩니까(29 CFR 1910.147(c)(8))?";
+// 기계 방호 — 29 CFR 1910.212
+"checklist.item.usGeneral.guard.001" = "협착점(point of operation), 물림점(ingoing nip point), 회전부 등 기계의 위험한 동작 부위가 방호돼 있습니까(29 CFR 1910.212(a)(1))?";
+// 전기 위험 — 29 CFR 1910.303 / 1910.333
+"checklist.item.usGeneral.elec.001" = "전기설비 주변에 안전한 조작·점검을 위한 충분한 접근·작업공간이 확보돼 있습니까(29 CFR 1910.303(g)(1))?";
+"checklist.item.usGeneral.elec.002" = "충전 제거되지 않은 전기회로 작업은 자격을 갖춘(qualified) 사람만 수행하며, 비자격자는 29 CFR 1910.333(c)(3)에 정한 충전부와의 최소 이격 거리를 지키고 있습니까?";
+// 동력 산업차량(지게차) — 29 CFR 1910.178(l)
+"checklist.item.usGeneral.pit.001" = "동력 산업용 차량(지게차 등)은 필요한 교육·평가를 이수한 운전자만 운전합니까(29 CFR 1910.178(l))?";
+// 허가대상 밀폐공간 — 29 CFR 1910.146 (일반산업 전용, 건설업 제외 규정)
+"checklist.item.usGeneral.conf.001" = "허가대상 밀폐공간이 있는 경우, 서면 출입허가 프로그램이 마련돼 있거나 출입이 효과적으로 차단돼 있습니까(29 CFR 1910.146(c)(3)-(4))?";
+// 화재 위험 — 29 CFR 1910.157
+"checklist.item.usGeneral.fire.001" = "휴대용 소화기가 근로자를 위험에 노출시키지 않고 즉시 사용할 수 있도록 배치·설치돼 있습니까(29 CFR 1910.157(c)(1))?";
+"checklist.item.usGeneral.fire.002" = "근로자가 사용하도록 휴대용 소화기가 제공된 경우, 근로자가 소화기 사용의 일반 원칙에 대한 교육을 받았습니까(29 CFR 1910.157(g)(1))?";
+// 화기 작업 — 29 CFR 1910.252
+"checklist.item.usGeneral.hotwork.001" = "용접·절단 작업이 화재 안전이 확보된 구역에서만 이뤄지며, 정해진 반경 내 가연물이 제거되거나 방호돼 있습니까(29 CFR 1910.252(a)(2)(vii), (xv))?";
+"checklist.item.usGeneral.hotwork.002" = "요건에 해당하는 경우(예: 35피트 이내 이동 불가능한 가연물이 있는 경우) 화재감시자가 배치돼 있습니까(29 CFR 1910.252(a)(2)(iii))?";
+// 비상조치 계획 — 29 CFR 1910.38
+"checklist.item.usGeneral.eap.001" = "OSHA 기준이 요구하는 경우, 신고·대피·인원 확인 절차를 포함하는 서면 비상조치계획이 마련돼 있습니까(29 CFR 1910.38(a), (c))?";
+"checklist.item.usGeneral.eap.002" = "구별되는 신호를 갖춘 비상경보체계가 유지되고 근로자가 이를 이해하고 있습니까(29 CFR 1910.38(d))?";
+
+// 미국 연방 — 건설업 (us-federal-construction-v1)
+// 정리정돈 — 29 CFR 1926.25
+"checklist.item.usConstruction.house.001" = "못이 박힌 채로 남은 형틀·폐목재 및 기타 잔해물이 작업구역·통로·계단에서 제거돼 있습니까(29 CFR 1926.25(a))?";
+// 추락 위험 — 29 CFR 1926.501 (6피트 — 일반산업의 4피트 기준과 다름)
+"checklist.item.usConstruction.fall.001" = "바닥면 기준 6피트(1.8m) 이상 개방된 측면·모서리에 안전난간, 방망, 개인 추락방지장비 중 하나가 설치돼 있습니까(29 CFR 1926.501(b)(1))?";
+"checklist.item.usConstruction.fall.002" = "바닥면 기준 6피트(1.8m) 이상 높이의 개구부·선단부(leading edge)·경사로/통로가 29 CFR 1926.501(b)의 해당 조항에 따라 방호돼 있습니까?";
+// 사다리·비계 — 29 CFR 1926.1053 / 1926.451
+"checklist.item.usConstruction.ladder.001" = "이동식 사다리 측면 레일이 상부 착지면 위로 최소 3피트(0.9m) 이상 연장돼 있습니까(29 CFR 1926.1053(b)(1))?";
+"checklist.item.usConstruction.scaffold.001" = "비계와 그 각 부재가 자격을 갖춘(qualified) 사람에 의해 설계되고, 최대 예정하중의 4배 이상을 지지할 수 있습니까(29 CFR 1926.451(a)(1), (a)(6))?";
+"checklist.item.usConstruction.scaffold.002" = "비계가 매 작업교대 전, 그리고 구조 안전성에 영향을 줄 수 있는 사건 발생 후 유자격 관리자(competent person)에 의해 점검됩니까(29 CFR 1926.451(f)(3))?";
+// 보호구 — 29 CFR 1926.95
+"checklist.item.usConstruction.ppe.001" = "공정·환경·화학적·기계적 유해요인으로 필요한 경우, 근로자에게 무상으로 보호구가 제공됩니까(29 CFR 1926.95(a), (d)(1))?";
+// 호흡 보호 — 29 CFR 1926.103 (건설업에 29 CFR 1910.134를 적용)
+"checklist.item.usConstruction.resp.001" = "호흡보호구가 필요하거나 요구되는 경우, 29 CFR 1926.103을 통해 건설업에 적용되는 29 CFR 1910.134에 따른 서면 호흡보호프로그램이 유지됩니까?";
+// 위험물 정보전달 — 29 CFR 1926.59 (건설업에 29 CFR 1910.1200을 적용)
+"checklist.item.usConstruction.hazcom.001" = "현장의 유해화학물질에 29 CFR 1926.59를 통해 건설업에 적용되는 29 CFR 1910.1200에 따라 라벨이 부착되고 SDS를 열람할 수 있습니까?";
+// 수공구·동력공구 — 29 CFR 1926.300
+"checklist.item.usConstruction.tools.001" = "가드(guard) 장착이 가능한 동력공구는 사용 시 가드를 장착하고 있습니까(29 CFR 1926.300(b)(1))?";
+// 전기 위험 — 29 CFR 1926.416 / 1926.404
+"checklist.item.usConstruction.elec.001" = "근로자가 충전 회로에 접촉하지 않도록 충전 제거·접지, 또는 효과적인 방호 조치가 돼 있습니까(29 CFR 1926.416(a)(1))?";
+"checklist.item.usConstruction.elec.002" = "영구배선에 속하지 않는 임시 125볼트 단상 15/20/30암페어 콘센트에 누전차단기(GFCI)가 설치돼 있거나, 사업주가 보증접지도체 프로그램(AEGCP)을 시행하고 있습니까(29 CFR 1926.404(b)(1))?";
+// 잠금·표지(LOTO) — 29 CFR 1926.417 (건설업은 일반산업 1910.147과 같은 다중 에너지원 LOTO 기준이
+// 없어 전기회로 범위로 한정)
+"checklist.item.usConstruction.loto.001" = "작업 중인 충전 제거 회로와 그 비활성화된 제어장치에, 재통전될 수 있는 모든 지점에 태그가 부착돼 있습니까(29 CFR 1926.417(a), (b))?";
+// 동력 산업차량(지게차) — 29 CFR 1926.602(d) (건설업에 29 CFR 1910.178(l)을 적용)
+"checklist.item.usConstruction.pit.001" = "29 CFR 1926.602(d)를 통해 건설업에 적용되는 29 CFR 1910.178(l)의 교육을 이수한 운전자만 동력 산업용 차량을 운전합니까?";
+// 화재 위험 — 29 CFR 1926.150
+"checklist.item.usConstruction.fire.001" = "공사·해체작업의 전 단계에 걸쳐 화재예방 프로그램이 유지되고 있습니까(29 CFR 1926.150(a)(1))?";
+// 화기 작업 — 29 CFR 1926.352
+"checklist.item.usConstruction.hotwork.001" = "용접·절단·가열 대상물이 지정된 안전 장소로 이동됐거나, 이동할 수 없는 경우 열·불티·용융물이 차단돼 있습니까(29 CFR 1926.352(a), (b))?";
+"checklist.item.usConstruction.hotwork.002" = "적절한 소화장비가 즉시 사용 가능한 상태로 화재감시자가 배치돼 있습니까(29 CFR 1926.352(d), (e))?";
+// 비상조치 계획 — 29 CFR 1926.35
+"checklist.item.usConstruction.eap.001" = "대피 절차, 경보체계, 인원 확인을 포함하는 서면 비상조치계획이 있습니까(29 CFR 1926.35(b), (c))?";
 
 
 /* Risk Assessment (위험성평가) — WO-2 */

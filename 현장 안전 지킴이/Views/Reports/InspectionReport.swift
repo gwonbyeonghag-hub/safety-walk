@@ -31,6 +31,12 @@ enum InspectionReport {
 
         var blocks: [AnyView] = [AnyView(headerGrid(inspection))]
 
+        // WO LEGAL-3B §E: US Federal 점검 템플릿으로 만든 점검에만 표시 — templateId 로 판별되는
+        // 단일 정책 지점(ChecklistTemplatePolicy)이라 화면마다 문자열 판별을 흩뜨리지 않는다.
+        if ChecklistTemplatePolicy.showsFederalNotice(forTemplateId: inspection.templateId) {
+            blocks.append(AnyView(USFederalNotice()))
+        }
+
         for group in grouped(inspection.items ?? []) {
             blocks.append(AnyView(sectionTitle(L(group.category))))
             for item in group.items {

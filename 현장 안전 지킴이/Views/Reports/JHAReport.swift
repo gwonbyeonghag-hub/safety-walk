@@ -25,6 +25,10 @@ enum JHAReport {
         // WO LEGAL-2c 반송 4차 P1: one block per corrective action (recommended control) so the whole
         // 1:N set paginates instead of being crammed into a single merged, clippable controls cell.
         var blocks: [AnyView] = [AnyView(headerGrid(assessment))]
+        // WO LEGAL-3B §E: US 관할 JHA에만 표시 — jurisdictionSnapshot 으로 판별하는 단일 정책 지점.
+        if JurisdictionPolicy.showsFederalNotice(assessment.jurisdictionSnapshot) {
+            blocks.append(AnyView(USFederalNotice()))
+        }
         for (offset, item) in items.enumerated() {
             blocks += rowBlocks(step: offset + 1, item: item, method: assessment.method)
         }

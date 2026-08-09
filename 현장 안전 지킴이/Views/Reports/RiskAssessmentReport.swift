@@ -38,6 +38,10 @@ enum RiskAssessmentReport {
         // WO LEGAL-2c 반송 4차 P1: emit ONE block per corrective action (not one block per item) so a
         // long 1:N set is paginated across pages instead of clipped inside a single unsplittable row.
         var blocks: [AnyView] = [AnyView(headerGrid(assessment))]
+        // WO LEGAL-3B §E: US 관할 평가에만 표시 — jurisdictionSnapshot 으로 판별하는 단일 정책 지점.
+        if JurisdictionPolicy.showsFederalNotice(assessment.jurisdictionSnapshot) {
+            blocks.append(AnyView(USFederalNotice()))
+        }
         for (offset, item) in items.enumerated() {
             blocks += rowBlocks(index: offset + 1, item: item, method: assessment.method)
         }

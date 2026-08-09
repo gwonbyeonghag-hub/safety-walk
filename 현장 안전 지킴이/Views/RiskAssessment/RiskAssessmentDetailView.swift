@@ -240,6 +240,10 @@ struct RiskAssessmentDetailView: View {
             // WO LEGAL-3A: 저장된 업종 스냅샷 — 과거 평가는 현재 설정이 아니라 그 평가의 값을 보여준다.
             infoRow(LocalizationKey.raIndustry.localized,
                     assessment.industryDisplayText)
+            // WO LEGAL-3B §E: US 관할 평가에만 Federal/State Plan 경고를 보인다.
+            if JurisdictionPolicy.showsFederalNotice(assessment.jurisdictionSnapshot) {
+                USFederalNoticeInline()
+            }
 
             if assessment.status == .planned, let scheduled = assessment.scheduledAt {
                 infoRow(LocalizationKey.raSchedule.localized,

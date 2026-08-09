@@ -1,0 +1,123 @@
+{
+  "id": "us-federal-construction-v1",
+  "regionProfile": "global",
+  "name": "U.S. Federal — Construction",
+  "version": "1",
+  "industryScope": "construction",
+  "reviewedOn": "2026-08-09",
+  "sourceCatalog": [
+    { "id": "src-1926-25",   "standardNumber": "29 CFR 1926.25",   "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.25" },
+    { "id": "src-1926-35",   "standardNumber": "29 CFR 1926.35",   "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.35" },
+    { "id": "src-1926-59",   "standardNumber": "29 CFR 1926.59",   "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.59" },
+    { "id": "src-1926-95",   "standardNumber": "29 CFR 1926.95",   "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.95" },
+    { "id": "src-1926-103",  "standardNumber": "29 CFR 1926.103",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.103" },
+    { "id": "src-1926-150",  "standardNumber": "29 CFR 1926.150",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.150" },
+    { "id": "src-1926-300",  "standardNumber": "29 CFR 1926.300",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.300" },
+    { "id": "src-1926-352",  "standardNumber": "29 CFR 1926.352",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.352" },
+    { "id": "src-1926-404",  "standardNumber": "29 CFR 1926.404",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.404" },
+    { "id": "src-1926-416",  "standardNumber": "29 CFR 1926.416",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.416" },
+    { "id": "src-1926-417",  "standardNumber": "29 CFR 1926.417",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.417" },
+    { "id": "src-1926-451",  "standardNumber": "29 CFR 1926.451",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.451" },
+    { "id": "src-1926-501",  "standardNumber": "29 CFR 1926.501",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.501" },
+    { "id": "src-1926-602",  "standardNumber": "29 CFR 1926.602",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.602" },
+    { "id": "src-1926-1053", "standardNumber": "29 CFR 1926.1053", "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.1053" }
+  ],
+  "categories": [
+    {
+      "id": "usc-cat-house",
+      "titleKey": "checklist.category.housekeeping",
+      "items": [
+        { "id": "usc-house-001", "titleKey": "checklist.item.usConstruction.house.001", "descriptionKey": null, "sourceIds": ["src-1926-25"] }
+      ]
+    },
+    {
+      "id": "usc-cat-fall",
+      "titleKey": "checklist.category.fallRisk",
+      "items": [
+        { "id": "usc-fall-001", "titleKey": "checklist.item.usConstruction.fall.001", "descriptionKey": null, "sourceIds": ["src-1926-501"] },
+        { "id": "usc-fall-002", "titleKey": "checklist.item.usConstruction.fall.002", "descriptionKey": null, "sourceIds": ["src-1926-501"] }
+      ]
+    },
+    {
+      "id": "usc-cat-ladder",
+      "titleKey": "checklist.category.laddersScaffolds",
+      "items": [
+        { "id": "usc-ladder-001",   "titleKey": "checklist.item.usConstruction.ladder.001",   "descriptionKey": null, "sourceIds": ["src-1926-1053"] },
+        { "id": "usc-scaffold-001", "titleKey": "checklist.item.usConstruction.scaffold.001", "descriptionKey": null, "sourceIds": ["src-1926-451"] },
+        { "id": "usc-scaffold-002", "titleKey": "checklist.item.usConstruction.scaffold.002", "descriptionKey": null, "sourceIds": ["src-1926-451"] }
+      ]
+    },
+    {
+      "id": "usc-cat-ppe",
+      "titleKey": "checklist.category.ppe",
+      "items": [
+        { "id": "usc-ppe-001", "titleKey": "checklist.item.usConstruction.ppe.001", "descriptionKey": null, "sourceIds": ["src-1926-95"] }
+      ]
+    },
+    {
+      "id": "usc-cat-resp",
+      "titleKey": "checklist.category.respiratoryProtection",
+      "items": [
+        { "id": "usc-resp-001", "titleKey": "checklist.item.usConstruction.resp.001", "descriptionKey": null, "sourceIds": ["src-1926-103"] }
+      ]
+    },
+    {
+      "id": "usc-cat-hazcom",
+      "titleKey": "checklist.category.hazardCommunication",
+      "items": [
+        { "id": "usc-hazcom-001", "titleKey": "checklist.item.usConstruction.hazcom.001", "descriptionKey": null, "sourceIds": ["src-1926-59"] }
+      ]
+    },
+    {
+      "id": "usc-cat-tools",
+      "titleKey": "checklist.category.handPowerTools",
+      "items": [
+        { "id": "usc-tools-001", "titleKey": "checklist.item.usConstruction.tools.001", "descriptionKey": null, "sourceIds": ["src-1926-300"] }
+      ]
+    },
+    {
+      "id": "usc-cat-elec",
+      "titleKey": "checklist.category.electrical",
+      "items": [
+        { "id": "usc-elec-001", "titleKey": "checklist.item.usConstruction.elec.001", "descriptionKey": null, "sourceIds": ["src-1926-416"] },
+        { "id": "usc-elec-002", "titleKey": "checklist.item.usConstruction.elec.002", "descriptionKey": null, "sourceIds": ["src-1926-404"] }
+      ]
+    },
+    {
+      "id": "usc-cat-loto",
+      "titleKey": "checklist.category.lockoutTagout",
+      "items": [
+        { "id": "usc-loto-001", "titleKey": "checklist.item.usConstruction.loto.001", "descriptionKey": null, "sourceIds": ["src-1926-417"] }
+      ]
+    },
+    {
+      "id": "usc-cat-pit",
+      "titleKey": "checklist.category.poweredIndustrialTrucks",
+      "items": [
+        { "id": "usc-pit-001", "titleKey": "checklist.item.usConstruction.pit.001", "descriptionKey": null, "sourceIds": ["src-1926-602"] }
+      ]
+    },
+    {
+      "id": "usc-cat-fire",
+      "titleKey": "checklist.category.fire",
+      "items": [
+        { "id": "usc-fire-001", "titleKey": "checklist.item.usConstruction.fire.001", "descriptionKey": null, "sourceIds": ["src-1926-150"] }
+      ]
+    },
+    {
+      "id": "usc-cat-hotwork",
+      "titleKey": "checklist.category.hotWork",
+      "items": [
+        { "id": "usc-hotwork-001", "titleKey": "checklist.item.usConstruction.hotwork.001", "descriptionKey": null, "sourceIds": ["src-1926-352"] },
+        { "id": "usc-hotwork-002", "titleKey": "checklist.item.usConstruction.hotwork.002", "descriptionKey": null, "sourceIds": ["src-1926-352"] }
+      ]
+    },
+    {
+      "id": "usc-cat-eap",
+      "titleKey": "checklist.category.emergencyActionPlan",
+      "items": [
+        { "id": "usc-eap-001", "titleKey": "checklist.item.usConstruction.eap.001", "descriptionKey": null, "sourceIds": ["src-1926-35"] }
+      ]
+    }
+  ]
+}
