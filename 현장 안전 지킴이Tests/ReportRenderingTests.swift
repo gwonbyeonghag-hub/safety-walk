@@ -432,7 +432,10 @@ final class ReportRenderingTests: XCTestCase {
     // MARK: - WO LEGAL-3A R1: 업종 스냅샷 표시 — 두 리포트가 공유 `industryDisplayText` 를 쓴다
 
     /// A missing industry snapshot must read as 미기록 / Not recorded — the shared
-    /// `RiskAssessment.industryDisplayText` value, not a blank cell.
+    /// `RiskAssessment.industryDisplayText` value, not a blank cell. Every other field that could
+    /// independently render the same shared label (JHA's Controls cell falls back to 미기록 when
+    /// empty) is filled with a unique, non-empty value, so the exactly-one occurrence asserted
+    /// below cannot be vacuously satisfied by some other missing field (WO LEGAL-3A R2).
     func testJHAReportUsesNotRecordedForMissingIndustry() throws {
         let ctx = try makeContext()
         let assessment = RiskAssessment(kind: .regular, method: .jsa,
@@ -442,8 +445,11 @@ final class ReportRenderingTests: XCTestCase {
         let item = RiskAssessmentItem(
             taskDescription: "Step with no recorded industry NOIND",
             hazardDescription: "Pinch point",
+            currentControls: "Guardrail installed CTLNOIND",  // non-empty — must not itself read as 미기록
             likelihood: 2, severity: 2, riskLevel: .medium, sortOrder: 0)
         ctx.insert(item)
+        // No corrective action on this item — the JHA renderer only emits a "감소대책" row per
+        // action, so zero actions means zero extra 미기록-eligible cells beyond Controls above.
         assessment.items = [item]
         try? ctx.save()
 
@@ -451,12 +457,16 @@ final class ReportRenderingTests: XCTestCase {
         let whole = pageTexts(url).joined(separator: "\n")
 
         XCTAssertTrue(whole.contains("NOIND"), "sanity: the step must render")
-        XCTAssertGreaterThanOrEqual(labelHits(["미기록", "Not recorded"], in: whole), 1,
-            "a missing industry snapshot must render the shared 미기록 / Not recorded label")
+        XCTAssertTrue(whole.contains("CTLNOIND"), "sanity: current controls must render, not itself read as 미기록")
+        XCTAssertEqual(labelHits(["미기록", "Not recorded"], in: whole), 1,
+            "exactly one 미기록 / Not recorded occurrence is expected, and it can only be the nil industry snapshot")
     }
 
     /// Same guarantee on the KR report — both reports render `industryDisplayText`, not their
-    /// own inline `?? raNotRecorded` fallback (WO LEGAL-3A R1).
+    /// own inline `?? raNotRecorded` fallback (WO LEGAL-3A R1). The item's Controls cell and its
+    /// one corrective action's 감소대책/담당/상태 cells are all filled, so — as with the JHA test
+    /// above — the exactly-one occurrence asserted below cannot be vacuously satisfied by some
+    /// other missing field (WO LEGAL-3A R2).
     func testRiskAssessmentReportUsesNotRecordedForMissingIndustry() throws {
         let ctx = try makeContext()
         let assessment = RiskAssessment(kind: .regular, method: .frequencySeverity,
@@ -464,8 +474,15 @@ final class ReportRenderingTests: XCTestCase {
         ctx.insert(assessment)
         let item = RiskAssessmentItem(
             taskDescription: "굴착 작업 NOINDKR", hazardDescription: "붕괴 위험",
+            currentControls: "표지판 설치 CTLNOINDKR",
             likelihood: 1, severity: 1, riskLevel: .low, sortOrder: 0)
         ctx.insert(item)
+        // A fully-specified action: 감소대책(measure)·담당(responsibleName) filled, and 상태 always
+        // has a value once an action exists (default .notStarted) — none of the three action
+        // columns can independently produce 미기록 here.
+        let action = try CorrectiveActionPolicy.makeDraft(
+            item: item, measure: "안전난간 설치 MEASNOINDKR", responsibleName: "김담당NOINDKR")
+        ctx.insert(action)
         assessment.items = [item]
         try? ctx.save()
 
@@ -473,8 +490,10 @@ final class ReportRenderingTests: XCTestCase {
         let whole = pageTexts(url).joined(separator: "\n")
 
         XCTAssertTrue(whole.contains("NOINDKR"), "sanity: the step must render")
-        XCTAssertGreaterThanOrEqual(labelHits(["미기록", "Not recorded"], in: whole), 1,
-            "a missing industry snapshot must render the shared 미기록 / Not recorded label")
+        XCTAssertTrue(whole.contains("CTLNOINDKR"), "sanity: current controls must render, not itself read as 미기록")
+        XCTAssertTrue(whole.contains("MEASNOINDKR"), "sanity: the reduction measure must render, not itself read as 미기록")
+        XCTAssertEqual(labelHits(["미기록", "Not recorded"], in: whole), 1,
+            "exactly one 미기록 / Not recorded occurrence is expected, and it can only be the nil industry snapshot")
     }
 
     // MARK: - WO LEGAL-2e: PDF 에 공유 이력 + 3년 보존 안내가 실제로 렌더되는지 (값 스냅샷 아님 —
