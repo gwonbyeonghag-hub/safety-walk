@@ -19,10 +19,10 @@
 "home.allClear"             = "All clear";
 "home.noOpenHazards"        = "No open hazards";
 "home.quickActions"         = "Quick actions";
-"home.assessmentsDue"       = "Assessments due";
+"home.assessmentsDue"       = "Assessments to review";
 "home.overdue"              = "Review due";
 "home.dueSoon"              = "Review soon";
-"home.noDueAssessments"     = "No assessments due";
+"home.noDueAssessments"     = "No assessments to review";
 "ipad.sidebar.section"      = "Site";
 "ipad.sidebar.role"         = "Field supervisor";
 
@@ -581,10 +581,10 @@
 "mac.stat.sites" = "Sites";
 "mac.stat.completedInspections" = "Completed";
 "mac.stat.openHazards" = "Open Hazards";
-"mac.stat.assessmentsDue" = "Assessments Due";
+"mac.stat.assessmentsDue" = "Reviews needed";
 "mac.riskDistribution" = "Risk by Site";
 "mac.openCorrectiveActions" = "Open Corrective Actions";
-"mac.assessmentsDue" = "Risk Assessments Due";
+"mac.assessmentsDue" = "Risk assessments to review";
 "mac.recentInspections" = "Recent Inspections";
 "mac.noData" = "No data";
 "mac.noOpenItems" = "No open items";

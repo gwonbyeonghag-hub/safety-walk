@@ -2,23 +2,26 @@ import Testing
 import Foundation
 @testable import SafetyWalkCore
 
-// WO-7 → WO LEGAL-3A: shared, jurisdiction-aware re-assessment REVIEW reminder. Single source
-// of truth for the "위험성평가 기한/검토" surfaces on iOS (home) and macOS (dashboard). Only a
-// KR-jurisdiction assessment gets the annual (365-day) reminder, with a 30-day grace window
-// before it. Federal OSHA has no universal annual JHA deadline (LEGAL_READINESS_KR_US.md P0-4),
-// so U.S. and unset-jurisdiction assessments must NEVER auto-flag, even long past the KR-style
-// 365-day mark — the app does not invent a legal-sounding deadline it cannot verify. Boundaries
-// are red-first (TDD).
+// WO-7 → WO LEGAL-3A → WO LEGAL-3A R1: shared, jurisdiction- AND kind-aware re-assessment
+// REVIEW reminder. Single source of truth for the review-reminder surfaces on iOS (home) and
+// macOS (dashboard) — callers must not re-check kind/jurisdiction themselves. Only a
+// KR-jurisdiction, `kind == .regular` assessment gets the annual (365-day) reminder, with a
+// 30-day grace window before it. `initial`/`occasional` KR assessments never auto-flag — the
+// annual cadence is a 정기(regular) concept only. Federal OSHA has no universal annual JHA
+// deadline (LEGAL_READINESS_KR_US.md P0-4), so U.S. and unset-jurisdiction assessments must
+// NEVER auto-flag, even long past the KR-style 365-day mark — the app does not invent a
+// legal-sounding deadline it cannot verify. Boundaries are red-first (TDD).
 
-@Suite("RiskAssessment.dueStatus — jurisdiction-aware annual review reminder (WO LEGAL-3A)")
+@Suite("RiskAssessment.dueStatus — jurisdiction- and kind-aware annual review reminder (WO LEGAL-3A R1)")
 struct AssessmentDueTests {
 
     private let cal = Calendar.current
     private var assessedAt: Date { cal.date(from: DateComponents(year: 2025, month: 1, day: 1))! }
     private func plus(_ days: Int) -> Date { cal.date(byAdding: .day, value: days, to: assessedAt)! }
 
-    private func assessment(jurisdiction: JurisdictionCode?, assessedAt: Date?) -> RiskAssessment {
-        let ra = RiskAssessment(kind: .regular, method: .frequencySeverity,
+    private func assessment(jurisdiction: JurisdictionCode?, assessedAt: Date?,
+                            kind: RiskAssessmentKind = .regular) -> RiskAssessment {
+        let ra = RiskAssessment(kind: kind, method: .frequencySeverity,
                                 siteId: UUID(), siteName: "1공장", assessorName: "홍길동",
                                 jurisdictionSnapshot: jurisdiction)
         ra.assessedAt = assessedAt
@@ -62,6 +65,20 @@ struct AssessmentDueTests {
 
     @Test func pastDeadlineIsOverdue() {
         #expect(kr(assessedAt).dueStatus(now: plus(400)) == .overdue)
+    }
+
+    // MARK: - Kind gate (WO LEGAL-3A R1) — the annual cadence is a 정기(regular) concept only
+
+    @Test func krInitialNeverAutoFlagsEvenPastTheDeadline() {
+        let ra = assessment(jurisdiction: .kr, assessedAt: assessedAt, kind: .initial)
+        #expect(ra.dueStatus(now: plus(365)) == .notDue)
+        #expect(ra.dueStatus(now: plus(1000)) == .notDue)
+    }
+
+    @Test func krOccasionalNeverAutoFlagsEvenPastTheDeadline() {
+        let ra = assessment(jurisdiction: .kr, assessedAt: assessedAt, kind: .occasional)
+        #expect(ra.dueStatus(now: plus(365)) == .notDue)
+        #expect(ra.dueStatus(now: plus(1000)) == .notDue)
     }
 
     // MARK: - Jurisdiction gate (WO LEGAL-3A P0-4)

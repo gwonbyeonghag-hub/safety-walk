@@ -23,12 +23,12 @@ struct HomeView: View {
 
     private var recentInspections: [Inspection] { Array(inspections.prefix(5)) }
 
-    /// 정기 assessments at/near their annual review reminder — shared, jurisdiction-aware rule
-    /// (SafetyWalkCore, WO LEGAL-3A). Only KR 관할이 자동 알림 대상이다 — US·미설정은 항상
-    /// notDue 이므로 여기서 걸러진다(nil assessedAt 도 마찬가지, 교정 #3).
+    /// Assessments at/near their annual review reminder — the shared, jurisdiction-aware Core
+    /// rule (SafetyWalkCore, WO LEGAL-3A / WO LEGAL-3A R1) decides `kind`/jurisdiction/assessedAt
+    /// entirely on its own; this screen must not re-check any of those (single policy point).
     private var dueAssessments: [RiskAssessment] {
         assessments
-            .filter { $0.kind == .regular && $0.dueStatus() != .notDue }
+            .filter { $0.dueStatus() != .notDue }
             .sorted { ($0.assessedAt ?? .distantPast) < ($1.assessedAt ?? .distantPast) }
     }
 

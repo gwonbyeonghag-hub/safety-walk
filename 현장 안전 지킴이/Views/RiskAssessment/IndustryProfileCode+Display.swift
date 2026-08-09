@@ -13,3 +13,12 @@ extension IndustryProfileCode {
         }
     }
 }
+
+extension RiskAssessment {
+    /// 저장된 업종 스냅샷의 공유 표시값 — 상세(iOS)·조회(macOS)·KR/US PDF 네 곳이 전부 이 값만
+    /// 쓴다(WO LEGAL-3A R1, 네 곳이 각자 `?? raNotRecorded` 를 반복하며 드리프트하는 것을 막는다).
+    /// `nil` = 미기록이며 실제 값처럼 계산에 넣지 않는다(CLAUDE.md 기본값≠미기록 원칙).
+    var industryDisplayText: String {
+        industryProfileSnapshot?.localizedLabel ?? LocalizationKey.raNotRecorded.localized
+    }
+}

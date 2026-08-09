@@ -212,9 +212,10 @@ struct DashboardView: View {
 
     private var completedInspections: [Inspection] { inspections.filter { $0.status == .completed } }
     private var openHazards: [Hazard] { hazards.filter { $0.correctiveActionStatus != .completed } }
-    // WO LEGAL-3A: shared, jurisdiction-aware rule — only KR 관할이 자동 알림 대상이다.
+    // WO LEGAL-3A / R1: shared Core rule decides kind/jurisdiction/assessedAt on its own —
+    // this screen must not re-check any of those (single policy point).
     private var dueAssessments: [RiskAssessment] {
-        assessments.filter { $0.kind == .regular && $0.dueStatus() != .notDue }
+        assessments.filter { $0.dueStatus() != .notDue }
     }
 
     private func distribution(for site: Site) -> [RiskLevel: Int] {

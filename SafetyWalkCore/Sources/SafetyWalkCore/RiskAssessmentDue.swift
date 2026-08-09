@@ -11,20 +11,23 @@ public enum AssessmentDueStatus: Sendable, Hashable {
 
 public extension RiskAssessment {
     /// Pure, jurisdiction-aware re-assessment REVIEW reminder — the single source of truth for
-    /// every "위험성평가 기한/검토" surface on iOS (home) and macOS (dashboard) (WO-7, WO LEGAL-3A).
+    /// every review-reminder surface on iOS (home) and macOS (dashboard) (WO-7, WO LEGAL-3A,
+    /// WO LEGAL-3A R1). Callers must NOT re-check `kind`/jurisdiction themselves — every
+    /// qualifying condition lives here so there is exactly one policy point.
     ///
-    /// Only a **KR**-jurisdiction assessment gets the automatic annual (365-day) reminder, with
-    /// the 30 days before the deadline flagged `.dueSoon` and the deadline onward `.overdue`.
-    /// Federal OSHA has no universal annual JHA/risk-assessment deadline (LEGAL_READINESS_KR_US.md
-    /// P0-4), so **U.S. and unset-jurisdiction** assessments always resolve `.notDue` — the app
-    /// never shows a legal-sounding deadline it cannot verify for that jurisdiction. An assessment
-    /// that has not been assessed yet (`assessedAt == nil`) is also always `.notDue` — there is
-    /// nothing to measure a deadline from.
+    /// Only a **KR-jurisdiction, `kind == .regular`** assessment gets the automatic annual
+    /// (365-day) reminder, with the 30 days before the deadline flagged `.dueSoon` and the
+    /// deadline onward `.overdue`. `initial`/`occasional` KR assessments never auto-flag — the
+    /// annual cadence only applies to 정기(regular) assessments (WO LEGAL-3A R1). Federal OSHA
+    /// has no universal annual JHA/risk-assessment deadline (LEGAL_READINESS_KR_US.md P0-4), so
+    /// **U.S. and unset-jurisdiction** assessments always resolve `.notDue` — the app never shows
+    /// a legal-sounding deadline it cannot verify for that jurisdiction. An assessment that has
+    /// not been assessed yet (`assessedAt == nil`) is also always `.notDue` — there is nothing to
+    /// measure a deadline from.
     ///
-    /// Date-only and side-effect-free (inject `now`/`calendar` in tests). The caller still decides
-    /// which assessments qualify by kind (typically `kind == .regular`), unchanged from before.
+    /// Date-only and side-effect-free (inject `now`/`calendar` in tests).
     func dueStatus(now: Date = Date(), calendar: Calendar = .current) -> AssessmentDueStatus {
-        guard jurisdictionSnapshot == .kr, let assessedAt else { return .notDue }
+        guard kind == .regular, jurisdictionSnapshot == .kr, let assessedAt else { return .notDue }
         guard let deadline = calendar.date(byAdding: .day, value: 365, to: assessedAt) else {
             return .notDue
         }

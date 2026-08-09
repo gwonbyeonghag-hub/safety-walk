@@ -65,7 +65,7 @@ enum RiskAssessmentReport {
             (LocalizationKey.raMethod.localized, a.method.localizedLabel),
             // WO LEGAL-3A: 저장된 업종 스냅샷 — 과거 평가는 현재 설정이 아니라 그 평가의 값을 보여준다.
             (LocalizationKey.raIndustry.localized,
-             a.industryProfileSnapshot?.localizedLabel ?? LocalizationKey.raNotRecorded.localized),
+             a.industryDisplayText),
             (LocalizationKey.commonDone.localized, (a.assessedAt ?? a.createdAt).formatted(date: .abbreviated, time: .shortened)),
         ])
     }

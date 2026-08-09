@@ -39,7 +39,7 @@ struct RiskAssessmentsBrowseView: View {
                     DetailField(label: LocalizationKey.raKind.localized, value: ra.kind.localizedLabel)
                     // WO LEGAL-3A: 저장된 업종 스냅샷 — 조회 전용(Mac 은 생성·편집하지 않는다).
                     DetailField(label: LocalizationKey.raIndustry.localized,
-                                value: ra.industryProfileSnapshot?.localizedLabel ?? LocalizationKey.raNotRecorded.localized)
+                                value: ra.industryDisplayText)
                     DetailField(label: LocalizationKey.commonDone.localized,
                                 value: (ra.assessedAt ?? ra.createdAt).formatted(date: .abbreviated, time: .shortened))
                 }

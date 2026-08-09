@@ -49,7 +49,7 @@ enum JHAReport {
             // WO LEGAL-3A: 저장된 업종 스냅샷 — US 리포트라 특히 값어치가 크다(General Industry vs
             // Construction 등 임계값이 갈리는 근거).
             (LocalizationKey.raIndustry.localized,
-             a.industryProfileSnapshot?.localizedLabel ?? LocalizationKey.raNotRecorded.localized),
+             a.industryDisplayText),
         ])
     }
 

@@ -19,10 +19,10 @@
 "home.allClear"             = "안정";
 "home.noOpenHazards"        = "미처리 위험요인 없음";
 "home.quickActions"         = "빠른 작업";
-"home.assessmentsDue"       = "위험성평가 기한";
+"home.assessmentsDue"       = "검토할 위험성평가";
 "home.overdue"              = "검토 필요";
 "home.dueSoon"              = "검토 시점 임박";
-"home.noDueAssessments"     = "임박한 위험성평가 없음";
+"home.noDueAssessments"     = "검토할 위험성평가 없음";
 "ipad.sidebar.section"      = "현장";
 "ipad.sidebar.role"         = "현장 감독";
 
@@ -581,10 +581,10 @@
 "mac.stat.sites" = "현장";
 "mac.stat.completedInspections" = "완료 점검";
 "mac.stat.openHazards" = "미조치 위험";
-"mac.stat.assessmentsDue" = "평가 기한";
+"mac.stat.assessmentsDue" = "검토 필요";
 "mac.riskDistribution" = "현장별 위험 분포";
 "mac.openCorrectiveActions" = "미조치 시정조치";
-"mac.assessmentsDue" = "위험성평가 기한";
+"mac.assessmentsDue" = "검토할 위험성평가";
 "mac.recentInspections" = "최근 점검";
 "mac.noData" = "데이터 없음";
 "mac.noOpenItems" = "미조치 항목 없음";

@@ -239,7 +239,7 @@ struct RiskAssessmentDetailView: View {
             infoRow(LocalizationKey.raAssessor.localized, assessment.assessorName)
             // WO LEGAL-3A: 저장된 업종 스냅샷 — 과거 평가는 현재 설정이 아니라 그 평가의 값을 보여준다.
             infoRow(LocalizationKey.raIndustry.localized,
-                    assessment.industryProfileSnapshot?.localizedLabel ?? LocalizationKey.raNotRecorded.localized)
+                    assessment.industryDisplayText)
 
             if assessment.status == .planned, let scheduled = assessment.scheduledAt {
                 infoRow(LocalizationKey.raSchedule.localized,

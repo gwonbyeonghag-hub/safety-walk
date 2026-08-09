@@ -429,6 +429,54 @@ final class ReportRenderingTests: XCTestCase {
             "an empty Controls value must render the shared 미기록 / Not recorded label")
     }
 
+    // MARK: - WO LEGAL-3A R1: 업종 스냅샷 표시 — 두 리포트가 공유 `industryDisplayText` 를 쓴다
+
+    /// A missing industry snapshot must read as 미기록 / Not recorded — the shared
+    /// `RiskAssessment.industryDisplayText` value, not a blank cell.
+    func testJHAReportUsesNotRecordedForMissingIndustry() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .jsa,
+                                        siteId: UUID(), siteName: "Plant C", assessorName: "J. Park")
+        // industryProfileSnapshot left nil (미설정) — the case under test.
+        ctx.insert(assessment)
+        let item = RiskAssessmentItem(
+            taskDescription: "Step with no recorded industry NOIND",
+            hazardDescription: "Pinch point",
+            likelihood: 2, severity: 2, riskLevel: .medium, sortOrder: 0)
+        ctx.insert(item)
+        assessment.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(JHAReport.pdfURL(for: assessment), "JHA URL nil")
+        let whole = pageTexts(url).joined(separator: "\n")
+
+        XCTAssertTrue(whole.contains("NOIND"), "sanity: the step must render")
+        XCTAssertGreaterThanOrEqual(labelHits(["미기록", "Not recorded"], in: whole), 1,
+            "a missing industry snapshot must render the shared 미기록 / Not recorded label")
+    }
+
+    /// Same guarantee on the KR report — both reports render `industryDisplayText`, not their
+    /// own inline `?? raNotRecorded` fallback (WO LEGAL-3A R1).
+    func testRiskAssessmentReportUsesNotRecordedForMissingIndustry() throws {
+        let ctx = try makeContext()
+        let assessment = RiskAssessment(kind: .regular, method: .frequencySeverity,
+                                        siteId: UUID(), siteName: "Plant D", assessorName: "홍길동")
+        ctx.insert(assessment)
+        let item = RiskAssessmentItem(
+            taskDescription: "굴착 작업 NOINDKR", hazardDescription: "붕괴 위험",
+            likelihood: 1, severity: 1, riskLevel: .low, sortOrder: 0)
+        ctx.insert(item)
+        assessment.items = [item]
+        try? ctx.save()
+
+        let url = try XCTUnwrap(RiskAssessmentReport.pdfURL(for: assessment), "report URL nil")
+        let whole = pageTexts(url).joined(separator: "\n")
+
+        XCTAssertTrue(whole.contains("NOINDKR"), "sanity: the step must render")
+        XCTAssertGreaterThanOrEqual(labelHits(["미기록", "Not recorded"], in: whole), 1,
+            "a missing industry snapshot must render the shared 미기록 / Not recorded label")
+    }
+
     // MARK: - WO LEGAL-2e: PDF 에 공유 이력 + 3년 보존 안내가 실제로 렌더되는지 (값 스냅샷 아님 —
     // SharingEvent 모델 필드만 사용, 참여자 개인정보는 포함하지 않는다)
 
