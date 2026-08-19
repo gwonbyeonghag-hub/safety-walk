@@ -20,7 +20,9 @@
     { "id": "src-1926-451",  "standardNumber": "29 CFR 1926.451",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.451" },
     { "id": "src-1926-501",  "standardNumber": "29 CFR 1926.501",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.501" },
     { "id": "src-1926-602",  "standardNumber": "29 CFR 1926.602",  "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.602" },
-    { "id": "src-1926-1053", "standardNumber": "29 CFR 1926.1053", "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.1053" }
+    { "id": "src-1926-1053", "standardNumber": "29 CFR 1926.1053", "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.1053" },
+    { "id": "src-1926-subpart-aa", "standardNumber": "29 CFR 1926 Subpart AA", "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926SubpartAA" },
+    { "id": "src-1926-1203", "standardNumber": "29 CFR 1926.1203", "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.1203" }
   ],
   "categories": [
     {
@@ -95,6 +97,13 @@
       "titleKey": "checklist.category.poweredIndustrialTrucks",
       "items": [
         { "id": "usc-pit-001", "titleKey": "checklist.item.usConstruction.pit.001", "descriptionKey": null, "sourceIds": ["src-1926-602"] }
+      ]
+    },
+    {
+      "id": "usc-cat-conf",
+      "titleKey": "checklist.category.confinedSpace",
+      "items": [
+        { "id": "usc-conf-001", "titleKey": "checklist.item.usConstruction.confined.001", "descriptionKey": null, "sourceIds": ["src-1926-subpart-aa", "src-1926-1203"] }
       ]
     },
     {

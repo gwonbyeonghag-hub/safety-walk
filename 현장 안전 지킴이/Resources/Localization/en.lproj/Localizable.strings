@@ -490,6 +490,8 @@
 "checklist.item.usConstruction.loto.001" = "Are deenergized circuits and their deactivated controls tagged at every point where they could be re-energized while work is performed on them (29 CFR 1926.417(a), (b))?";
 // Powered Industrial Trucks — 29 CFR 1926.602(d) (applies 29 CFR 1910.178(l) to construction)
 "checklist.item.usConstruction.pit.001" = "Do only operators who have completed the training required by 29 CFR 1910.178(l), as applied to construction by 29 CFR 1926.602(d), operate powered industrial trucks?";
+// Confined Spaces — 29 CFR 1926 Subpart AA / 1926.1203 (construction-specific identification/evaluation duty — distinct from general industry's 1910.146 permit-program question)
+"checklist.item.usConstruction.confined.001" = "Before work begins, has a competent person evaluated the worksite to identify confined spaces and determine whether any are permit-required confined spaces (29 CFR 1926.1203(a))?";
 // Fire Protection — 29 CFR 1926.150
 "checklist.item.usConstruction.fire.001" = "Is a fire protection program maintained throughout all phases of the construction and demolition work (29 CFR 1926.150(a)(1))?";
 // Hot Work — 29 CFR 1926.352

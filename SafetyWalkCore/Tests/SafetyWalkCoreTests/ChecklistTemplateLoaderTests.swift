@@ -239,6 +239,23 @@ struct ChecklistTemplateLoaderUSFederalSourceTests {
         }
     }
 
+    /// WO LEGAL-3B-R1: Construction gained a confined-space item (29 CFR 1926 Subpart AA /
+    /// 1926.1203) — this guards against both a regression (item silently dropped again) and a
+    /// copy-paste of the General Industry item (which asks a different question, see the audit doc §3).
+    @Test func constructionTemplateHasAConfinedSpaceItemDistinctFromGeneralIndustrys() throws {
+        let templates = try loader.load(for: .global)
+        let construction = try #require(templates.first { $0.industryScope == .construction })
+        let confinedCategory = try #require(
+            construction.categories.first { $0.titleKey == "checklist.category.confinedSpace" },
+            "Construction template has no confinedSpace category"
+        )
+        #expect(!confinedCategory.items.isEmpty, "Construction confinedSpace category has no items")
+        for item in confinedCategory.items {
+            #expect(item.titleKey != "checklist.item.usGeneral.conf.001",
+                    "Construction confined-space item must not reuse the General Industry titleKey")
+        }
+    }
+
     /// The core structural guard against the WO's named defect: a checklist item citing General
     /// Industry (29 CFR 1910) and Construction (29 CFR 1926) thresholds in the same place. Since
     /// each template now owns an independent sourceCatalog, this asserts no cross-standard leak —

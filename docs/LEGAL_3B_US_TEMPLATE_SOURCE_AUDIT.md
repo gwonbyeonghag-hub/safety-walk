@@ -23,7 +23,10 @@
 | 템플릿 | id | industryScope | 카테고리 | 항목 | sourceCatalog |
 |---|---|---|---|---|---|
 | U.S. Federal — General Industry | `us-federal-general-industry-v1` | `general` | 14 | 25 | 29 CFR 1910.* 15건 |
-| U.S. Federal — Construction | `us-federal-construction-v1` | `construction` | 13 | 18 | 29 CFR 1926.* 15건 |
+| U.S. Federal — Construction | `us-federal-construction-v1` | `construction` | 14 | 19 | 29 CFR 1926.* 17건 |
+
+> Construction의 카테고리/항목/출처 수는 WO LEGAL-3B-R1(밀폐공간 항목 보완)에서 13→14 /
+> 18→19 / 15건→17건으로 갱신됐다 — §2·§3·§5 참고.
 
 `checklist_global.json`(`global-general-v1`)은 **삭제하지 않았다** — 파일·내용·localization
 key 그대로 번들에 남아 있고 `ChecklistTemplateLoader.loadTemplate(filename:region:)`으로 여전히
@@ -59,7 +62,7 @@ decode된다(Core 테스트로 고정). 다만 `ChecklistTemplateLoader.load(for
 | fire | 유지 | 유지 | 1910.157(소화기) / 1926.150(화재예방 프로그램). | 1910.157 · 1926.150 |
 | hotWork | 유지 | 유지 | 1910.252 / 1926.352 — 이격거리·화재감시자 조건을 조문 그대로. | 1910.252 · 1926.352 |
 | poweredIndustrialTrucks | 유지 | 유지(1926.602(d) 경유) | — | 1910.178(l) · 1926.602(d) |
-| confinedSpace | 유지 | **제거** | 1910.146(a)이 **명시적으로 건설을 제외**한다("이 기준은 일반산업의... 건설·조선·농업은 제외") — 건설 전용 밀폐공간 표준(1926 Subpart AA)은 이번 조사 범위에서 다루지 않아, 근거 없는 건설 밀폐공간 항목을 만들지 않고 제거했다. | 1910.146(a) |
+| confinedSpace | 유지 | **유지(WO LEGAL-3B-R1에서 추가)** | 최초 감사는 1910.146(a)이 **명시적으로 건설을 제외**한다는 점만 확인하고, 건설 전용 밀폐공간 표준(29 CFR 1926 Subpart AA)은 조사 범위 밖으로 남겨 항목을 제거했다. WO LEGAL-3B-R1에서 Subpart AA/§1926.1203(a)를 조사해 신규 `checklist.item.usConstruction.confined.001`(`usc-conf-001`)을 추가했다 — 건설 특유의 "작업 시작 전 유자격자가 밀폐공간을 식별·평가할 의무"를 묻는 항목이며, GI의 `usgi-conf-001`(허가 프로그램 존재 여부를 묻는 문구, 1910.146(c)(3)-(4))을 그대로 복제하지 않았다. | 1926.1203(a) · 1910.146(a) |
 | emergencyResponse/emergencyActionPlan | 유지 | 유지 | 1910.38 / 1926.35. | 1910.38 · 1926.35 |
 
 ## 4. Prompt별 출처표 — U.S. Federal General Industry (`us-federal-general-industry-v1`)
@@ -110,6 +113,7 @@ decode된다(Core 테스트로 고정). 다만 `ChecklistTemplateLoader.load(for
 | usc-elec-002 | checklist.item.usConstruction.elec.002 | 임시배선(125V 15/20/30A) | 1926.404(b)(1) | src-1926-404 | 신규 | §2 GFCI/AEGCP 대안 |
 | usc-loto-001 | checklist.item.usConstruction.loto.001 | 전기회로 작업 시 | 1926.417(a)-(b) | src-1926-417 | 신규 | §3 범위 축소(전기 한정) |
 | usc-pit-001 | checklist.item.usConstruction.pit.001 | 동력산업차량 운전 | 1926.602(d) → 1910.178(l) | src-1926-602 | 신규 | 준용 조문 명시 |
+| usc-conf-001 | checklist.item.usConstruction.confined.001 | 작업 시작 전(밀폐공간 존재 가능 시) | 1926.1203(a) | src-1926-subpart-aa, src-1926-1203 | 신규(R1) | 건설 고유의 식별·평가 의무 — GI `usgi-conf-001`(허가 프로그램 존재 여부)과 다른 지점을 물음. §3 참고 |
 | usc-fire-001 | checklist.item.usConstruction.fire.001 | 상시 | 1926.150(a)(1) | src-1926-150 | 신규 | 화재예방 프로그램 |
 | usc-hotwork-001 | checklist.item.usConstruction.hotwork.001 | 용접/절단/가열 시 | 1926.352(a)-(b) | src-1926-352 | 신규 | 가연물 이동/차단 |
 | usc-hotwork-002 | checklist.item.usConstruction.hotwork.002 | 상동 | 1926.352(d)-(e) | src-1926-352 | 신규 | 화재감시자·소화장비 |
@@ -130,7 +134,7 @@ decode된다(Core 테스트로 고정). 다만 `ChecklistTemplateLoader.load(for
 
 ## 7. 한계
 
-- **시작용 점검표이며 exhaustive checklist가 아니다.** 위 43개 항목(GI 25 + Construction 18)은
+- **시작용 점검표이며 exhaustive checklist가 아니다.** 위 44개 항목(GI 25 + Construction 19)은
   각 표준의 핵심 요구사항 일부만 다룬다 — 예를 들어 1910.147은 (c)(1)/(c)(8) 두 항만 인용했지만
   전체 조문은 훈련·정기점검(periodic inspection) 등 더 많은 하위 조항을 포함한다.
 - **State Plan 미반영.** 22개 주(+7개 공공부문 전용, 총 29개 프로그램)가 연방보다 같거나 더
@@ -138,7 +142,7 @@ decode된다(Core 테스트로 고정). 다만 `ChecklistTemplateLoader.load(for
   관할 자동판정을 구현하지 않는다(§G 명시 제외) — Federal/State Plan 경고(§E)로 사용자에게
   "이 현장에 적용되는 기준을 확인하라"고 안내할 뿐이다.
 - **지역·사업장 규정 미반영.** 시(市)·카운티 조례, 개별 사업장 안전수칙은 이 템플릿에 없다.
-- 위 43개 항목의 EN/KO 문구는 원문 규정을 정확히 의역한 것이며, 조문 원문의 장문 인용이 아니다
+- 위 44개 항목의 EN/KO 문구는 원문 규정을 정확히 의역한 것이며, 조문 원문의 장문 인용이 아니다
   — 그러나 의역 과정에서 발생할 수 있는 뉘앙스 손실 가능성은 남아 있다.
 
 ## 8. 검증 상태 — 정직 기록
